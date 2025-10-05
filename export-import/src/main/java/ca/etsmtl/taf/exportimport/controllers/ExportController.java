@@ -24,12 +24,10 @@ public class ExportController {
         try {
             JSONObject caseData = exportService.getTestCase(caseId);
             return ResponseEntity.ok(Map.of(
-                    "success", true,
                     "data", caseData
             ));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(Map.of(
-                    "success", false,
                     "message", e.getMessage()
             ));
         }
@@ -40,12 +38,10 @@ public class ExportController {
         try {
             String message = exportService.exportTo(exportRequest.getType(), exportRequest.getIds());
             return ResponseEntity.ok(Map.of(
-                    "success", true,
                     "message", message
             ));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(Map.of(
-                    "success", false,
                     "message", e.getMessage()
             ));
         }

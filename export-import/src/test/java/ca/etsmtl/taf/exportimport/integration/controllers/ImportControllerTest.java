@@ -1,6 +1,6 @@
 package ca.etsmtl.taf.exportimport.integration.controllers;
 
-import ca.etsmtl.taf.exportimport.services.ExportService;
+import ca.etsmtl.taf.exportimport.services.ImportService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +23,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
-class ExportControllerTest {
+class ImportControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ExportService exportService;
+    private ImportService importService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -44,13 +44,13 @@ class ExportControllerTest {
                 "run", List.of("r1")
         );
 
-        when(exportService.exportTo(eq("testrail"), any())).thenReturn("Export success");
+        when(importService.importTo(eq("testrail"), any())).thenReturn("Import success");
 
-        mockMvc.perform(post("/export")
+        mockMvc.perform(post("/import")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestBody)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Export success"));
+                .andExpect(jsonPath("$.message").value("Import success"));
     }
 
     @Test
@@ -60,12 +60,12 @@ class ExportControllerTest {
                 "project", List.of("p1", "p2")
         );
 
-        when(exportService.exportTo(eq("testrail"), any())).thenThrow(new Exception("Export failed"));
+        when(importService.importTo(eq("testrail"), any())).thenThrow(new Exception("Import failed"));
 
-        mockMvc.perform(post("/export")
+        mockMvc.perform(post("/import")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestBody)))
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("$.message").value("Export failed"));
+                .andExpect(jsonPath("$.message").value("Import failed"));
     }
 }

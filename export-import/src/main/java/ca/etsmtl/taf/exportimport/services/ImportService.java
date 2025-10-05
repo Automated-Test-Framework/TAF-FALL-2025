@@ -16,7 +16,7 @@ public class ImportService {
 
     }
 
-    public String importTo(String type, Map<String, List<String>> ids) {
+    public String importTo(String type, Map<String, List<String>> ids) throws Exception {
 
         int nbProjects = ids.get("project").size();
         int nbSuitests = ids.get("suite").size();
@@ -25,11 +25,12 @@ public class ImportService {
 
         switch (type) {
             default:
-                logger.debug(String.format("Unsupported type: %s", type));
-                break;
+                String message = String.format("Unsupported type: %s", type);
+                logger.warn(message);
+                throw new Exception(message);
         }
 
-        return String.format("Successfully exported %d projects, %d suites, %d cases and %d runs", nbProjects, nbSuitests, nbCases, nbRuns);
+        //return String.format("Successfully imported %d projects, %d suites, %d cases and %d runs", nbProjects, nbSuitests, nbCases, nbRuns);
     }
 }
 

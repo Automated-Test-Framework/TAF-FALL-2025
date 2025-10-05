@@ -22,12 +22,10 @@ public class ImportController {
         try {
             String message = importService.importTo(importRequest.getType(), importRequest.getIds());
             return ResponseEntity.ok(Map.of(
-                    "success", true,
                     "message", message
             ));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(Map.of(
-                    "success", false,
                     "message", e.getMessage()
             ));
         }

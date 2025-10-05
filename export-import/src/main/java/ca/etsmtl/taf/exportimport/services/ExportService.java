@@ -1,9 +1,13 @@
 package ca.etsmtl.taf.exportimport.services;
 
 import ca.etsmtl.taf.exportimport.config.TestRailConfig;
+import ca.etsmtl.taf.exportimport.repositories.ProjectRepository;
+import ca.etsmtl.taf.exportimport.utils.exporters.Exporter;
+import ca.etsmtl.taf.exportimport.utils.exporters.TestRailExporter;
 import com.gurock.testrail.APIClient;
 import com.gurock.testrail.APIException;
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -16,37 +20,53 @@ import org.slf4j.LoggerFactory;
 @Service
 public class ExportService {
 
-    private final APIClient client;
-
+    private final ProjectRepository projectRepository;
+    private final Map<String, Exporter> exporters;
     private static final Logger logger = LoggerFactory.getLogger(ExportService.class);
 
-    public ExportService(TestRailConfig testRailConfig) {
-        this.client = testRailConfig.createClient();
+
+    @Autowired
+    public ExportService(ProjectRepository projectRepository, Map<String, Exporter> exporters) {
+        this.projectRepository = projectRepository;
+        this.exporters = exporters;
     }
 
     //Temporaire pour debugger
     public JSONObject getTestCase(int caseId) throws IOException, APIException {
-        return (JSONObject) client.sendGet("get_case/" + caseId);
+        Exporter testrailExporter = exporters.get("testrail");
+
+        return ((TestRailExporter) testrailExporter) .getTestCase(caseId);
     }
 
     public String exportTo(String type, Map<String, List<String>> ids) throws Exception {
+        logger.info(String.valueOf(ids.get("project")));
+        logger.info(ids.get("project").getFirst());
+        logger.info(String.valueOf(projectRepository.findById(ids.get("project").getFirst())));
 
-        int nbProjects = ids.get("project").size();
-        int nbSuitests = ids.get("suite").size();
-        int nbCases = ids.get("case").size();
-        int nbRuns = ids.get("run").size();
-
-        switch (type) {
-            case "testrail":
-                logger.info("TestRail");
-                break;
-
-            default:
-                String message = String.format("Unsupported type: %s", type);
-                logger.warn(message);
-                throw new Exception(message);
+        Exporter exporter = exporters.get(type);
+        if (exporter == null) {
+            String message = String.format("Unsupported type: %s", type);
+            logger.warn(message);
+            throw new Exception(message);
         }
 
-        return String.format("Successfully exported %d projects, %d suites, %d cases and %d runs", nbProjects, nbSuitests, nbCases, nbRuns);
+        exporter.exportTo(ids);
+
+        return getExportConfirmationMessage(ids);
+    }
+
+    private static String getExportConfirmationMessage(Map<String, List<String>> ids) {
+        int nbProjects = ids.getOrDefault("project", List.of()).size();
+        int nbSuites = ids.getOrDefault("suite", List.of()).size();
+        int nbCases = ids.getOrDefault("case", List.of()).size();
+        int nbRuns = ids.getOrDefault("run", List.of()).size();
+
+        StringBuilder messageBuilder = new StringBuilder("Successfully exported");
+        if (nbProjects > 0) messageBuilder.append(" ").append(nbProjects).append(" projects");
+        if (nbSuites > 0) messageBuilder.append(nbProjects > 0 ? "," : "").append(" ").append(nbSuites).append(" suites");
+        if (nbCases > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0) ? "," : "").append(" ").append(nbCases).append(" cases");
+        if (nbRuns > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0) ? "," : "").append(" ").append(nbRuns).append(" runs");
+
+        return messageBuilder.toString();
     }
 }

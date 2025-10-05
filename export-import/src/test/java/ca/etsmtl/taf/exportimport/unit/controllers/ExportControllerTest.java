@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -33,13 +34,12 @@ class ExportControllerTest {
         request.setType("testrail");
         request.getIds().put("project", List.of("123", "456"));
 
-        when(exportService.exportTo(eq("testrail"), any())).thenReturn("OK");
+        when(exportService.exportTo(eq("testrail"), any())).thenReturn("Export success");
 
         ResponseEntity<Map<String, Object>> response = exportController.exportTo(request);
 
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(true, response.getBody().get("success"));
-        assertEquals("OK", response.getBody().get("message"));
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Export success", response.getBody().get("message"));
     }
 
     @Test
@@ -48,13 +48,12 @@ class ExportControllerTest {
         request.setType("testrail");
 
         when(exportService.exportTo(eq("testrail"), any()))
-                .thenThrow(new RuntimeException("Erreur d’export"));
+                .thenThrow(new RuntimeException("Export failed"));
 
         ResponseEntity<Map<String, Object>> response = exportController.exportTo(request);
 
-        assertEquals(400, response.getStatusCodeValue());
-        assertEquals(false, response.getBody().get("success"));
-        assertEquals("Erreur d’export", response.getBody().get("message"));
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Export failed", response.getBody().get("message"));
     }
 }
 
