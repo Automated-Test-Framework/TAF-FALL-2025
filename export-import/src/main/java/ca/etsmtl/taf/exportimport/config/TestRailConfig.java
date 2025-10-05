@@ -1,21 +1,24 @@
 package ca.etsmtl.taf.exportimport.config;
 
 import com.gurock.testrail.APIClient;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
-@Configuration
+@Component
 public class TestRailConfig {
 
-    public static APIClient createClient() {
+    @Value("${testrail.url}")
+    private String url;
 
-        String url = System.getenv("TESTRAIL_URL");
-        String user = System.getenv("TESTRAIL_USER");
-        String apiKey = System.getenv("TESTRAIL_APIKEY");
+    @Value("${testrail.user}")
+    private String user;
 
-        if (url == null || user == null || apiKey == null) {
-            throw new IllegalStateException("Missing TestRail environment variables.");
-        }
+    @Value("${testrail.apikey}")
+    private String apiKey;
 
+    @Bean
+    public APIClient createClient() {
         APIClient client = new APIClient(url);
         client.setUser(user);
         client.setPassword(apiKey);
