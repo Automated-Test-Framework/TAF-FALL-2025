@@ -39,9 +39,9 @@ public class ExportService {
     }
 
     public String exportTo(String type, Map<String, List<String>> ids) throws Exception {
-        logger.info(String.valueOf(ids.get("project")));
-        logger.info(ids.get("project").getFirst());
-        logger.info(String.valueOf(projectRepository.findById(ids.get("project").getFirst())));
+
+        // TODO: voir si on veut mettre la logique de récupération depuis la base de données dans les exporters ou dans le service
+        logger.info(String.valueOf(projectRepository.findById(ids.get("project").get(0))));
 
         Exporter exporter = exporters.get(type);
         if (exporter == null) {

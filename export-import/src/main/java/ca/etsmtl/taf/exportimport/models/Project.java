@@ -1,5 +1,6 @@
 package ca.etsmtl.taf.exportimport.models;
 
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -9,26 +10,27 @@ import java.util.Date;
 public class Project {
 
     @Id
-    private String id;
+    private String _id;
     private String name;
     private String description;
+    @CreatedDate
     private Date createdAt;
 
     public Project() {}
 
-    public Project(String id, String name, String description, Date createdAt) {
-        this.id = id;
+    public Project(String _id, String name, String description, Date createdAt) {
+        this._id = _id;
         this.name = name;
         this.description = description;
         this.createdAt = createdAt;
     }
 
     public String getId() {
-        return id;
+        return _id;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setId(String _id) {
+        this._id = _id;
     }
 
     public String getName() {
