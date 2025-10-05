@@ -1,5 +1,7 @@
 package ca.etsmtl.taf.exportimport.controllers;
 
+
+import ca.etsmtl.taf.exportimport.dtos.ExportRequest;
 import ca.etsmtl.taf.exportimport.services.ExportService;
 import org.json.simple.JSONObject;
 import org.springframework.http.ResponseEntity;
@@ -32,5 +34,20 @@ public class ExportController {
             ));
         }
     }
-}
 
+    @PostMapping()
+    public ResponseEntity<Map<String, Object>> exportTo(@RequestBody ExportRequest exportRequest) {
+        try {
+            String message = exportService.exportTo(exportRequest.getType(), exportRequest.getIds());
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", message
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
+    }
+}
