@@ -3,20 +3,22 @@ package ca.etsmtl.taf.exportimport.models;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.Builder;
 
-@Document(collection = "projects")
+@Document(collection = "test_runs")
 @Builder
 @Getter
-public class Project extends Entity {
+public class TestRun extends Entity {
     @Id
     private String _id;
+    private String testSuiteId;
     private String name;
-    private String description;
+    private List<String> testCaseIds;
 
     @Override
     public EntityType getType() {
-        return EntityType.PROJECT;
+        return EntityType.TEST_RUN;
     }
 }

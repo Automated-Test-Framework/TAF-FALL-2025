@@ -6,17 +6,18 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Getter;
 import lombok.Builder;
 
-@Document(collection = "projects")
+@Document(collection = "test_suites")
 @Builder
 @Getter
-public class Project extends Entity {
+public class TestSuite extends Entity {
     @Id
     private String _id;
+    private String projectId;
     private String name;
     private String description;
 
     @Override
     public EntityType getType() {
-        return EntityType.PROJECT;
+        return EntityType.TEST_SUITE;
     }
 }

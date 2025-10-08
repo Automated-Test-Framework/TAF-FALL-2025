@@ -37,10 +37,10 @@ class ExportControllerTest {
     void testExport_Success() throws Exception {
         Map<String, Object> requestBody = Map.of(
                 "type", "testrail",
-                "project", List.of("p1", "p2"),
-                "suite", List.of("s1"),
-                "case", List.of("c1"),
-                "run", List.of("r1")
+                "PROJECT", List.of("p1", "p2"),
+                "TEST_SUITE", List.of("s1"),
+                "TEST_CASE", List.of("c1"),
+                "TEST_RUN", List.of("r1")
         );
 
         when(exportService.exportTo(eq("testrail"), any())).thenReturn("Export success");
@@ -56,7 +56,7 @@ class ExportControllerTest {
     void testExport_failed() throws Exception {
         Map<String, Object> requestBody = Map.of(
                 "type", "testrail",
-                "project", List.of("p1", "p2")
+                "PROJECT", List.of("p1", "p2")
         );
 
         when(exportService.exportTo(eq("testrail"), any())).thenThrow(new Exception("Export failed"));

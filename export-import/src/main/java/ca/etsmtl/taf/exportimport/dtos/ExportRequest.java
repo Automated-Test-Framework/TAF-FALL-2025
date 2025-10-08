@@ -2,26 +2,30 @@ package ca.etsmtl.taf.exportimport.dtos;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import ca.etsmtl.taf.exportimport.models.EntityType;
 import jakarta.validation.ValidationException;
-import java.util.*;
+import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 public class ExportRequest {
 
     private String type;
 
     @JsonIgnore
-    private static final Set<String> ALLOWED_KEYS = Set.of("project", "suite", "case", "run");
-
-    private final Map<String, List<String>> ids = new HashMap<>();
+    private final Map<EntityType, List<String>> ids = new HashMap<>();
 
     @JsonAnySetter
     public void add(String key, Object value) {
-        if (!ALLOWED_KEYS.contains(key)) {
-            throw new ValidationException("Non authorized key : " + key + ". Valid keys : " + ALLOWED_KEYS);
+        try {
+            EntityType type = EntityType.valueOf(key);
+            // Cast sécurisé
+            ids.put(type, new ArrayList<>((List<String>) value));
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("Non authorized key : " + key);
         }
-
-        // Cast sécurisé
-        ids.put(key, new ArrayList<>((List<String>) value));
     }
 
     public String getType() {
@@ -32,7 +36,7 @@ public class ExportRequest {
         this.type = type;
     }
 
-    public Map<String, List<String>> getIds() {
+    public Map<EntityType, List<String>> getIds() {
         return ids;
     }
 }

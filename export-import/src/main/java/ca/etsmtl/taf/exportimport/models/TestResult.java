@@ -1,22 +1,24 @@
 package ca.etsmtl.taf.exportimport.models;
 
+import ca.etsmtl.taf.exportimport.models.TestRunStatus;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.Getter;
 import lombok.Builder;
 
-@Document(collection = "projects")
+@Document(collection = "test_runs")
 @Builder
 @Getter
-public class Project extends Entity {
+public class TestResult extends Entity {
     @Id
     private String _id;
-    private String name;
-    private String description;
+    private String testRunId;
+    private String testCaseId;
+    private TestRunStatus status;
 
     @Override
     public EntityType getType() {
-        return EntityType.PROJECT;
+        return EntityType.TEST_RESULT;
     }
 }

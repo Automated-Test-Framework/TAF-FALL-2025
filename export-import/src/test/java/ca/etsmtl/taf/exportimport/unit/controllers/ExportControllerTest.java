@@ -2,6 +2,7 @@ package ca.etsmtl.taf.exportimport.unit.controllers;
 
 import ca.etsmtl.taf.exportimport.controllers.ExportController;
 import ca.etsmtl.taf.exportimport.dtos.ExportRequest;
+import ca.etsmtl.taf.exportimport.models.EntityType;
 import ca.etsmtl.taf.exportimport.services.ExportService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +33,7 @@ class ExportControllerTest {
     void testExport_Success() throws Exception {
         ExportRequest request = new ExportRequest();
         request.setType("testrail");
-        request.getIds().put("project", List.of("123", "456"));
+        request.getIds().put(EntityType.PROJECT, List.of("123", "456"));
 
         when(exportService.exportTo(eq("testrail"), any())).thenReturn("Export success");
 
