@@ -16,6 +16,9 @@ services:
     environment:
       - MONGO_HOST=mongo-import-export
       - MONGO_PORT=27017
+      - TESTRAIL_URL=${TESTRAIL_URL}
+      - TESTRAIL_USER=${TESTRAIL_USER}
+      - TESTRAIL_APIKEY=${TESTRAIL_APIKEY}
 
 volumes:
   mongo_data:
