@@ -83,6 +83,8 @@ public class TestRailExporter implements Exporter {
                         return !isSuiteInTR;
                     }).toList();
 
+            entities.put(EntityType.TEST_SUITE, testSuiteOfProjectNotInTR.stream().map(testSuite -> (Entity) testSuite).toList());
+
             List<TestSuiteDTO> testSuiteDTOS = testSuiteOfProjectNotInTR
                     .stream()
                     .map(TestSuiteDTO::new)
