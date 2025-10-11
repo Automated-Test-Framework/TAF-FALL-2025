@@ -54,20 +54,22 @@ public class ExportService {
 
         exporter.exportTo(entitiesMap);
 
-        return getExportConfirmationMessage(ids);
+        return getExportConfirmationMessage(entitiesMap);
     }
 
-    private static String getExportConfirmationMessage(Map<EntityType, List<String>> ids) {
-        int nbProjects = ids.getOrDefault(EntityType.PROJECT, List.of()).size();
-        int nbSuites = ids.getOrDefault(EntityType.TEST_SUITE, List.of()).size();
-        int nbCases = ids.getOrDefault(EntityType.TEST_CASE, List.of()).size();
-        int nbRuns = ids.getOrDefault(EntityType.TEST_RUN, List.of()).size();
+    private static String getExportConfirmationMessage(Map<EntityType, List<Entity>> entitiesMap) {
+        int nbProjects = entitiesMap.getOrDefault(EntityType.PROJECT, List.of()).size();
+        int nbSuites = entitiesMap.getOrDefault(EntityType.TEST_SUITE, List.of()).size();
+        int nbCases = entitiesMap.getOrDefault(EntityType.TEST_CASE, List.of()).size();
+        int nbRuns = entitiesMap.getOrDefault(EntityType.TEST_RUN, List.of()).size();
+        int nbResults = entitiesMap.getOrDefault(EntityType.TEST_RESULT, List.of()).size();
 
         StringBuilder messageBuilder = new StringBuilder("Successfully exported");
         if (nbProjects > 0) messageBuilder.append(" ").append(nbProjects).append(" project(s)");
         if (nbSuites > 0) messageBuilder.append(nbProjects > 0 ? "," : "").append(" ").append(nbSuites).append(" suite(s)");
         if (nbCases > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0) ? "," : "").append(" ").append(nbCases).append(" case(s)");
         if (nbRuns > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0) ? "," : "").append(" ").append(nbRuns).append(" run(s)");
+        if (nbResults > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0 || nbRuns > 0) ? "," : "").append(" ").append(nbResults).append(" result(s)");
 
         return messageBuilder.toString();
     }
