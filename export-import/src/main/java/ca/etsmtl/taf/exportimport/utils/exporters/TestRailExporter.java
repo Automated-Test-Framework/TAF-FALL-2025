@@ -2,7 +2,9 @@ package ca.etsmtl.taf.exportimport.utils.exporters;
 
 import ca.etsmtl.taf.exportimport.config.TestRailConfig;
 import ca.etsmtl.taf.exportimport.dtos.testrail.ProjectDTO;
+import ca.etsmtl.taf.exportimport.dtos.testrail.ProjectData;
 import ca.etsmtl.taf.exportimport.dtos.testrail.TestSuiteDTO;
+import ca.etsmtl.taf.exportimport.dtos.testrail.TestSuiteData;
 import ca.etsmtl.taf.exportimport.models.*;
 
 import com.gurock.testrail.APIClient;
@@ -34,21 +36,17 @@ public class TestRailExporter implements Exporter {
         // Projects
 
         // key:projectId (de testRail), value: projectName
-        Map<Integer, String> testrailProjectMapExported = exportProject(entities);
+        List<ProjectData> testrailProjectsToExport = exportProject(entities);
 
         //TODO: inverser pour avoir les suiteId en première clé, pour faciliter pour case et run
 
         // Test Suites
         // key:projectId (de testRail), value: Map<suiteIdTR, suiteName>
-        Map<Integer, Map<Integer, String>> testrailSuiteMapToExport = new HashMap<>();
 
-        for (Map.Entry<Integer, String> entry : testrailProjectMapExported.entrySet()) {
-            Integer projectId = entry.getKey();
-            String projectName = entry.getValue();
-
+        for (ProjectData projectData : testrailProjectsToExport) {
             JSONObject responseGET;
             try {
-                responseGET = (JSONObject) client.sendGet("get_suites/" + projectId);
+                responseGET = (JSONObject) client.sendGet("get_suites/" + projectData.getTestrailId());
             } catch (Exception e) {
                 logger.warn("An error occurred when getting projects from testrail : {}", e.getMessage());
                 throw e;
@@ -64,13 +62,15 @@ public class TestRailExporter implements Exporter {
                 Integer id = ((Number) project.get("id")).intValue();
                 testrailTestSuiteMap.put(name, id);
             }
-            Map<Integer, String> testrailSuiteOfProjectMapToExport = new HashMap<>();
+            List<TestSuiteData> testrailSuitesOfProjectToExport = new ArrayList<>();
 
-            //Tous les TestSuite du project qu'on veut exporter
             List<TestSuite> testSuiteOfProject = entities.get(EntityType.TEST_SUITE)
                     .stream()
                     .map(TestSuite.class::cast)
-                    .filter(testSuite -> testSuite.getProjectId().equals(projectName))
+                    .filter(testSuite -> {
+                        System.out.println("Testting for testSuite: " + testSuite.getName());
+                        return testSuite.getProjectId().equals(projectData.getId());
+                    })
                     .toList();
 
             List<TestSuite> testSuiteOfProjectNotInTR = testSuiteOfProject.stream()
@@ -78,7 +78,7 @@ public class TestRailExporter implements Exporter {
                         Integer suiteIdTR = testrailTestSuiteMap.get(testSuite.getName());
                         boolean isSuiteInTR = suiteIdTR != null;
                         if (isSuiteInTR) {
-                            testrailSuiteOfProjectMapToExport.put(suiteIdTR, testSuite.getName());
+                            testrailSuitesOfProjectToExport.add(new TestSuiteData(testSuite.getName(), testSuite.get_id(), suiteIdTR));
                         }
                         return !isSuiteInTR;
                     }).toList();
@@ -90,25 +90,16 @@ public class TestRailExporter implements Exporter {
 
             for (TestSuiteDTO testSuiteDTO: testSuiteDTOS) {
                 try {
-
-                    JSONObject createdSuite = (JSONObject) client.sendPost("add_suite/" + projectId, testSuiteDTO.toJson());
-                    testrailSuiteOfProjectMapToExport.put(((Number) createdSuite.get("id")).intValue(), testSuiteDTO.getName());
+                    JSONObject createdSuite = (JSONObject) client.sendPost("add_suite/" + projectData.getTestrailId(), testSuiteDTO.toJson());
+                    testrailSuitesOfProjectToExport.add(new TestSuiteData(testSuiteDTO.getName(), testSuiteDTO.getId(), ((Number) createdSuite.get("id")).intValue()));
                 } catch (Exception e) {
-                    logger.warn("An error occurred when adding suite {} of project {} to testrail : {}", testSuiteDTO.getName(), projectName, e.getMessage());
+                    logger.warn("An error occurred when adding suite {} of project {} to testrail : {}", testSuiteDTO.getName(), projectData.getName(), e.getMessage());
                     throw e;
                 }
             }
 
-
-            testrailSuiteMapToExport.put(projectId, testrailSuiteOfProjectMapToExport);
+            projectData.setTestSuiteDatas(testrailSuitesOfProjectToExport);
         }
-
-        printMap(testrailSuiteMapToExport);
-
-        List<TestSuite> suites = entities.get(EntityType.TEST_SUITE)
-                .stream()
-                .map(TestSuite.class::cast)
-                .toList();
 
         // Test Cases
         List<TestCase> cases = entities.get(EntityType.TEST_CASE)
@@ -141,31 +132,7 @@ public class TestRailExporter implements Exporter {
          */
     }
 
-    private static void printMap(Map<Integer, Map<Integer, String>> testrailSuiteMapToExport) {
-        System.out.println("===== Testrail Suite Map To Export =====");
-
-        for (Map.Entry<Integer, Map<Integer, String>> projectEntry : testrailSuiteMapToExport.entrySet()) {
-            Integer projectId = projectEntry.getKey();
-            Map<Integer, String> suites = projectEntry.getValue();
-
-            System.out.println("Project ID: " + projectId);
-
-            if (suites == null || suites.isEmpty()) {
-                System.out.println("  (No suites)");
-                continue;
-            }
-
-            for (Map.Entry<Integer, String> suiteEntry : suites.entrySet()) {
-                Integer suiteId = suiteEntry.getKey();
-                String suiteName = suiteEntry.getValue();
-                System.out.println("  Suite ID: " + suiteId + " | Suite Name: " + suiteName);
-            }
-
-            System.out.println("----------------------------------------");
-        }
-    }
-
-    private Map<Integer, String> exportProject(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
+    private List<ProjectData> exportProject(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
         JSONObject responseGET;
         try {
             responseGET = (JSONObject) client.sendGet("get_projects");
@@ -174,12 +141,8 @@ public class TestRailExporter implements Exporter {
             throw e;
         }
 
-        // on veux exporter projet 2 et 3
-        // dans testRail, on a projets 1 et 2
-
         JSONArray projectsNode = (JSONArray) responseGET.get("projects");
 
-        //1, 2
         Map<String, Integer> testrailProjectMap = new HashMap<>();
         for (Object obj : projectsNode) {
             JSONObject project = (JSONObject) obj;
@@ -187,15 +150,13 @@ public class TestRailExporter implements Exporter {
             Integer id = ((Number) project.get("id")).intValue();
             testrailProjectMap.put(name, id);
         }
-        Map<Integer, String> testrailProjectMapToExport = new HashMap<>();
+        List<ProjectData> testrailProjectsToExport = new ArrayList<>();
 
-        // TOUS les projets à exporter => 2, 3
         List<Project> projects = entities.get(EntityType.PROJECT)
                 .stream()
                 .map(Project.class::cast)
                 .toList();
 
-        // TOUS les projets qui n'existe pas dans Test Rail
         List<Project> projectsNotInTR = projects
                 .stream()
                 .filter(project -> {
@@ -203,7 +164,7 @@ public class TestRailExporter implements Exporter {
                     boolean isProjectInTR = projectIdTR != null;
                     if (isProjectInTR) {
                         // on ajoute le project 2, déjà dans testRail
-                        testrailProjectMapToExport.put(projectIdTR, project.getName());
+                        testrailProjectsToExport.add(new ProjectData(project.getName(), project.get_id(), projectIdTR));
                     }
                     return !isProjectInTR;
                 })
@@ -218,17 +179,15 @@ public class TestRailExporter implements Exporter {
 
         for (ProjectDTO projectDTO: projectsDTO) {
             try {
-                // on crée projet 3
                 JSONObject createdProject = (JSONObject) client.sendPost("add_project", projectDTO.toJson());
-                testrailProjectMapToExport.put(((Number) createdProject.get("id")).intValue(), projectDTO.getName());
+                testrailProjectsToExport.add(new ProjectData(projectDTO.getName(), projectDTO.getId(), ((Number) createdProject.get("id")).intValue()));
             } catch (Exception e) {
                 logger.warn("An error occurred when adding project {} to testrail : {}", projectDTO.getName(), e.getMessage());
                 throw e;
             }
         }
 
-        //on ne veux que projet 2 et 3
-        return testrailProjectMapToExport;
+        return testrailProjectsToExport;
     }
 
 }

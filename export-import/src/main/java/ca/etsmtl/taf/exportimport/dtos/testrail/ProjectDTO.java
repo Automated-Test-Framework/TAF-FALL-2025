@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class ProjectDTO {
 
+    private String id;
     private String name;
     private String announcement;
     private boolean show_announcement;
@@ -16,9 +17,18 @@ public class ProjectDTO {
     }
 
     public ProjectDTO(Project project) {
+        this.id = project.get_id();
         this.name = project.getName();
         this.announcement = project.getDescription();
         this.show_announcement = project.getDescription() != null;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {

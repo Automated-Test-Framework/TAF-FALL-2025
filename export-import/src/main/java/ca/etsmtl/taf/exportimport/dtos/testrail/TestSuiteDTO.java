@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TestSuiteDTO {
+    private String id;
     private String name;
     private String description;
 
@@ -14,8 +15,17 @@ public class TestSuiteDTO {
     }
 
     public TestSuiteDTO(TestSuite testSuite) {
+        this.id = testSuite.get_id();
         this.name = testSuite.getName();
         this.description = testSuite.getDescription();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
