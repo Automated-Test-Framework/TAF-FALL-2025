@@ -27,6 +27,12 @@ public class TestRailExporter implements Exporter {
     @Override
     public void exportTo(Map<EntityType, List<Entity>> entities) throws Exception {
         System.out.println("Do some work, being productive and all that");
+        System.out.println(entities.keySet());
+        System.out.println(entities.values());
+        entities.values().forEach(entity -> {
+            System.out.println(entity.toString());
+            System.out.println();
+        });
         /*
          * Important considerations:
          * - Careful with the order of exports (project -> suite -> section -> case -> run -> results)

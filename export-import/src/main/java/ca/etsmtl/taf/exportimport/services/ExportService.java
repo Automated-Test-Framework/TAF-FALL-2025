@@ -64,10 +64,10 @@ public class ExportService {
         int nbRuns = ids.getOrDefault(EntityType.TEST_RUN, List.of()).size();
 
         StringBuilder messageBuilder = new StringBuilder("Successfully exported");
-        if (nbProjects > 0) messageBuilder.append(" ").append(nbProjects).append(" projects");
-        if (nbSuites > 0) messageBuilder.append(nbProjects > 0 ? "," : "").append(" ").append(nbSuites).append(" suites");
-        if (nbCases > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0) ? "," : "").append(" ").append(nbCases).append(" cases");
-        if (nbRuns > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0) ? "," : "").append(" ").append(nbRuns).append(" runs");
+        if (nbProjects > 0) messageBuilder.append(" ").append(nbProjects).append(" project(s)");
+        if (nbSuites > 0) messageBuilder.append(nbProjects > 0 ? "," : "").append(" ").append(nbSuites).append(" suite(s)");
+        if (nbCases > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0) ? "," : "").append(" ").append(nbCases).append(" case(s)");
+        if (nbRuns > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0) ? "," : "").append(" ").append(nbRuns).append(" run(s)");
 
         return messageBuilder.toString();
     }
