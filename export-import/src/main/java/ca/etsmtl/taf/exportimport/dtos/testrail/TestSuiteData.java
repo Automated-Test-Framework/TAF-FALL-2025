@@ -1,18 +1,36 @@
 package ca.etsmtl.taf.exportimport.dtos.testrail;
 
-import ca.etsmtl.taf.exportimport.models.Project;
+import java.util.List;
 
 public class TestSuiteData {
 
     private String name;
     private String id;
     private Integer testrailId;
+    private Integer sectionId;
     private ProjectData projectData;
+    private List<TestCaseData> testCaseDataList;
 
     public TestSuiteData(String name, String id, Integer testrailId) {
         this.name = name;
         this.id = id;
         this.testrailId = testrailId;
+    }
+
+    public List<TestCaseData> getTestCaseDataList() {
+        return testCaseDataList;
+    }
+
+    public void setTestCaseDataList(List<TestCaseData> testCaseDataList) {
+        this.testCaseDataList = testCaseDataList;
+    }
+
+    public Integer getSectionId() {
+        return sectionId;
+    }
+
+    public void setSectionId(Integer sectionId) {
+        this.sectionId = sectionId;
     }
 
     public String getName() {

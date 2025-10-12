@@ -71,6 +71,10 @@ public class ExportService {
         if (nbRuns > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0) ? "," : "").append(" ").append(nbRuns).append(" run(s)");
         if (nbResults > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0 || nbRuns > 0) ? "," : "").append(" ").append(nbResults).append(" result(s)");
 
+        if ("Successfully exported".contentEquals(messageBuilder)) {
+            return "Nothing was exported";
+        }
+
         return messageBuilder.toString();
     }
 }
