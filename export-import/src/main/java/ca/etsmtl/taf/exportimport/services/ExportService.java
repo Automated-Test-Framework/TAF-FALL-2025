@@ -52,7 +52,12 @@ public class ExportService {
             throw new Exception(message);
         }
 
-        exporter.exportTo(entitiesMap);
+        try {
+            exporter.exportTo(entitiesMap);
+        } catch (Exception e) {
+            throw new Exception("An error occured during the exportation: " + e.getMessage());
+        }
+
 
         return getExportConfirmationMessage(entitiesMap);
     }

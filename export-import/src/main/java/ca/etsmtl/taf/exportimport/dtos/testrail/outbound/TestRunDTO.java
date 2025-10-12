@@ -11,6 +11,7 @@ public class TestRunDTO {
     private String name;
 
     public TestRunDTO(TestRun testRun, Integer testSuiteId) {
+        this.id = testRun.get_id();
         this.testSuiteId = testSuiteId;
         this.name = testRun.getName();
     }

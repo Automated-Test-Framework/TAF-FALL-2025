@@ -73,7 +73,7 @@ db.test_runs.insertMany([
 db.test_results.insertMany([
     { "_id": "result1", "testRunId": "tr1", "testCaseId": "tc1", "status": "PASSED" },
     { "_id": "result2", "testRunId": "tr1", "testCaseId": "tc2", "status": "FAILED" },
-    { "_id": "result3", "testRunId": "tr2", "testCaseId": "tc3", "status": "UNTESTED" },
+    { "_id": "result3", "testRunId": "tr2", "testCaseId": "tc3", "status": "PASSED" },
     { "_id": "result4", "testRunId": "tr2", "testCaseId": "tc4", "status": "BLOCKED" },
     { "_id": "result5", "testRunId": "tr3", "testCaseId": "tc5", "status": "PASSED" },
     { "_id": "result6", "testRunId": "tr3", "testCaseId": "tc6", "status": "RETEST" }
