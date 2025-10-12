@@ -93,7 +93,6 @@ public class TestRailExporter implements Exporter {
 
         JSONArray suitesNode = (JSONArray) responseGET.get("suites");
 
-        //Map<> name et id (de suite de testrail)
         Map<String, Integer> testrailTestSuiteMap = new HashMap<>();
         for (Object obj : suitesNode) {
             JSONObject suite = (JSONObject) obj;
@@ -168,7 +167,9 @@ public class TestRailExporter implements Exporter {
             try {
                 responseGET = (JSONObject) client.sendGet("get_results_for_run/" + testRunTestrailId);
             } catch (Exception e) {
-                logger.warn("TODO");
+                logger.warn("An error occurred when gettings results of run {} of section {} of suite {} of project {} from testrail : {}",
+                        testRunId, SectionDTO.ROOT_SECTION_NAME, testSuiteData.getName(), projectData.getName(), e.getMessage()
+                );
                 throw e;
             }
 
