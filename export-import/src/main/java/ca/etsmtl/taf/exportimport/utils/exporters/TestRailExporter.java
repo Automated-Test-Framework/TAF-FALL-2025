@@ -1,7 +1,11 @@
 package ca.etsmtl.taf.exportimport.utils.exporters;
 
 import ca.etsmtl.taf.exportimport.config.TestRailConfig;
-import ca.etsmtl.taf.exportimport.dtos.testrail.*;
+import ca.etsmtl.taf.exportimport.dtos.testrail.inbound.ProjectData;
+import ca.etsmtl.taf.exportimport.dtos.testrail.inbound.TestCaseData;
+import ca.etsmtl.taf.exportimport.dtos.testrail.inbound.TestRunData;
+import ca.etsmtl.taf.exportimport.dtos.testrail.inbound.TestSuiteData;
+import ca.etsmtl.taf.exportimport.dtos.testrail.outbound.*;
 import ca.etsmtl.taf.exportimport.models.*;
 
 import com.gurock.testrail.APIClient;
@@ -90,8 +94,8 @@ public class TestRailExporter implements Exporter {
             }
 
             List<TestCase> allTestCasesExported = new ArrayList<>();
+            List<TestRun> allTestRunsExported = new ArrayList<>();
             for (TestSuiteData testSuiteData: testrailSuitesOfProjectToExport) {
-                System.out.println("starting test suite creation for suite: " + testSuiteData.getName());
                 // section
                 createSection(projectData, testSuiteData);
 
@@ -100,31 +104,15 @@ public class TestRailExporter implements Exporter {
                 allTestCasesExported.addAll(testCasesExported);
 
                 // run
+                List<TestRun> testRunsExported = exportRun(projectData, testSuiteData, entities);
+                allTestRunsExported.addAll(testRunsExported);
+
             }
             entities.put(EntityType.TEST_CASE, allTestCasesExported.stream().map(testCase -> (Entity) testCase).toList());
+            entities.put(EntityType.TEST_RUN, allTestRunsExported.stream().map(testRun -> (Entity) testRun).toList());
 
             projectData.setTestSuiteDatas(testrailSuitesOfProjectToExport);
         }
-
-        // Test Cases
-        List<TestCase> cases = entities.get(EntityType.TEST_CASE)
-                .stream()
-                .map(TestCase.class::cast)
-                .toList();
-
-        // Test Runs
-        List<TestRun> runs = entities.get(EntityType.TEST_RUN)
-                .stream()
-                .map(TestRun.class::cast)
-                .toList();
-
-        // Test Results
-        List<TestResult> results = entities.get(EntityType.TEST_RESULT)
-                .stream()
-                .map(TestResult.class::cast)
-                .toList();
-
-
 
         /*
          * Important considerations:
@@ -135,6 +123,67 @@ public class TestRailExporter implements Exporter {
          * - Consider API rate limits? Could be solved as a more generic problem (not TR
          * specific)
          */
+    }
+
+    private List<TestRun> exportRun(ProjectData projectData, TestSuiteData testSuiteData, Map<EntityType, List<Entity>> entities) throws IOException, APIException {
+        int projectId = projectData.getTestrailId();
+        int testSuiteId = testSuiteData.getTestrailId();
+
+        JSONObject responseGET;
+        try {
+            responseGET = (JSONObject) client.sendGet("get_runs/" + projectId + "&suite_id=" + testSuiteId);
+        } catch (Exception e) {
+            logger.warn("An error occurred when getting runs of suite {} of project {} from testrail : {}",  testSuiteId, projectId, e.getMessage());
+            throw e;
+        }
+
+        JSONArray runsNode = (JSONArray) responseGET.get("runs");
+        
+        Map<String, Integer> testrailTestRunMap = new HashMap<>();
+        for (Object obj : runsNode) {
+            JSONObject runTR = (JSONObject) obj;
+            String name = (String) runTR.get("name");
+            Integer id = ((Number) runTR.get("id")).intValue();
+            testrailTestRunMap.put(name, id);
+        }
+        List<TestRunData> testrailRunsOfSuiteToExport = new ArrayList<>();
+
+        List<TestRun> testRunsOfSuite = entities.get(EntityType.TEST_RUN)
+                .stream()
+                .map(TestRun.class::cast)
+                .filter(testRun -> testRun.getTestSuiteId().equals(testSuiteData.getId()))
+                .toList();
+
+        List<TestRun> testRunsOfSuiteNotInTR = testRunsOfSuite.stream()
+                .filter(testRun -> {
+                    Integer runIdTR = testrailTestRunMap.get(testRun.getName());
+                    boolean isRunInTR = runIdTR != null;
+                    if (isRunInTR) {
+                        testrailRunsOfSuiteToExport.add(new TestRunData(testRun.getName(), testRun.get_id(), runIdTR));
+                    }
+                    return !isRunInTR;
+                }).toList();
+
+        List<TestRunDTO> testRunDTOS = testRunsOfSuiteNotInTR
+                .stream()
+                .map(testRun -> new TestRunDTO(testRun, testSuiteId))
+                .toList();
+
+        for (TestRunDTO testRunDTO: testRunDTOS) {
+            try {
+                JSONObject createdRun = (JSONObject) client.sendPost("add_run/" + projectId, testRunDTO.toJson());
+                testrailRunsOfSuiteToExport.add(new TestRunData(testRunDTO.getName(), testRunDTO.getId(), ((Number) createdRun.get("id")).intValue()));
+            } catch (Exception e) {
+                logger.warn("An error occurred when adding run {} of section {} of suite {} of project {} to testrail : {}",
+                        testRunDTO.getName(), SectionDTO.ROOT_SECTION_NAME, testSuiteData.getName(), projectData.getName(), e.getMessage()
+                );
+                throw e;
+            }
+        }
+
+        testSuiteData.setTestRunDataList(testrailRunsOfSuiteToExport);
+
+        return testRunsOfSuiteNotInTR;
     }
 
     private List<TestCase> exportCase(ProjectData projectData, TestSuiteData testSuiteData, Map<EntityType, List<Entity>> entities) throws IOException, APIException {
@@ -162,13 +211,13 @@ public class TestRailExporter implements Exporter {
         }
         List<TestCaseData> testrailCasesOfSuiteToExport = new ArrayList<>();
 
-        List<TestCase> testCaseOfSuite = entities.get(EntityType.TEST_CASE)
+        List<TestCase> testCasesOfSuite = entities.get(EntityType.TEST_CASE)
                 .stream()
                 .map(TestCase.class::cast)
                 .filter(testCase -> testCase.getTestSuiteId().equals(testSuiteData.getId()))
                 .toList();
 
-        List<TestCase> testCaseOfSuiteNotInTR = testCaseOfSuite.stream()
+        List<TestCase> testCasesOfSuiteNotInTR = testCasesOfSuite.stream()
                 .filter(testCase -> {
                     Integer caseIdTR = testrailTestCaseMap.get(testCase.getName());
                     boolean isCaseInTR = caseIdTR != null;
@@ -178,7 +227,7 @@ public class TestRailExporter implements Exporter {
                     return !isCaseInTR;
                 }).toList();
 
-        List<TestCaseDTO> testCaseDTOS = testCaseOfSuiteNotInTR
+        List<TestCaseDTO> testCaseDTOS = testCasesOfSuiteNotInTR
                 .stream()
                 .map(testCase -> new TestCaseDTO(testCase, sectionId))
                 .toList();
@@ -197,7 +246,7 @@ public class TestRailExporter implements Exporter {
 
         testSuiteData.setTestCaseDataList(testrailCasesOfSuiteToExport);
 
-        return testCaseOfSuiteNotInTR;
+        return testCasesOfSuiteNotInTR;
     }
 
     private void createSection(ProjectData projectData, TestSuiteData testSuiteData) throws IOException, APIException {

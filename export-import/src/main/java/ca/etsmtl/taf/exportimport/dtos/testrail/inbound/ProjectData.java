@@ -1,4 +1,4 @@
-package ca.etsmtl.taf.exportimport.dtos.testrail;
+package ca.etsmtl.taf.exportimport.dtos.testrail.inbound;
 
 import java.util.List;
 

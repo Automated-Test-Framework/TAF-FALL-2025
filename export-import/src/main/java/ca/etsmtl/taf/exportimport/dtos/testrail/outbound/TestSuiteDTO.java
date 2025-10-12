@@ -1,4 +1,4 @@
-package ca.etsmtl.taf.exportimport.dtos.testrail;
+package ca.etsmtl.taf.exportimport.dtos.testrail.outbound;
 
 import ca.etsmtl.taf.exportimport.models.TestSuite;
 

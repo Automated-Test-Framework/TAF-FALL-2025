@@ -1,4 +1,4 @@
-package ca.etsmtl.taf.exportimport.dtos.testrail;
+package ca.etsmtl.taf.exportimport.dtos.testrail.inbound;
 
 import java.util.List;
 
@@ -10,6 +10,7 @@ public class TestSuiteData {
     private Integer sectionId;
     private ProjectData projectData;
     private List<TestCaseData> testCaseDataList;
+    private List<TestRunData> testRunDataList;
 
     public TestSuiteData(String name, String id, Integer testrailId) {
         this.name = name;
@@ -63,5 +64,13 @@ public class TestSuiteData {
 
     public void setProjectData(ProjectData projectData) {
         this.projectData = projectData;
+    }
+
+    public List<TestRunData> getTestRunDataList() {
+        return testRunDataList;
+    }
+
+    public void setTestRunDataList(List<TestRunData> testRunDataList) {
+        this.testRunDataList = testRunDataList;
     }
 }

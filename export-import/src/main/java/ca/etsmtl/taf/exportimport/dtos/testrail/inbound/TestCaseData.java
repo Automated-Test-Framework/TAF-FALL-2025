@@ -1,4 +1,4 @@
-package ca.etsmtl.taf.exportimport.dtos.testrail;
+package ca.etsmtl.taf.exportimport.dtos.testrail.inbound;
 
 public class TestCaseData {
     private String name;
