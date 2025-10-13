@@ -53,10 +53,12 @@ public class TestRailExporter implements Exporter {
         for (ProjectData projectData : testrailProjectsToExport) {
             List<TestSuiteData> testrailSuitesOfProjectToExport = exportSuite(entities, projectData, allTestSuitesExported);
 
-            Map<String, Integer> testCaseIdsMap = new HashMap<>();
-            Map<String, Integer> testRunIdsMap = new HashMap<>();
+            Map<String, Integer> testCaseIdsMap;
+            Map<String, Integer> testRunIdsMap;
 
             for (TestSuiteData testSuiteData: testrailSuitesOfProjectToExport) {
+                testCaseIdsMap = new HashMap<>();
+                testRunIdsMap = new HashMap<>();
                 // section
                 createSection(projectData, testSuiteData);
 
@@ -142,17 +144,10 @@ public class TestRailExporter implements Exporter {
             ProjectData projectData, TestSuiteData testSuiteData, Map<EntityType, List<Entity>> entities,
             Map<String, Integer> testCaseIdsMap, Map<String, Integer> testRunIdsMap
     ) throws IOException, APIException {
-        Set<String> testRunIdsOfSuite = entities.get(EntityType.TEST_RUN)
-                .stream()
-                .map(TestRun.class::cast)
-                .filter(testRun -> testRun.getTestSuiteId().equals(testSuiteData.getId()))
-                .map(TestRun::get_id)
-                .collect(Collectors.toSet());
-
         Map<String, List<TestResult>> testResultsByRunIdMap = entities.get(EntityType.TEST_RESULT)
                 .stream()
                 .map(TestResult.class::cast)
-                .filter(testResult -> testRunIdsOfSuite.contains(testResult.getTestRunId()))
+                .filter(testResult -> testRunIdsMap.get(testResult.getTestRunId()) != null)
                 .collect(Collectors.groupingBy(TestResult::getTestRunId));
 
         List<TestResult> allTestResultsOfRunNotInTR = new ArrayList<>();
