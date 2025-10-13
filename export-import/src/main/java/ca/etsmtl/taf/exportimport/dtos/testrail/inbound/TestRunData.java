@@ -4,7 +4,6 @@ public class TestRunData {
     private String name;
     private String id;
     private Integer testrailId;
-    private TestSuiteData testSuiteData;
 
     public TestRunData(String name, Integer testrailId) {
         this.name = name;
@@ -39,13 +38,5 @@ public class TestRunData {
 
     public void setTestrailId(Integer testrailId) {
         this.testrailId = testrailId;
-    }
-
-    public TestSuiteData getTestSuiteData() {
-        return testSuiteData;
-    }
-
-    public void setTestSuiteData(TestSuiteData testSuiteData) {
-        this.testSuiteData = testSuiteData;
     }
 }

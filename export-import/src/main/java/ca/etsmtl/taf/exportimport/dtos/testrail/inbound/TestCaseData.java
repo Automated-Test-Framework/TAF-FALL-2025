@@ -4,7 +4,6 @@ public class TestCaseData {
     private String name;
     private String id;
     private Integer testrailId;
-    private TestSuiteData testSuiteData;
 
     public TestCaseData(String name, String id, Integer testrailId) {
         this.name = name;
@@ -34,13 +33,5 @@ public class TestCaseData {
 
     public void setTestrailId(Integer testrailId) {
         this.testrailId = testrailId;
-    }
-
-    public TestSuiteData getTestSuiteData() {
-        return testSuiteData;
-    }
-
-    public void setTestSuiteData(TestSuiteData testSuiteData) {
-        this.testSuiteData = testSuiteData;
     }
 }

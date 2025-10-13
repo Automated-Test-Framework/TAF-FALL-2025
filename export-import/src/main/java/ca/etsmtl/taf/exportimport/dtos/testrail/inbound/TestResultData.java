@@ -4,7 +4,6 @@ public class TestResultData {
     private String comment;
     private String id;
     private Integer testrailId;
-    private TestRunData testRunData;
 
     public TestResultData(String comment, Integer testrailId) {
         this.comment = comment;
@@ -39,13 +38,5 @@ public class TestResultData {
 
     public void setTestrailId(Integer testrailId) {
         this.testrailId = testrailId;
-    }
-
-    public TestRunData getTestRunData() {
-        return testRunData;
-    }
-
-    public void setTestRunData(TestRunData testRunData) {
-        this.testRunData = testRunData;
     }
 }

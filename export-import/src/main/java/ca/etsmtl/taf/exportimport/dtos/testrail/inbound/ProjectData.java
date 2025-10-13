@@ -7,7 +7,6 @@ public class ProjectData {
     private String name;
     private String id;
     private Integer testrailId;
-    private List<TestSuiteData> testSuiteDatas;
 
     public ProjectData() {
 
@@ -41,18 +40,5 @@ public class ProjectData {
 
     public void setTestrailId(Integer testrailId) {
         this.testrailId = testrailId;
-    }
-
-    public List<TestSuiteData> getTestSuiteDatas() {
-        return testSuiteDatas;
-    }
-
-    public void setTestSuiteDatas(List<TestSuiteData> testSuiteDatas) {
-        this.testSuiteDatas = testSuiteDatas;
-    }
-
-    public void addTestSuiteData(TestSuiteData testSuiteData) {
-        this.testSuiteDatas.add(testSuiteData);
-        testSuiteData.setProjectData(this);
     }
 }

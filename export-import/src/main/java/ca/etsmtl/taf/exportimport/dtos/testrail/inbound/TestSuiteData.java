@@ -9,21 +9,11 @@ public class TestSuiteData {
     private Integer testrailId;
     private Integer sectionId;
     private ProjectData projectData;
-    private List<TestCaseData> testCaseDataList;
-    private List<TestRunData> testRunDataList;
 
     public TestSuiteData(String name, String id, Integer testrailId) {
         this.name = name;
         this.id = id;
         this.testrailId = testrailId;
-    }
-
-    public List<TestCaseData> getTestCaseDataList() {
-        return testCaseDataList;
-    }
-
-    public void setTestCaseDataList(List<TestCaseData> testCaseDataList) {
-        this.testCaseDataList = testCaseDataList;
     }
 
     public Integer getSectionId() {
@@ -64,13 +54,5 @@ public class TestSuiteData {
 
     public void setProjectData(ProjectData projectData) {
         this.projectData = projectData;
-    }
-
-    public List<TestRunData> getTestRunDataList() {
-        return testRunDataList;
-    }
-
-    public void setTestRunDataList(List<TestRunData> testRunDataList) {
-        this.testRunDataList = testRunDataList;
     }
 }
