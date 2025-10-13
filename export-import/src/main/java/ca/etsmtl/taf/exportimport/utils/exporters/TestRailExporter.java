@@ -105,9 +105,7 @@ public class TestRailExporter implements Exporter {
         List<TestSuite> testSuiteOfProject = entities.get(EntityType.TEST_SUITE)
                 .stream()
                 .map(TestSuite.class::cast)
-                .filter(testSuite -> {
-                    return testSuite.getProjectId().equals(projectData.getId());
-                })
+                .filter(testSuite -> testSuite.getProjectId().equals(projectData.getId()))
                 .toList();
 
         List<TestSuite> testSuiteOfProjectNotInTR = testSuiteOfProject.stream()
@@ -185,7 +183,6 @@ public class TestRailExporter implements Exporter {
             List<TestResultData> testrailResultsOfRunToExport = new ArrayList<>();
             List<TestResult> testResultsOfRun = entry.getValue();
 
-            // on utilise le id de notre BD dans le comment pour retrouver les results déjà exported
             List<TestResult> testResultsOfRunNotInTR = testResultsOfRun.stream()
                     .filter(testResult -> {
                         Integer testResultTestrailId = testrailTestResultsMap.get(testResult.get_id());
@@ -318,7 +315,6 @@ public class TestRailExporter implements Exporter {
 
         JSONArray casesNode =  (JSONArray) responseGET.get("cases");
 
-        //Map<> name et id (de case de testrail)
         Map<String, Integer> testrailTestCaseMap = new HashMap<>();
         for (Object obj : casesNode) {
             JSONObject caseTR = (JSONObject) obj;

@@ -7,5 +7,5 @@ import ca.etsmtl.taf.exportimport.models.Entity;
 import ca.etsmtl.taf.exportimport.models.EntityType;
 
 public interface Exporter {
-    public void exportTo(Map<EntityType, List<Entity>> entities) throws Exception;
+    void exportTo(Map<EntityType, List<Entity>> entities) throws Exception;
 }
