@@ -55,6 +55,7 @@ public class ExportService {
         try {
             exporter.exportTo(entitiesMap);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new Exception("An error occured during the exportation: " + e.getMessage());
         }
 

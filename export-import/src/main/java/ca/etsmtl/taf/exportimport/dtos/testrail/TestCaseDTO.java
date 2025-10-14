@@ -1,10 +1,14 @@
-package ca.etsmtl.taf.exportimport.dtos.testrail.outbound;
+package ca.etsmtl.taf.exportimport.dtos.testrail;
 
 import ca.etsmtl.taf.exportimport.models.TestCase;
 
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class TestCaseDTO {
     private String id;
     private Integer section_id;
@@ -14,30 +18,6 @@ public class TestCaseDTO {
         this.id = testCase.get_id();
         this.title = testCase.getName();
         this.section_id = sectionId;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Integer getSection_id() {
-        return section_id;
-    }
-
-    public void setSection_id(Integer section_id) {
-        this.section_id = section_id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public Map<String, Object> toJson() {

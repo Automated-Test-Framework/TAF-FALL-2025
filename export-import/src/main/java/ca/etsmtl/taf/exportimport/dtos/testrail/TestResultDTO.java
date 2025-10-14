@@ -1,11 +1,15 @@
-package ca.etsmtl.taf.exportimport.dtos.testrail.outbound;
+package ca.etsmtl.taf.exportimport.dtos.testrail;
 
 import ca.etsmtl.taf.exportimport.models.TestResult;
 import ca.etsmtl.taf.exportimport.models.TestRunStatus;
 
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class TestResultDTO {
     private String id;
     private Integer testRunId;
@@ -32,46 +36,6 @@ public class TestResultDTO {
         // par défaut: UNTESTED
         // Testrail va lancer une erreur si il reçoit un UNTESTED
         return TESTRAIL_STATUS_MAP.getOrDefault(status, 3);
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Integer getTestRunId() {
-        return testRunId;
-    }
-
-    public void setTestRunId(Integer testRunId) {
-        this.testRunId = testRunId;
-    }
-
-    public Integer getTestCaseId() {
-        return testCaseId;
-    }
-
-    public void setTestCaseId(Integer testCaseId) {
-        this.testCaseId = testCaseId;
-    }
-
-    public Integer getStatusId() {
-        return statusId;
-    }
-
-    public void setStatusId(Integer status_id) {
-        this.statusId = status_id;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
     }
 
     public Map<String, Object> toJson() {

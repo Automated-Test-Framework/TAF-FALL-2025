@@ -20,6 +20,9 @@ services:
       - TESTRAIL_URL=${TESTRAIL_URL}
       - TESTRAIL_USER=${TESTRAIL_USER}
       - TESTRAIL_APIKEY=${TESTRAIL_APIKEY}
+      - DB_PATH=/app/data/testrail_cache.db
+    volumes:
+      - ./data:/app/data
 
 volumes:
   mongo_data:

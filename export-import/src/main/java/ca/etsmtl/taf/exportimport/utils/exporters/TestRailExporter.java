@@ -1,10 +1,10 @@
 package ca.etsmtl.taf.exportimport.utils.exporters;
 
 import ca.etsmtl.taf.exportimport.config.TestRailConfig;
-import ca.etsmtl.taf.exportimport.dtos.testrail.inbound.*;
-import ca.etsmtl.taf.exportimport.dtos.testrail.outbound.*;
+import ca.etsmtl.taf.exportimport.dtos.testrail.*;
 import ca.etsmtl.taf.exportimport.models.*;
 
+import ca.etsmtl.taf.exportimport.repositories.TestRailMappingRepository;
 import com.gurock.testrail.APIClient;
 import com.gurock.testrail.APIException;
 import org.json.simple.JSONArray;
@@ -22,12 +22,20 @@ import java.util.stream.Collectors;
 public class TestRailExporter implements Exporter {
 
     private final APIClient client;
+    private final TestRailMappingRepository testRailMappingRepository;
+
+    List<Project> allProjectsExported;
+    List<TestSuite> allTestSuitesExported;
+    List<TestCase> allTestCasesExported;
+    List<TestRun> allTestRunsExported;
+    List<TestResult> allTestResultsExported;
 
     private static final Logger logger = LoggerFactory.getLogger(TestRailExporter.class);
 
     @Autowired
-    public TestRailExporter(TestRailConfig testRailConfig) {
+    public TestRailExporter(TestRailConfig testRailConfig, TestRailMappingRepository testRailMappingRepository) {
         this.client = testRailConfig.createClient();
+        this.testRailMappingRepository = testRailMappingRepository;
     }
 
     /*
@@ -37,413 +45,261 @@ public class TestRailExporter implements Exporter {
 
     @Override
     public void exportTo(Map<EntityType, List<Entity>> entities) throws Exception {
-        // Projects
-        List<ProjectData> testrailProjectsToExport = exportProject(entities);
-        List<TestSuite> allTestSuitesExported = new ArrayList<>();
-        List<TestCase> allTestCasesExported = new ArrayList<>();
-        List<TestRun> allTestRunsExported = new ArrayList<>();
-        List<TestResult> allTestResultsExported = new ArrayList<>();
+        allProjectsExported = new ArrayList<>();
+        allTestSuitesExported = new ArrayList<>();
+        allTestCasesExported = new ArrayList<>();
+        allTestRunsExported = new ArrayList<>();
+        allTestResultsExported = new ArrayList<>();
 
-        for (ProjectData projectData : testrailProjectsToExport) {
-            // Suites
-            List<TestSuiteData> testrailSuitesOfProjectToExport = exportSuite(entities, projectData, allTestSuitesExported);
+        exportProject(entities);
+        exportSuite(entities);
+        exportCase(entities);
+        exportRun(entities);
+        exportResult(entities);
 
-            for (TestSuiteData testSuiteData: testrailSuitesOfProjectToExport) {
-                Map<String, Integer> testCaseIdsMap = new HashMap<>();
-                Map<String, Integer> testRunIdsMap = new HashMap<>();
-
-                // Sections
-                createSection(projectData, testSuiteData);
-                // Cases
-                allTestCasesExported.addAll(exportCase(projectData, testSuiteData, entities, testCaseIdsMap));
-                // Runs
-                allTestRunsExported.addAll(exportRun(projectData, testSuiteData, entities, testRunIdsMap));
-                // Results
-                allTestResultsExported.addAll(exportResult(projectData, testSuiteData, entities, testCaseIdsMap, testRunIdsMap));
-            }
-        }
-
+        entities.put(EntityType.PROJECT, allProjectsExported.stream().map(project -> (Entity) project).toList());
         entities.put(EntityType.TEST_SUITE, allTestSuitesExported.stream().map(testSuite -> (Entity) testSuite).toList());
         entities.put(EntityType.TEST_CASE, allTestCasesExported.stream().map(testCase -> (Entity) testCase).toList());
         entities.put(EntityType.TEST_RUN, allTestRunsExported.stream().map(testRun -> (Entity) testRun).toList());
         entities.put(EntityType.TEST_RESULT, allTestResultsExported.stream().map(testResult -> (Entity) testResult).toList());
     }
 
-    private List<ProjectData> exportProject(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
-        JSONObject responseGET;
-        try {
-            responseGET = (JSONObject) client.sendGet("get_projects");
-        } catch (Exception e) {
-            logger.warn("An error occurred when getting projects from testrail : {}", e.getMessage());
-            throw e;
-        }
-
-        JSONArray projectsNode = (JSONArray) responseGET.get("projects");
-
-        Map<String, Integer> testrailProjectMap = new HashMap<>();
-        for (Object obj : projectsNode) {
-            JSONObject project = (JSONObject) obj;
-            String name = (String) project.get("name");
-            Integer id = ((Number) project.get("id")).intValue();
-            testrailProjectMap.put(name, id);
-        }
-        List<ProjectData> testrailProjectsToExport = new ArrayList<>();
-
+    private void exportProject(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
         List<Project> projects = entities.get(EntityType.PROJECT)
                 .stream()
                 .map(Project.class::cast)
                 .toList();
 
-        List<Project> projectsNotInTR = projects
-                .stream()
-                .filter(project -> {
-                    Integer projectIdTR = testrailProjectMap.get(project.getName());
-                    boolean isProjectInTR = projectIdTR != null;
-                    if (isProjectInTR) {
-                        testrailProjectsToExport.add(new ProjectData(project.getName(), project.get_id(), projectIdTR));
-                    }
-                    return !isProjectInTR;
-                })
-                .toList();
+        for (Project project : projects) {
+            String projectKey = TestRailMappingRepository.PROJECT_KEY_SUFFIX + project.get_id();
+            Integer projectIdTR = testRailMappingRepository.get(projectKey);
 
-        entities.put(EntityType.PROJECT, projectsNotInTR.stream().map(project -> (Entity) project).toList());
+            if (projectIdTR == null) {
+                ProjectDTO projectDTO = new ProjectDTO(project);
+                try {
+                    JSONObject createdProject = (JSONObject) client.sendPost("add_project", projectDTO.toJson());
+                    projectIdTR = ((Number) createdProject.get("id")).intValue();
 
-        List<ProjectDTO> projectsDTO = projectsNotInTR
-                .stream()
-                .map(ProjectDTO::new)
-                .toList();
-
-        for (ProjectDTO projectDTO: projectsDTO) {
-            try {
-                JSONObject createdProject = (JSONObject) client.sendPost("add_project", projectDTO.toJson());
-                testrailProjectsToExport.add(
-                        new ProjectData(projectDTO.getName(), projectDTO.getId(), ((Number) createdProject.get("id")).intValue())
-                );
-            } catch (Exception e) {
-                logger.warn("An error occurred when adding project {} to testrail : {}",
-                        projectDTO.getName(), e.getMessage()
-                );
-                throw e;
+                    testRailMappingRepository.put(projectKey, projectIdTR);
+                } catch (Exception e) {
+                    logger.warn("An error occurred when adding project {} to testrail : {}",
+                            projectDTO.getId(), e.getMessage()
+                    );
+                    throw e;
+                }
+                allProjectsExported.add(project);
             }
         }
-
-        return testrailProjectsToExport;
     }
 
-    private List<TestSuiteData> exportSuite(
-            Map<EntityType, List<Entity>> entities, ProjectData projectData, List<TestSuite> allTestSuitesExported
+    private void exportSuite(
+            Map<EntityType, List<Entity>> entities
     ) throws IOException, APIException {
-        JSONObject responseGET;
-        try {
-            responseGET = (JSONObject) client.sendGet("get_suites/" + projectData.getTestrailId());
-        } catch (Exception e) {
-            logger.warn("An error occurred when getting suites of project {} from testrail : {}", projectData.getTestrailId(), e.getMessage());
-            throw e;
-        }
-
-        JSONArray suitesNode = (JSONArray) responseGET.get("suites");
-
-        Map<String, Integer> testrailTestSuiteMap = new HashMap<>();
-        for (Object obj : suitesNode) {
-            JSONObject suite = (JSONObject) obj;
-            String name = (String) suite.get("name");
-            Integer id = ((Number) suite.get("id")).intValue();
-            testrailTestSuiteMap.put(name, id);
-        }
-        List<TestSuiteData> testrailSuitesOfProjectToExport = new ArrayList<>();
-
-        List<TestSuite> testSuiteOfProject = entities.get(EntityType.TEST_SUITE)
+        List<TestSuite> testSuites = entities.get(EntityType.TEST_SUITE)
                 .stream()
                 .map(TestSuite.class::cast)
-                .filter(testSuite -> testSuite.getProjectId().equals(projectData.getId()))
                 .toList();
 
-        List<TestSuite> testSuiteOfProjectNotInTR = testSuiteOfProject.stream()
-                .filter(testSuite -> {
-                    Integer suiteIdTR = testrailTestSuiteMap.get(testSuite.getName());
-                    boolean isSuiteInTR = suiteIdTR != null;
-                    if (isSuiteInTR) {
-                        testrailSuitesOfProjectToExport.add(new TestSuiteData(testSuite.getName(), testSuite.get_id(), suiteIdTR));
-                    }
-                    return !isSuiteInTR;
-                }).toList();
+        for (TestSuite testSuite : testSuites) {
+            String projectId =  testSuite.getProjectId();
+            String projectKey = TestRailMappingRepository.PROJECT_KEY_SUFFIX + projectId;
+            Integer projectIdTR = testRailMappingRepository.get(projectKey);
 
-        allTestSuitesExported.addAll(testSuiteOfProjectNotInTR);
+            String testSuiteKey = TestRailMappingRepository.TEST_SUITE_KEY_SUFFIX + testSuite.get_id();
+            Integer testSuiteIdTR = testRailMappingRepository.get(testSuiteKey);
 
+            if (testSuiteIdTR == null) {
+                TestSuiteDTO testSuiteDTO = new TestSuiteDTO(testSuite);
+                try {
+                    JSONObject createdSuite = (JSONObject) client.sendPost("add_suite/" + projectIdTR, testSuiteDTO.toJson());
+                    testSuiteIdTR = ((Number) createdSuite.get("id")).intValue();
 
-        List<TestSuiteDTO> testSuiteDTOS = testSuiteOfProjectNotInTR
-                .stream()
-                .map(TestSuiteDTO::new)
-                .toList();
+                    testRailMappingRepository.put(testSuiteKey, testSuiteIdTR, projectId);
 
-        for (TestSuiteDTO testSuiteDTO: testSuiteDTOS) {
+                    createSection(testSuite.get_id(), testSuite.getName());
+                } catch (Exception e) {
+                    logger.warn("An error occurred when adding suite {} of project {} to testrail : {}",
+                            testSuiteDTO.getId(), projectId, e.getMessage()
+                    );
+                    throw e;
+                }
+
+                allTestSuitesExported.add(testSuite);
+            }
+        }
+    }
+
+    private void createSection(String testSuiteId, String name) throws IOException, APIException {
+        String sectionKey = TestRailMappingRepository.SECTION_KEY_SUFFIX + testSuiteId;
+        Integer sectionIdTR = testRailMappingRepository.get(sectionKey);
+
+        String testSuiteKey = TestRailMappingRepository.TEST_SUITE_KEY_SUFFIX + testSuiteId;
+        Integer testSuiteIdTR = testRailMappingRepository.get(testSuiteKey);
+        String projectId = testRailMappingRepository.getParentId(testSuiteKey);
+
+        String projectKey = TestRailMappingRepository.PROJECT_KEY_SUFFIX + projectId;
+        Integer projectIdTR = testRailMappingRepository.get(projectKey);
+
+        if (sectionIdTR == null) {
+            SectionDTO sectionDTO = new SectionDTO(testSuiteIdTR, name);
             try {
-                JSONObject createdSuite = (JSONObject) client.sendPost("add_suite/" + projectData.getTestrailId(), testSuiteDTO.toJson());
-                testrailSuitesOfProjectToExport.add(new TestSuiteData(testSuiteDTO.getName(), testSuiteDTO.getId(), ((Number) createdSuite.get("id")).intValue()));
+                JSONObject createdSection = (JSONObject) client.sendPost("add_section/" + projectIdTR, sectionDTO.toJson());
+                sectionIdTR = ((Number) createdSection.get("id")).intValue();
+                testRailMappingRepository.put(sectionKey, sectionIdTR, testSuiteId);
             } catch (Exception e) {
-                logger.warn("An error occurred when adding suite {} of project {} to testrail : {}", testSuiteDTO.getName(), projectData.getName(), e.getMessage());
+                logger.warn("An error occurred when creating root section of suite {} of project {} from testrail : {}",
+                        testSuiteId, projectId, e.getMessage()
+                );
                 throw e;
             }
         }
-        return testrailSuitesOfProjectToExport;
     }
 
-    private void createSection(ProjectData projectData, TestSuiteData testSuiteData) throws IOException, APIException {
-        int projectId = projectData.getTestrailId();
-        int testSuiteId = testSuiteData.getTestrailId();
-
-        JSONObject responseGET;
-        try {
-            responseGET = (JSONObject) client.sendGet("/get_sections/"+ projectId + "&suite_id=" + testSuiteId);
-        } catch (Exception e) {
-            logger.warn("An error occurred when getting sections of suite {} of project {} from testrail : {}",
-                    testSuiteId, projectId, e.getMessage()
-            );
-            throw e;
-        }
-
-        JSONArray sectionsNode =  (JSONArray) responseGET.get("sections");
-        if (!sectionsNode.isEmpty()) {
-            for (Object obj : sectionsNode) {
-                JSONObject section = (JSONObject) obj;
-                String name = (String) section.get("name");
-                if (SectionDTO.ROOT_SECTION_NAME.equals(name)) {
-                    Integer sectionId = ((Number) section.get("id")).intValue();
-                    testSuiteData.setSectionId(sectionId);
-                }
-            }
-            return;
-        }
-
-        SectionDTO sectionDTO = new SectionDTO(testSuiteId);
-
-        try {
-            JSONObject createdSection = (JSONObject) client.sendPost("/add_section/" + projectId, sectionDTO.toJson());
-            int sectionId = ((Number) createdSection.get("id")).intValue();
-            testSuiteData.setSectionId(sectionId);
-        } catch (Exception e) {
-            logger.warn("An error occurred when creating root section of suite {} of project {} from testrail : {}",
-                    testSuiteId, projectId, e.getMessage()
-            );
-            throw e;
-        }
-    }
-
-    private List<TestCase> exportCase(
-            ProjectData projectData, TestSuiteData testSuiteData, Map<EntityType, List<Entity>> entities, Map<String, Integer> testCaseIdsMap
+    private void exportCase(Map<EntityType, List<Entity>> entities
     ) throws IOException, APIException {
-        int projectId = projectData.getTestrailId();
-        int testSuiteId = testSuiteData.getTestrailId();
-        int sectionId = testSuiteData.getSectionId();
-
-        JSONObject responseGET;
-        try {
-            responseGET = (JSONObject) client.sendGet("/get_cases/"+ projectId + "&suite_id=" + testSuiteId);
-        } catch (Exception e) {
-            logger.warn("An error occurred when getting cases of section {} of suite {} of project {} from testrail : {}",
-                    sectionId, testSuiteId, projectId, e.getMessage()
-            );
-            throw e;
-        }
-
-        JSONArray casesNode =  (JSONArray) responseGET.get("cases");
-
-        Map<String, Integer> testrailTestCaseMap = new HashMap<>();
-        for (Object obj : casesNode) {
-            JSONObject caseTR = (JSONObject) obj;
-            String name = (String) caseTR.get("title");
-            Integer id = ((Number) caseTR.get("id")).intValue();
-            testrailTestCaseMap.put(name, id);
-        }
-        List<TestCaseData> testrailCasesOfSuiteToExport = new ArrayList<>();
-
-        List<TestCase> testCasesOfSuite = entities.get(EntityType.TEST_CASE)
+        List<TestCase> testCases = entities.get(EntityType.TEST_CASE)
                 .stream()
                 .map(TestCase.class::cast)
-                .filter(testCase -> testCase.getTestSuiteId().equals(testSuiteData.getId()))
                 .toList();
 
-        List<TestCase> testCasesOfSuiteNotInTR = testCasesOfSuite.stream()
-                .filter(testCase -> {
-                    Integer caseIdTR = testrailTestCaseMap.get(testCase.getName());
-                    boolean isCaseInTR = caseIdTR != null;
-                    if (isCaseInTR) {
-                        testrailCasesOfSuiteToExport.add(new TestCaseData(testCase.getName(), testCase.get_id(), caseIdTR));
-                        testCaseIdsMap.put(testCase.get_id(), caseIdTR);
-                    }
-                    return !isCaseInTR;
-                }).toList();
+        for (TestCase testCase: testCases) {
+            String testCaseId = testCase.get_id();
 
-        List<TestCaseDTO> testCaseDTOS = testCasesOfSuiteNotInTR
-                .stream()
-                .map(testCase -> new TestCaseDTO(testCase, sectionId))
-                .toList();
+            String testCaseKey = TestRailMappingRepository.TEST_CASE_KEY_SUFFIX + testCaseId;
+            Integer testCaseIdTR = testRailMappingRepository.get(testCaseKey);
 
-        for (TestCaseDTO testCaseDTO: testCaseDTOS) {
-            try {
-                JSONObject createdCase = (JSONObject) client.sendPost("add_case/" + sectionId, testCaseDTO.toJson());
-                int testCaseTestrailId = ((Number) createdCase.get("id")).intValue();
-                testrailCasesOfSuiteToExport.add(
-                        new TestCaseData(testCaseDTO.getTitle(), testCaseDTO.getId(), testCaseTestrailId)
-                );
-                testCaseIdsMap.put(testCaseDTO.getId(), testCaseTestrailId);
-            } catch (Exception e) {
-                logger.warn("An error occurred when adding case {} of section {} of suite {} of project {} to testrail : {}",
-                        testCaseDTO.getTitle(), SectionDTO.ROOT_SECTION_NAME, testSuiteData.getName(), projectData.getName(), e.getMessage()
-                );
-                throw e;
+            if (testCaseIdTR == null) {
+                String testSuiteId = testCase.getTestSuiteId();
+                String sectionKey = TestRailMappingRepository.SECTION_KEY_SUFFIX + testSuiteId;
+                Integer sectionIdTR = testRailMappingRepository.get(sectionKey);
+
+                TestCaseDTO testCaseDTO = new TestCaseDTO(testCase, sectionIdTR);
+                try {
+                    JSONObject createdTestCase = (JSONObject) client.sendPost("add_case/" + sectionIdTR, testCaseDTO.toJson());
+                    testCaseIdTR = ((Number) createdTestCase.get("id")).intValue();
+                    testRailMappingRepository.put(testCaseKey, testCaseIdTR, testSuiteId);
+                } catch (Exception e) {
+                    String testSuiteKey = TestRailMappingRepository.TEST_SUITE_KEY_SUFFIX + testSuiteId;
+                    String projectId =  testRailMappingRepository.getParentId(testSuiteKey);
+
+                    logger.warn("An error occurred when adding case {} of section {} of suite {} of project {} to testrail : {}",
+                            testCaseId, testSuiteId, testSuiteId, projectId, e.getMessage()
+                    );
+                    throw e;
+                }
+                allTestCasesExported.add(testCase);
             }
         }
-
-        return testCasesOfSuiteNotInTR;
     }
 
-    private List<TestRun> exportRun(
-            ProjectData projectData, TestSuiteData testSuiteData, Map<EntityType, List<Entity>> entities, Map<String, Integer> testRunIdsMap
-    ) throws IOException, APIException {
-        int projectId = projectData.getTestrailId();
-        int testSuiteId = testSuiteData.getTestrailId();
-
-        JSONObject responseGET;
-        try {
-            responseGET = (JSONObject) client.sendGet("get_runs/" + projectId + "&suite_id=" + testSuiteId);
-        } catch (Exception e) {
-            logger.warn("An error occurred when getting runs of suite {} of project {} from testrail : {}",
-                    testSuiteId, projectId, e.getMessage());
-            throw e;
-        }
-
-        JSONArray runsNode = (JSONArray) responseGET.get("runs");
-
-        Map<String, Integer> testrailTestRunMap = new HashMap<>();
-        for (Object obj : runsNode) {
-            JSONObject runTR = (JSONObject) obj;
-            String name = (String) runTR.get("name");
-            Integer id = ((Number) runTR.get("id")).intValue();
-            testrailTestRunMap.put(name, id);
-        }
-        List<TestRunData> testrailRunsOfSuiteToExport = new ArrayList<>();
-
-        List<TestRun> testRunsOfSuite = entities.get(EntityType.TEST_RUN)
+    private void exportRun(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
+        List<TestRun> testRuns = entities.get(EntityType.TEST_RUN)
                 .stream()
                 .map(TestRun.class::cast)
-                .filter(testRun -> testRun.getTestSuiteId().equals(testSuiteData.getId()))
                 .toList();
 
-        List<TestRun> testRunsOfSuiteNotInTR = testRunsOfSuite.stream()
-                .filter(testRun -> {
-                    Integer testRunTestrailId = testrailTestRunMap.get(testRun.getName());
-                    boolean isTestRunInTR = testRunTestrailId != null;
-                    if (isTestRunInTR) {
-                        testrailRunsOfSuiteToExport.add(new TestRunData(testRun.getName(), testRun.get_id(), testRunTestrailId));
-                        testRunIdsMap.put(testRun.get_id(), testRunTestrailId);
-                    }
-                    return !isTestRunInTR;
-                }).toList();
+        for (TestRun testRun: testRuns) {
+            String testRunId = testRun.get_id();
 
-        List<TestRunDTO> testRunDTOS = testRunsOfSuiteNotInTR
-                .stream()
-                .map(testRun -> new TestRunDTO(testRun, testSuiteId))
-                .toList();
+            String testRunKey = TestRailMappingRepository.TEST_RUN_KEY_SUFFIX + testRunId;
+            Integer testRunIdTR = testRailMappingRepository.get(testRunKey);
 
-        for (TestRunDTO testRunDTO: testRunDTOS) {
-            try {
-                JSONObject createdTestRun = (JSONObject) client.sendPost("add_run/" + projectId, testRunDTO.toJson());
-                int testRunTestrailId = ((Number) createdTestRun.get("id")).intValue();
-                testrailRunsOfSuiteToExport.add(
-                        new TestRunData(testRunDTO.getName(), testRunDTO.getId(), testRunTestrailId)
-                );
-                testRunIdsMap.put(testRunDTO.getId(), testRunTestrailId);
-            } catch (Exception e) {
-                logger.warn("An error occurred when adding run {} of section {} of suite {} of project {} to testrail : {}",
-                        testRunDTO.getName(), SectionDTO.ROOT_SECTION_NAME, testSuiteData.getName(), projectData.getName(), e.getMessage()
-                );
-                throw e;
+            if (testRunIdTR == null) {
+                String testSuiteId = testRun.getTestSuiteId();
+                String testSuiteKey = TestRailMappingRepository.TEST_SUITE_KEY_SUFFIX + testSuiteId;
+                Integer testSuiteIdTR = testRailMappingRepository.get(testSuiteKey);
+                String projectId = testRailMappingRepository.getParentId(testSuiteKey);
+
+                String projectKey = TestRailMappingRepository.PROJECT_KEY_SUFFIX + projectId;
+                Integer projectIdTR = testRailMappingRepository.get(projectKey);
+
+                TestRunDTO testRunDTO = new TestRunDTO(testRun, testSuiteIdTR);
+                try {
+                    JSONObject createdTestRun = (JSONObject) client.sendPost("add_run/" + projectIdTR, testRunDTO.toJson());
+                    testRunIdTR = ((Number) createdTestRun.get("id")).intValue();
+                    testRailMappingRepository.put(testRunKey, testRunIdTR, testSuiteId);
+                } catch (Exception e) {
+                    logger.warn("An error occurred when adding run {} of section {} of suite {} of project {} to testrail : {}",
+                            testRunId, testSuiteId, testSuiteId, projectId, e.getMessage()
+                    );
+                    throw e;
+                }
+                allTestRunsExported.add(testRun);
             }
         }
-
-        return testRunsOfSuiteNotInTR;
     }
 
-    private List<TestResult> exportResult(
-            ProjectData projectData, TestSuiteData testSuiteData, Map<EntityType, List<Entity>> entities,
-            Map<String, Integer> testCaseIdsMap, Map<String, Integer> testRunIdsMap
-    ) throws IOException, APIException {
+    private void exportResult(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
         Map<String, List<TestResult>> testResultsByRunIdMap = entities.get(EntityType.TEST_RESULT)
                 .stream()
                 .map(TestResult.class::cast)
-                .filter(testResult -> testRunIdsMap.get(testResult.getTestRunId()) != null)
                 .collect(Collectors.groupingBy(TestResult::getTestRunId));
-
-        List<TestResult> allTestResultsOfRunNotInTR = new ArrayList<>();
 
         for (Map.Entry<String, List<TestResult>> entry : testResultsByRunIdMap.entrySet()) {
             String testRunId = entry.getKey();
-            Integer testRunTestrailId = testRunIdsMap.get(testRunId);
-
-            JSONObject responseGET;
-            try {
-                responseGET = (JSONObject) client.sendGet("get_results_for_run/" + testRunTestrailId);
-            } catch (Exception e) {
-                logger.warn("An error occurred when gettings results of run {} of section {} of suite {} of project {} from testrail : {}",
-                        testRunId, SectionDTO.ROOT_SECTION_NAME, testSuiteData.getName(), projectData.getName(), e.getMessage()
-                );
-                throw e;
-            }
-
-            JSONArray resultsNode = (JSONArray) responseGET.get("results");
-
-            Map<String, Integer> testrailTestResultsMap = new HashMap<>();
-            for (Object obj : resultsNode) {
-                JSONObject runTR = (JSONObject) obj;
-                String name = (String) runTR.get("comment");
-                Integer id = ((Number) runTR.get("id")).intValue();
-                testrailTestResultsMap.put(name, id);
-            }
-            List<TestResultData> testrailResultsOfRunToExport = new ArrayList<>();
             List<TestResult> testResultsOfRun = entry.getValue();
+            List<TestResultDTO> testResultDTOS = new ArrayList<>();
 
-            List<TestResult> testResultsOfRunNotInTR = testResultsOfRun.stream()
-                    .filter(testResult -> {
-                        Integer testResultTestrailId = testrailTestResultsMap.get(testResult.get_id());
-                        boolean isTestResultInTR = testResultTestrailId != null;
-                        if (isTestResultInTR) {
-                            // RAPPEL : le "comment" est l'id de notre BD
-                            testrailResultsOfRunToExport.add(new TestResultData(testResult.get_id(), testResult.get_id(), testResultTestrailId));
-                        }
-                        return !isTestResultInTR;
-                    }).toList();
+            String testRunKey = TestRailMappingRepository.TEST_RUN_KEY_SUFFIX + testRunId;
+            Integer testRunIdTR = testRailMappingRepository.get(testRunKey);
 
-            List<TestResultDTO> testResultDTOS = testResultsOfRunNotInTR
-                    .stream()
-                    .map(testResult -> {
-                        Integer testCaseTestrailId = testCaseIdsMap.get(testResult.getTestCaseId());
-                        return new TestResultDTO(testResult, testRunTestrailId, testCaseTestrailId);
-                    })
-                    .toList();
+            for (TestResult testResult : testResultsOfRun) {
+                String testResultId = testResult.get_id();
 
-            Map<String, Object> body = new HashMap<>();
-            List<Map<String, Object>> results = testResultDTOS.stream().map(TestResultDTO::toJson).toList();
+                String testResultKey = TestRailMappingRepository.TEST_RESULT_KEY_SUFFIX + testResultId;
+                Integer testResultIdTR = testRailMappingRepository.get(testResultKey);
 
-            if (results.isEmpty()) {
+                if (testResultIdTR == null) {
+                    String testCaseId = testResult.getTestCaseId();
+                    String testCaseKey = TestRailMappingRepository.TEST_CASE_KEY_SUFFIX + testCaseId;
+                    Integer testCaseIdTR = testRailMappingRepository.get(testCaseKey);
+
+                    testResultDTOS.add(new TestResultDTO(testResult, testRunIdTR, testCaseIdTR));
+                    allTestResultsExported.add(testResult);
+                }
+            }
+
+            if (testResultDTOS.isEmpty()) {
+                String testSuiteId = testRailMappingRepository.getParentId(testRunKey);
+                String testSuiteKey = TestRailMappingRepository.TEST_SUITE_KEY_SUFFIX + testSuiteId;
+                String projectId = testRailMappingRepository.getParentId(testSuiteKey);
+
                 logger.info("No results to add for run {} of section {} of suite {} of project {} to testrail",
-                        testRunId, SectionDTO.ROOT_SECTION_NAME, testSuiteData.getName(), projectData.getName()
+                        testRunId, testSuiteId, testSuiteId, projectId
                 );
                 continue;
             }
 
+            Map<String, Object> body = new HashMap<>();
+            List<Map<String, Object>> results = testResultDTOS.stream().map(TestResultDTO::toJson).toList();
             try {
+
                 body.put("results", results);
-                client.sendPost("add_results_for_cases/" + testRunTestrailId, body);
+                JSONArray createdTestResults = (JSONArray) client.sendPost("add_results_for_cases/" + testRunIdTR, body);
+
+                for (Object createdTestResult : createdTestResults) {
+                    JSONObject createdResult = (JSONObject) createdTestResult;
+
+                    Integer testResultIdTR = ((Number) createdResult.get("id")).intValue();
+                    String testResultId = createdResult.get("comment").toString();
+
+                    if (testResultId == null || testResultId.isBlank()) {
+                        logger.warn("Created result {} has no comment — cannot map back to local TestResult", testResultIdTR);
+                    }
+
+                    String testResultKey = TestRailMappingRepository.TEST_RESULT_KEY_SUFFIX + testResultId;
+                    testRailMappingRepository.put(testResultKey, testResultIdTR, testRunId);
+                }
             } catch (Exception e) {
+                String testSuiteId = testRailMappingRepository.getParentId(testRunKey);
+                String testSuiteKey = TestRailMappingRepository.TEST_SUITE_KEY_SUFFIX + testSuiteId;
+                String projectId = testRailMappingRepository.getParentId(testSuiteKey);
+
                 logger.warn("An error occurred when adding results of run {} of section {} of suite {} of project {} to testrail : {}",
-                        testRunId, SectionDTO.ROOT_SECTION_NAME, testSuiteData.getName(), projectData.getName(), e.getMessage()
+                        testRunId, testSuiteId, testSuiteId, projectId, e.getMessage()
                 );
                 throw e;
             }
-
-            allTestResultsOfRunNotInTR.addAll(testResultsOfRunNotInTR);
         }
-        return allTestResultsOfRunNotInTR;
     }
 }

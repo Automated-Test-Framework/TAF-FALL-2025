@@ -1,0 +1,79 @@
+package ca.etsmtl.taf.exportimport.repositories;
+
+import org.springframework.stereotype.Component;
+
+import java.sql.*;
+
+@Component
+public class TestRailMappingRepository {
+
+    private static final String DB_PATH =
+            System.getenv().getOrDefault("DB_PATH", "data/testrail_cache.db");
+    private static final String DB_URL = "jdbc:sqlite:" + DB_PATH;
+
+    public static final String PROJECT_KEY_SUFFIX = "PROJECT:";
+    public static final String TEST_SUITE_KEY_SUFFIX = "SUITE:";
+    public static final String SECTION_KEY_SUFFIX = "SECTION:";
+    public static final String TEST_CASE_KEY_SUFFIX = "CASE:";
+    public static final String TEST_RUN_KEY_SUFFIX = "RUN:";
+    public static final String TEST_RESULT_KEY_SUFFIX = "RESULT:";
+
+    public TestRailMappingRepository() {
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            String createTable = """
+                CREATE TABLE IF NOT EXISTS cache (
+                    key TEXT PRIMARY KEY,
+                    id INT NOT NULL,
+                    parent_id TEXT
+                );
+            """;
+            conn.createStatement().execute(createTable);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to initialize SQLite store", e);
+        }
+    }
+
+    public void put(String key, Integer id) {
+        put(key, id, null);
+    }
+
+    public void put(String key, Integer id, String parentId) {
+        String sql = "INSERT OR REPLACE INTO cache (key, id, parent_id) VALUES (?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, key);
+            stmt.setInt(2, id);
+            if (parentId != null)
+                stmt.setString(3, parentId);
+            else
+                stmt.setNull(3, Types.VARCHAR);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to put id in store", e);
+        }
+    }
+
+    public Integer get(String key) {
+        String sql = "SELECT id FROM cache WHERE key = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, key);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? rs.getInt("id") : null;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get id from store", e);
+        }
+    }
+
+    public String getParentId(String key) {
+        String sql = "SELECT parent_id FROM cache WHERE key = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, key);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? rs.getString("parent_id") : null;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get parent_id from store", e);
+        }
+    }
+}
