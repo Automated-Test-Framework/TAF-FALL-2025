@@ -2,6 +2,7 @@ package ca.etsmtl.taf.exportimport.repositories;
 
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.sql.*;
 
 @Component
@@ -19,6 +20,11 @@ public class TestRailMappingRepository {
     public static final String TEST_RESULT_KEY_SUFFIX = "RESULT:";
 
     public TestRailMappingRepository() {
+        File dbDir = new File("/app/data");
+        if (!dbDir.exists()) {
+            dbDir.mkdirs();
+        }
+
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             String createTable = """
                 CREATE TABLE IF NOT EXISTS cache (
