@@ -33,6 +33,13 @@ public class ExportService {
     }
 
     public String exportTo(String type, Map<EntityType, List<String>> ids) throws Exception {
+        Exporter exporter = exporters.get(type);
+        if (exporter == null) {
+            String message = String.format("Unsupported exporter type: %s", type);
+            logger.warn(message);
+            throw new Exception(message);
+        }
+
         Map<EntityType, List<String>> fullExportIds = exportDependencyResolver.resolveDependencies(ids);
         Map<EntityType, List<Entity>> entitiesMap =
             fullExportIds.entrySet().stream()
@@ -45,17 +52,9 @@ public class ExportService {
                     LinkedHashMap::new // To keep type order
             ));
 
-        Exporter exporter = exporters.get(type);
-        if (exporter == null) {
-            String message = String.format("Unsupported type: %s", type);
-            logger.warn(message);
-            throw new Exception(message);
-        }
-
         try {
             exporter.exportTo(entitiesMap);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new Exception("An error occured during the exportation: " + e.getMessage());
         }
 

@@ -29,8 +29,7 @@ public class TestRailMappingRepository {
             String createTable = """
                 CREATE TABLE IF NOT EXISTS cache (
                     key TEXT PRIMARY KEY,
-                    id INT NOT NULL,
-                    parent_id TEXT
+                    id INT NOT NULL
                 );
             """;
             conn.createStatement().execute(createTable);
@@ -40,19 +39,11 @@ public class TestRailMappingRepository {
     }
 
     public void put(String key, Integer id) {
-        put(key, id, null);
-    }
-
-    public void put(String key, Integer id, String parentId) {
-        String sql = "INSERT OR REPLACE INTO cache (key, id, parent_id) VALUES (?, ?, ?)";
+        String sql = "INSERT OR REPLACE INTO cache (key, id) VALUES (?, ?)";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, key);
             stmt.setInt(2, id);
-            if (parentId != null)
-                stmt.setString(3, parentId);
-            else
-                stmt.setNull(3, Types.VARCHAR);
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to put id in store", e);
@@ -68,18 +59,6 @@ public class TestRailMappingRepository {
             return rs.next() ? rs.getInt("id") : null;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to get id from store", e);
-        }
-    }
-
-    public String getParentId(String key) {
-        String sql = "SELECT parent_id FROM cache WHERE key = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, key);
-            ResultSet rs = stmt.executeQuery();
-            return rs.next() ? rs.getString("parent_id") : null;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to get parent_id from store", e);
         }
     }
 }
