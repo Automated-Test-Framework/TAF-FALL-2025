@@ -51,11 +51,11 @@ public class TestRailExporter implements Exporter {
         allTestRunsExported = new ArrayList<>();
         allTestResultsExported = new ArrayList<>();
 
-        exportProject(entities);
-        exportSuite(entities);
-        exportCase(entities);
-        exportRun(entities);
-        exportResult(entities);
+        exportProjects(entities);
+        exportSuites(entities);
+        exportCases(entities);
+        exportRuns(entities);
+        exportResults(entities);
 
         entities.put(EntityType.PROJECT, allProjectsExported.stream().map(project -> (Entity) project).toList());
         entities.put(EntityType.TEST_SUITE, allTestSuitesExported.stream().map(testSuite -> (Entity) testSuite).toList());
@@ -64,7 +64,7 @@ public class TestRailExporter implements Exporter {
         entities.put(EntityType.TEST_RESULT, allTestResultsExported.stream().map(testResult -> (Entity) testResult).toList());
     }
 
-    private void exportProject(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
+    private void exportProjects(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
         List<Project> projects = entities.get(EntityType.PROJECT)
                 .stream()
                 .map(Project.class::cast)
@@ -92,7 +92,7 @@ public class TestRailExporter implements Exporter {
         }
     }
 
-    private void exportSuite(
+    private void exportSuites(
             Map<EntityType, List<Entity>> entities
     ) throws IOException, APIException {
         List<TestSuite> testSuites = entities.get(EntityType.TEST_SUITE)
@@ -155,7 +155,7 @@ public class TestRailExporter implements Exporter {
         }
     }
 
-    private void exportCase(Map<EntityType, List<Entity>> entities
+    private void exportCases(Map<EntityType, List<Entity>> entities
     ) throws IOException, APIException {
         List<TestCase> testCases = entities.get(EntityType.TEST_CASE)
                 .stream()
@@ -192,7 +192,7 @@ public class TestRailExporter implements Exporter {
         }
     }
 
-    private void exportRun(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
+    private void exportRuns(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
         List<TestRun> testRuns = entities.get(EntityType.TEST_RUN)
                 .stream()
                 .map(TestRun.class::cast)
@@ -213,7 +213,12 @@ public class TestRailExporter implements Exporter {
                 String projectKey = TestRailMappingRepository.PROJECT_KEY_SUFFIX + projectId;
                 Integer projectIdTR = testRailMappingRepository.get(projectKey);
 
-                TestRunDTO testRunDTO = new TestRunDTO(testRun, testSuiteIdTR);
+                List<Integer> testCaseIds = testRun.getTestCaseIds().stream().map(testCaseId -> {
+                    String testCaseKey = TestRailMappingRepository.TEST_CASE_KEY_SUFFIX + testCaseId;
+                    return testRailMappingRepository.get(testCaseKey);
+                }).toList();
+
+                TestRunDTO testRunDTO = new TestRunDTO(testRun, testSuiteIdTR, testCaseIds);
                 try {
                     JSONObject createdTestRun = (JSONObject) client.sendPost("add_run/" + projectIdTR, testRunDTO.toJson());
                     testRunIdTR = ((Number) createdTestRun.get("id")).intValue();
@@ -229,7 +234,7 @@ public class TestRailExporter implements Exporter {
         }
     }
 
-    private void exportResult(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
+    private void exportResults(Map<EntityType, List<Entity>> entities) throws IOException, APIException {
         Map<String, List<TestResult>> testResultsByRunIdMap = entities.get(EntityType.TEST_RESULT)
                 .stream()
                 .map(TestResult.class::cast)
