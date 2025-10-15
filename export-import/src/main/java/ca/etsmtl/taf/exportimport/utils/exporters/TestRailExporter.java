@@ -105,14 +105,14 @@ public class TestRailExporter implements Exporter {
                 .toList();
 
         for (TestSuite testSuite : testSuites) {
-            String projectId =  testSuite.getProjectId();
-            String projectKey = TestRailMappingRepository.PROJECT_KEY_SUFFIX + projectId;
-            Integer projectIdTR = testRailMappingRepository.get(projectKey);
-
             String testSuiteKey = TestRailMappingRepository.TEST_SUITE_KEY_SUFFIX + testSuite.get_id();
             Integer testSuiteIdTR = testRailMappingRepository.get(testSuiteKey);
 
             if (testSuiteIdTR == null) {
+                String projectId =  testSuite.getProjectId();
+                String projectKey = TestRailMappingRepository.PROJECT_KEY_SUFFIX + projectId;
+                Integer projectIdTR = testRailMappingRepository.get(projectKey);
+
                 TestSuiteDTO testSuiteDTO = new TestSuiteDTO(testSuite);
                 try {
                     JSONObject createdSuite = (JSONObject) client.sendPost("add_suite/" + projectIdTR, testSuiteDTO.toJson());
@@ -138,14 +138,14 @@ public class TestRailExporter implements Exporter {
         String sectionKey = TestRailMappingRepository.SECTION_KEY_SUFFIX + testSuiteId;
         Integer sectionIdTR = testRailMappingRepository.get(sectionKey);
 
-        String testSuiteKey = TestRailMappingRepository.TEST_SUITE_KEY_SUFFIX + testSuiteId;
-        Integer testSuiteIdTR = testRailMappingRepository.get(testSuiteKey);
-        String projectId = testSuite.getProjectId();
-
-        String projectKey = TestRailMappingRepository.PROJECT_KEY_SUFFIX + projectId;
-        Integer projectIdTR = testRailMappingRepository.get(projectKey);
-
         if (sectionIdTR == null) {
+            String testSuiteKey = TestRailMappingRepository.TEST_SUITE_KEY_SUFFIX + testSuiteId;
+            Integer testSuiteIdTR = testRailMappingRepository.get(testSuiteKey);
+            String projectId = testSuite.getProjectId();
+
+            String projectKey = TestRailMappingRepository.PROJECT_KEY_SUFFIX + projectId;
+            Integer projectIdTR = testRailMappingRepository.get(projectKey);
+
             SectionDTO sectionDTO = new SectionDTO(testSuiteIdTR, testSuite.getName());
             try {
                 JSONObject createdSection = (JSONObject) client.sendPost("add_section/" + projectIdTR, sectionDTO.toJson());
