@@ -19,4 +19,6 @@ public class TestCase extends Entity {
     public EntityType getType() {
         return EntityType.TEST_CASE;
     }
+
+
 }
