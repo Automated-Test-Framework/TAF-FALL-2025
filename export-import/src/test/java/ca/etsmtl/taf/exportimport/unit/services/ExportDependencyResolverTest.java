@@ -104,39 +104,37 @@ class ExportDependencyResolverTest {
     }
 
     @Test
-    void givenInputWithNullIdentifiers_whenResolvingDependencies_thenSkipsNullValues() {
-        // Arrange
-        when(entityLookupService.findTestCaseById("case-1"))
-            .thenReturn(TestCase.builder()
-                ._id("case-1")
-                .testSuiteId("suite-1")
-                .name("TestCase1")
-                .build());
-        when(entityLookupService.findTestSuiteById("suite-1"))
-            .thenReturn(TestSuite.builder()
-                ._id("suite-1")
-                .projectId("project-1")
-                .name("TestSuite1")
-                .description("TestSuite1 description")
-                .build());
-
+    void givenInputWithNullIdentifiers_whenResolvingDependencies_thenThrowIllegalStateException() {
         Map<EntityType, List<String>> input = new EnumMap<>(EntityType.class);
-        input.put(EntityType.TEST_CASE, Arrays.asList(null, "case-1", null));
+        input.put(EntityType.TEST_CASE, Arrays.asList(null, "case-1"));
         input.put(EntityType.TEST_RUN, null);
 
-        // Act
-        Map<EntityType, List<String>> resolved = resolver.resolveDependencies(input);
+        assertThatThrownBy(() -> resolver.resolveDependencies(input))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("TEST_CASE")
+            .hasMessageContaining("cannot be null or empty");
+    }
 
-        // Assert
-        assertThat(resolved.get(EntityType.TEST_CASE)).containsExactlyInAnyOrder("case-1");
-        assertThat(resolved.get(EntityType.TEST_SUITE)).containsExactlyInAnyOrder("suite-1");
-        assertThat(resolved.get(EntityType.PROJECT)).containsExactlyInAnyOrder("project-1");
-        assertThat(resolved.get(EntityType.TEST_RUN)).isEmpty();
-        assertThat(resolved.get(EntityType.TEST_RESULT)).isEmpty();
+    @Test
+    void givenInputWithEmptyIdentifier_whenResolvingDependencies_thenThrowIllegalStateException() {
+        Map<EntityType, List<String>> input = Map.of(
+            EntityType.TEST_CASE, List.of("")
+        );
 
-        verify(entityLookupService).findTestCaseById("case-1");
-        verify(entityLookupService).findTestSuiteById("suite-1");
-        verifyNoMoreInteractions(entityLookupService);
+        assertThatThrownBy(() -> resolver.resolveDependencies(input))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("TEST_CASE")
+            .hasMessageContaining("cannot be null or empty");
+    }
+
+    @Test
+    void givenInputWithNullIdList_whenResolvingDependencies_thenThrowIllegalStateException() {
+        Map<EntityType, List<String>> input = new EnumMap<>(EntityType.class);
+        input.put(EntityType.TEST_RUN, null);
+
+        assertThatThrownBy(() -> resolver.resolveDependencies(input))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("Id list for type TEST_RUN cannot be null");
     }
 
     @Test
@@ -314,6 +312,25 @@ class ExportDependencyResolverTest {
         assertThat(resolved.get(EntityType.PROJECT)).containsExactlyInAnyOrder("project-1");
         assertThat(resolved.get(EntityType.TEST_CASE)).isEmpty();
         assertThat(resolved.get(EntityType.TEST_RESULT)).isEmpty();
+    }
+
+    @Test
+    void givenTestRunWithInvalidTestCaseId_whenResolvingDependencies_thenThrowIllegalStateException() {
+        when(entityLookupService.findTestRunById("run-1"))
+            .thenReturn(TestRun.builder()
+                ._id("run-1")
+                .testSuiteId("suite-1")
+                .name("TestRun1")
+                .testCaseIds(List.of("case-1", ""))
+                .build());
+
+        Map<EntityType, List<String>> input = Map.of(
+            EntityType.TEST_RUN, List.of("run-1")
+        );
+
+        assertThatThrownBy(() -> resolver.resolveDependencies(input))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("TestRun with id 'run-1' contains an invalid TestCase identifier.");
     }
 
     @Test

@@ -55,13 +55,13 @@ public class ExportDependencyResolver {
 
         // Prepare work queue with initial ids
         ids.forEach((type, idList) -> {
-            if(idList == null) {
-                return;
+            if (idList == null) {
+                throw new IllegalStateException("Id list for type " + type + " cannot be null");
             }
 
             for (String id : idList) {
-                if (id == null) {
-                    continue;
+                if (id == null || id.isBlank()) {
+                    throw new IllegalStateException("Id for type " + type + " cannot be null or empty");
                 }
                 result.get(type).add(id);
                 q.add(new EntityReference(type, id));
@@ -77,11 +77,15 @@ public class ExportDependencyResolver {
 
             List<EntityReference> dependencies = getDependencies(current);
             for (EntityReference dep : dependencies) {
-                if (dep == null || dep.id() == null) {
-                    continue;
+                if (dep == null) {
+                    throw new IllegalStateException("Dependency reference cannot be null for type " + current.type());
+                }
+                String dependencyId = dep.id();
+                if (dependencyId == null || dependencyId.isBlank()) {
+                    throw new IllegalStateException("Id for dependency type " + dep.type() + " cannot be null or empty");
                 }
 
-                if (result.get(dep.type()).add(dep.id())) {
+                if (result.get(dep.type()).add(dependencyId)) {
                     q.addLast(dep);
                 }
             }
@@ -158,8 +162,12 @@ public class ExportDependencyResolver {
         List<EntityReference> cases = testCaseIds == null
             ? List.of()
             : testCaseIds.stream()
-            .filter(Objects::nonNull)
-            .map(tcId -> new EntityReference(EntityType.TEST_CASE, tcId))
+            .map(tcId -> {
+                if (tcId == null || tcId.isBlank()) {
+                    throw new IllegalStateException("TestRun with id '" + id + "' contains an invalid TestCase identifier.");
+                }
+                return new EntityReference(EntityType.TEST_CASE, tcId);
+            })
             .collect(Collectors.toList());
         LinkedList<EntityReference> res = new LinkedList<>(cases);
         res.addFirst(new EntityReference(EntityType.TEST_SUITE, testSuiteId));
