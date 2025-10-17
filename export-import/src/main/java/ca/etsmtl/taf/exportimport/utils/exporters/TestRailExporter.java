@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component("testrail")
 public class TestRailExporter implements Exporter {
@@ -127,7 +126,6 @@ public class TestRailExporter implements Exporter {
                     );
                     throw e;
                 }
-
                 allTestSuitesExported.add(testSuite);
             }
         }

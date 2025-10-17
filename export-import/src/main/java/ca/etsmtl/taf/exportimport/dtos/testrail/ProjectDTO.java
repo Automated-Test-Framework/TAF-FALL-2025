@@ -14,13 +14,13 @@ public class ProjectDTO {
     private String id;
     private String name;
     private String announcement;
-    private boolean show_announcement;
+    private boolean showAnnouncement;
 
     public ProjectDTO(Project project) {
         this.id = project.get_id();
         this.name = project.getName();
         this.announcement = project.getDescription();
-        this.show_announcement = project.getDescription() != null;
+        this.showAnnouncement = project.getDescription() != null;
     }
 
     /**
@@ -30,7 +30,7 @@ public class ProjectDTO {
         Map<String, Object> data = new HashMap<>();
         data.put("name", this.name);
         data.put("announcement", this.announcement);
-        data.put("show_announcement", this.show_announcement);
+        data.put("show_announcement", this.showAnnouncement);
         return data;
     }
 }
