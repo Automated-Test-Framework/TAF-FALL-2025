@@ -5,11 +5,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import ca.etsmtl.taf.exportimport.models.EntityType;
 import jakarta.validation.ValidationException;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
 import java.util.ArrayList;
 
+@Getter
+@Setter
 public class ExportRequest {
 
     private String type;
@@ -26,17 +31,5 @@ public class ExportRequest {
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Non authorized key : " + key);
         }
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public Map<EntityType, List<String>> getIds() {
-        return ids;
     }
 }
