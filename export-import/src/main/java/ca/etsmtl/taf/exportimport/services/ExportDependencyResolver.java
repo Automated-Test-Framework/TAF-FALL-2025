@@ -39,7 +39,6 @@ public class ExportDependencyResolver {
     }
 
     public Map<EntityType, List<String>> resolveDependencies(Map<EntityType, List<String>> ids) {
-        // TODO: Have our own exceptions
         if (ids == null) {
             throw new IllegalArgumentException("ids cannot be null");
         }
@@ -51,7 +50,7 @@ public class ExportDependencyResolver {
 
         // Work queue for BFS
         Deque<EntityReference> q = new ArrayDeque<>();
-        // Keep track of visited nodes to avoid cycles
+        // Keep track of visited nodes
         Set<EntityReference> visited = new HashSet<>();
 
         // Prepare work queue with initial ids
@@ -118,46 +117,65 @@ public class ExportDependencyResolver {
     private List<EntityReference> getTestCaseDependencies(String id) {
         TestCase testCase = entityLookupService.findTestCaseById(id);
         if (testCase == null) {
-            // TODO: Exception
-            return List.of();
+            throw new IllegalStateException("TestCase with id '" + id + "' not found while resolving dependencies.");
         }
-        return List.of(new EntityReference(EntityType.TEST_SUITE, testCase.getTestSuiteId()));
+        String testSuiteId = testCase.getTestSuiteId();
+        if (testSuiteId == null) {
+            throw new IllegalStateException("TestCase with id '" + id + "' is missing an associated TestSuite while resolving dependencies.");
+        }
+        return List.of(new EntityReference(EntityType.TEST_SUITE, testSuiteId));
     }
 
     private List<EntityReference> getTestResultDependencies(String id) {
         TestResult testResult = entityLookupService.findTestResultById(id);
         if (testResult == null) {
-            // TODO: Exception
-            return List.of();
+            throw new IllegalStateException("TestResult with id '" + id + "' not found while resolving dependencies.");
+        }
+        String testCaseId = testResult.getTestCaseId();
+        if (testCaseId == null) {
+            throw new IllegalStateException("TestResult with id '" + id + "' is missing an associated TestCase while resolving dependencies.");
+        }
+        String testRunId = testResult.getTestRunId();
+        if (testRunId == null) {
+            throw new IllegalStateException("TestResult with id '" + id + "' is missing an associated TestRun while resolving dependencies.");
         }
         return List.of(
-            new EntityReference(EntityType.TEST_CASE, testResult.getTestCaseId()),
-            new EntityReference(EntityType.TEST_RUN, testResult.getTestRunId())
+            new EntityReference(EntityType.TEST_CASE, testCaseId),
+            new EntityReference(EntityType.TEST_RUN, testRunId)
         );
     }
 
     private List<EntityReference> getTestRunDependencies(String id) {
         TestRun testRun = entityLookupService.findTestRunById(id);
         if (testRun == null) {
-            // TODO: Exception
-            return List.of();
+            throw new IllegalStateException("TestRun with id '" + id + "' not found while resolving dependencies.");
         }
-        List<EntityReference> cases = testRun.getTestCaseIds().stream()
+        String testSuiteId = testRun.getTestSuiteId();
+        if (testSuiteId == null) {
+            throw new IllegalStateException("TestRun with id '" + id + "' is missing an associated TestSuite while resolving dependencies.");
+        }
+        List<String> testCaseIds = testRun.getTestCaseIds();
+        List<EntityReference> cases = testCaseIds == null
+            ? List.of()
+            : testCaseIds.stream()
             .filter(Objects::nonNull)
             .map(tcId -> new EntityReference(EntityType.TEST_CASE, tcId))
             .collect(Collectors.toList());
         LinkedList<EntityReference> res = new LinkedList<>(cases);
-        res.addFirst(new EntityReference(EntityType.TEST_SUITE, testRun.getTestSuiteId()));
+        res.addFirst(new EntityReference(EntityType.TEST_SUITE, testSuiteId));
         return res;
     }
 
     private List<EntityReference> getTestSuiteDependencies(String id) {
         TestSuite testSuite = entityLookupService.findTestSuiteById(id);
         if (testSuite == null) {
-            // TODO: Exception
-            return List.of();
+            throw new IllegalStateException("TestSuite with id '" + id + "' not found while resolving dependencies.");
         }
-        return List.of(new EntityReference(EntityType.PROJECT, testSuite.getProjectId()));
+        String projectId = testSuite.getProjectId();
+        if (projectId == null) {
+            throw new IllegalStateException("TestSuite with id '" + id + "' is missing an associated Project while resolving dependencies.");
+        }
+        return List.of(new EntityReference(EntityType.PROJECT, projectId));
     }
 
     private List<EntityReference> getProjectDependencies(String id) {
