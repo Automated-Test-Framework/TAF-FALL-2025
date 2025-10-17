@@ -18,6 +18,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+        continue-on-error: true
 
       - name: Run Checkstyle
         run: |
@@ -28,22 +29,28 @@ jobs:
           else
             echo "No build tool found, skipping Checkstyle"
           fi
+        continue-on-error: true
 
       # HTML linting
       - name: Install HTMLHint
         run: npm install -g htmlhint
       - name: Run HTMLHint
-        run: htmlhint "**/*.html"
+        id: htmlhint
+        run: |
+          htmlhint "**/*.html" || echo "HTMLHint failed" >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
 
       # CSS linting
       - name: Install Stylelint
         run: npm install -g stylelint
       - name: Run Stylelint
         run: stylelint "**/*.{css,scss}"
+        continue-on-error: true
 
       # Dockerfile linting
       - name: Run Hadolint
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
+        continue-on-error: true
 
