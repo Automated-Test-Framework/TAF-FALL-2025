@@ -1,56 +1,35 @@
-name: Lint
+name: Super Linter
 
 on:
-  pull_request:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
   lint:
+    name: Lint Code Base
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Java checkstyle
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-        continue-on-error: true
+      - name: Run Super Linter
+        uses: github/super-linter@v6
+        env:
+          VALIDATE_ALL_CODEBASE: true
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Checkstyle
-        run: |
-          if [ -f ./gradlew ]; then
-            ./gradlew checkstyleMain || true
-          elif [ -f ./mvnw ]; then
-            ./mvnw checkstyle:check || true
-          else
-            echo "No build tool found, skipping Checkstyle"
-          fi
-        continue-on-error: true
+          # ✅ Enable only the linters you want
+          VALIDATE_JAVA: true
+          VALIDATE_JAVASCRIPT_ES: true
+          VALIDATE_TYPESCRIPT_ES: true
+          VALIDATE_HTML: true
+          VALIDATE_CSS: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
 
-      # HTML linting
-      - name: Install HTMLHint
-        run: npm install -g htmlhint
-      - name: Run HTMLHint
-        id: htmlhint
-        run: |
-          htmlhint "**/*.html" || echo "HTMLHint failed" >> $GITHUB_STEP_SUMMARY
-        continue-on-error: true
-
-      # CSS linting
-      - name: Install Stylelint
-        run: npm install -g stylelint
-      - name: Run Stylelint
-        run: stylelint "**/*.{css,scss}"
-        continue-on-error: true
-
-      # Dockerfile linting
-      - name: Run Hadolint
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: Dockerfile
-        continue-on-error: true
-
+          # ❌ Disable others to speed it up
+          VALIDATE_PYTHON: false
+          VALIDATE_YAML: false
+          VALIDATE_MARKDOWN: false
