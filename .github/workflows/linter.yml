@@ -1,4 +1,5 @@
-name: Linters
+linters:
+    name: Linters
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
