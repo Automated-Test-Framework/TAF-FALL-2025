@@ -1,4 +1,4 @@
-package ca.etsmtl.taf.exportimport.integration.controllers;
+package ca.etsmtl.taf.exportimport.integration;
 
 import ca.etsmtl.taf.exportimport.controllers.ExportController;
 import ca.etsmtl.taf.exportimport.services.ExportService;

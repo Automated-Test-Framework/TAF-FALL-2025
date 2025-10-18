@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Getter;
 import lombok.Builder;
 
-@Document(collection = "test_runs")
+@Document(collection = "test_results")
 @Builder
 @Getter
 public class TestResult extends Entity {

@@ -6,6 +6,7 @@ services:
     volumes:
       - mongo_data:/data/db
       - mongo_config:/data/configdb
+      - ./db-init:/docker-entrypoint-initdb.d
 
   import-export:
     build: .
@@ -19,6 +20,9 @@ services:
       - TESTRAIL_URL=${TESTRAIL_URL}
       - TESTRAIL_USER=${TESTRAIL_USER}
       - TESTRAIL_APIKEY=${TESTRAIL_APIKEY}
+      - DB_PATH=/app/data/testrail_cache.db
+    volumes:
+      - ./data:/app/data
 
 volumes:
   mongo_data:

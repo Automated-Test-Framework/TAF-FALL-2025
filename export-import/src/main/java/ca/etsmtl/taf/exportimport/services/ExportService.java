@@ -33,6 +33,13 @@ public class ExportService {
     }
 
     public String exportTo(String type, Map<EntityType, List<String>> ids) throws Exception {
+        Exporter exporter = exporters.get(type);
+        if (exporter == null) {
+            String message = String.format("Unsupported exporter type: %s", type);
+            logger.warn(message);
+            throw new Exception(message);
+        }
+
         Map<EntityType, List<String>> fullExportIds = exportDependencyResolver.resolveDependencies(ids);
         Map<EntityType, List<Entity>> entitiesMap =
             fullExportIds.entrySet().stream()
@@ -45,29 +52,33 @@ public class ExportService {
                     LinkedHashMap::new // To keep type order
             ));
 
-        Exporter exporter = exporters.get(type);
-        if (exporter == null) {
-            String message = String.format("Unsupported type: %s", type);
-            logger.warn(message);
-            throw new Exception(message);
+        try {
+            exporter.exportTo(entitiesMap);
+        } catch (Exception e) {
+            throw new Exception("An error occured during the exportation: " + e.getMessage());
         }
 
-        exporter.exportTo(entitiesMap);
 
-        return getExportConfirmationMessage(ids);
+        return getExportConfirmationMessage(entitiesMap);
     }
 
-    private static String getExportConfirmationMessage(Map<EntityType, List<String>> ids) {
-        int nbProjects = ids.getOrDefault(EntityType.PROJECT, List.of()).size();
-        int nbSuites = ids.getOrDefault(EntityType.TEST_SUITE, List.of()).size();
-        int nbCases = ids.getOrDefault(EntityType.TEST_CASE, List.of()).size();
-        int nbRuns = ids.getOrDefault(EntityType.TEST_RUN, List.of()).size();
+    private static String getExportConfirmationMessage(Map<EntityType, List<Entity>> entitiesMap) {
+        int nbProjects = entitiesMap.getOrDefault(EntityType.PROJECT, List.of()).size();
+        int nbSuites = entitiesMap.getOrDefault(EntityType.TEST_SUITE, List.of()).size();
+        int nbCases = entitiesMap.getOrDefault(EntityType.TEST_CASE, List.of()).size();
+        int nbRuns = entitiesMap.getOrDefault(EntityType.TEST_RUN, List.of()).size();
+        int nbResults = entitiesMap.getOrDefault(EntityType.TEST_RESULT, List.of()).size();
 
         StringBuilder messageBuilder = new StringBuilder("Successfully exported");
-        if (nbProjects > 0) messageBuilder.append(" ").append(nbProjects).append(" projects");
-        if (nbSuites > 0) messageBuilder.append(nbProjects > 0 ? "," : "").append(" ").append(nbSuites).append(" suites");
-        if (nbCases > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0) ? "," : "").append(" ").append(nbCases).append(" cases");
-        if (nbRuns > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0) ? "," : "").append(" ").append(nbRuns).append(" runs");
+        if (nbProjects > 0) messageBuilder.append(" ").append(nbProjects).append(" project(s)");
+        if (nbSuites > 0) messageBuilder.append(nbProjects > 0 ? "," : "").append(" ").append(nbSuites).append(" suite(s)");
+        if (nbCases > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0) ? "," : "").append(" ").append(nbCases).append(" case(s)");
+        if (nbRuns > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0) ? "," : "").append(" ").append(nbRuns).append(" run(s)");
+        if (nbResults > 0) messageBuilder.append((nbProjects > 0 || nbSuites > 0 || nbCases > 0 || nbRuns > 0) ? "," : "").append(" ").append(nbResults).append(" result(s)");
+
+        if ("Successfully exported".contentEquals(messageBuilder)) {
+            return "Nothing was exported";
+        }
 
         return messageBuilder.toString();
     }
