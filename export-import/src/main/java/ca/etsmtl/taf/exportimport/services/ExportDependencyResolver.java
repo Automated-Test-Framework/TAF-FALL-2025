@@ -19,11 +19,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class ExportDependencyResolver {
-    private static record EntityReference(EntityType type, String id) {
+    private record EntityReference(EntityType type, String id) {
         EntityReference {
             Objects.requireNonNull(type, "type");
             Objects.requireNonNull(id, "id");
@@ -168,7 +167,7 @@ public class ExportDependencyResolver {
                 }
                 return new EntityReference(EntityType.TEST_CASE, tcId);
             })
-            .collect(Collectors.toList());
+            .toList();
         LinkedList<EntityReference> res = new LinkedList<>(cases);
         res.addFirst(new EntityReference(EntityType.TEST_SUITE, testSuiteId));
         return res;
