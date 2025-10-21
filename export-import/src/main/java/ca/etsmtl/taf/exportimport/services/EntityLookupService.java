@@ -1,9 +1,11 @@
 package ca.etsmtl.taf.exportimport.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import ca.etsmtl.taf.exportimport.config.CacheConfig;
 import ca.etsmtl.taf.exportimport.models.Entity;
 import ca.etsmtl.taf.exportimport.models.EntityType;
 import ca.etsmtl.taf.exportimport.models.Project;
@@ -39,24 +41,34 @@ public class EntityLookupService {
         this.testCaseRepository = testCaseRepository;
     }
 
+    @Cacheable(cacheNames = CacheConfig.PROJECTS_CACHE, key = "#id")
     public Project findProjectById(String id) {
-        return projectRepository.findById(id).orElse(null);
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Project with id %s not found".formatted(id)));
     }
 
+    @Cacheable(cacheNames = CacheConfig.TEST_SUITES_CACHE, key = "#id")
     public TestSuite findTestSuiteById(String id) {
-        return testSuiteRepository.findById(id).orElse(null);
+        return testSuiteRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Test suite with id %s not found".formatted(id)));
     }
 
+    @Cacheable(cacheNames = CacheConfig.TEST_RUNS_CACHE, key = "#id")
     public TestRun findTestRunById(String id) {
-        return testRunRepository.findById(id).orElse(null); 
+        return testRunRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Test run with id %s not found".formatted(id)));
     }
 
+    @Cacheable(cacheNames = CacheConfig.TEST_RESULTS_CACHE, key = "#id")
     public TestResult findTestResultById(String id) {
-        return testResultRepository.findById(id).orElse(null);
+        return testResultRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Test result with id %s not found".formatted(id)));
     }
 
+    @Cacheable(cacheNames = CacheConfig.TEST_CASES_CACHE, key = "#id")
     public TestCase findTestCaseById(String id) {
-        return testCaseRepository.findById(id).orElse(null);
+        return testCaseRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Test case with id %s not found".formatted(id)));
     }
 
     public Entity findById(String id, EntityType type) {
