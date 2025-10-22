@@ -32,7 +32,7 @@ Il faut avoir un fichier .env fonctionnel pour permettre à Spring de se connect
 
 Pour lancer le projet + build les containers :
 ```
-    docker compose up --build -d
+docker compose up --build -d
 ```
 
 ### La route /export
