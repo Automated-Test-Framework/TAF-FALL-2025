@@ -1,8 +1,22 @@
 services:
   auth:
-    image: ${REGISTRY_BASE}/lionel-test-auth:${AUTH_VERSION}
-    container_name: lionel-test-user
+#    image: ${REGISTRY_BASE}/lionel-test-auth:${AUTH_VERSION}
+    container_name: lionel-test-auth
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8762:8080"
+      - "8763:8763"
+      - "8080:8763"
     env_file:
       - .env
+    environment:
+      LOG_ROOT: "INFO"
+      LOGGING_LEVEL_ROOT: "INFO"
+      LOG_WEB: "INFO"
+      LOG_HIBERNATE: "INFO"
+      LOG_FRAMEWORK: "INFO"
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: "INFO"
+      SPRING_SECURITY_USER_NAME: "actuator"
+      SPRING_SECURITY_USER_PASSWORD: "actuatorPass123"
+      SPRING_APPLICATION_JSON: "{\"logging\":{\"level\":{\"root\":\"INFO\",\"org.springframework.web\":\"INFO\",\"org.hibernate\":\"INFO\",\"org.springframework\":\"INFO\"}}}"

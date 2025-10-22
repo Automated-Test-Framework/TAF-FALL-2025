@@ -52,10 +52,10 @@ springdoc:
 
 logging:
   level:
-    root: ${LOG_ROOT}
-    org.springframework.web: ${LOG_WEB}
-    org.hibernate: ${LOG_HIBERNATE}
-    org.springframework: ${LOG_FRAMEWORK}
+    root: ${LOG_ROOT:INFO}
+    org.springframework.web: ${LOG_WEB:INFO}
+    org.hibernate: ${LOG_HIBERNATE:INFO}
+    org.springframework: ${LOG_FRAMEWORK:INFO}
 
 #endpoints:
 #  cors:
