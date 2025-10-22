@@ -22,6 +22,9 @@ Pour le moment (automne 2025), seul la feature d'export de données vers TestRai
     - L'importation de données peut être ajoutée et réalisée de manière similaire à l'export.
 
 ## Comment lancer le projet?
+Il faut avoir Docker et Docker Desktop d'installé sur le poste. Tout le développement et les tests se font via les containers.
+Ainsi, il n'est pas obligatoire d'avoir Java d'installé sur le poste, mais ça reste fortement recommandé.
+
 Le projet se lance à l'aide du `docker-compose.yml` qui se trouve au même niveau que ce fichier.
 
 Il faut avoir un fichier .env fonctionnel pour permettre à Spring de se connecter à l'API de TestRail (se reférer
