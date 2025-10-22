@@ -18,6 +18,7 @@ public class JwtResponse {
     private String email;
     private List<String> roles;
 
+    public JwtResponse() {}
     // Full constructor (for BasicAuthStrategy and JWT flow)
     public JwtResponse(String token, String refresh, String type,
                        String id, String fullName, String username,
@@ -43,4 +44,5 @@ public class JwtResponse {
     public JwtResponse(String token) {
         this(token, null, "Bearer", null, null, null, null, Collections.emptyList());
     }
+
 }

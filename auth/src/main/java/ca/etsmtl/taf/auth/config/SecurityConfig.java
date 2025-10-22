@@ -81,6 +81,8 @@ public class SecurityConfig {
                 // Simulated OAuth2 mode (no spring-security-oauth2 classes used)
                 // All logic handled in OAuthAuthStrategy
                 http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // Here, you simulate OAuth2 since external client registrations are optional
+//                http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
             }
             default -> throw new IllegalStateException(
                     "Invalid authentication mode: " + authMode);

@@ -1,22 +1,21 @@
 package ca.etsmtl.taf.auth.controller;
 
-import ca.etsmtl.taf.auth.services.AuthStrategy;
+import ca.etsmtl.taf.auth.cache.TokenCache;
+import ca.etsmtl.taf.auth.jwt.JwtUtil;
+import ca.etsmtl.taf.auth.payload.request.LoginRequest;
 import ca.etsmtl.taf.auth.payload.request.RefreshTokenRequest;
+import ca.etsmtl.taf.auth.payload.request.SignupRequest;
 import ca.etsmtl.taf.auth.payload.request.ValidateTokenRequest;
 import ca.etsmtl.taf.auth.payload.response.JwtResponse;
+import ca.etsmtl.taf.auth.payload.response.MessageResponse;
+import ca.etsmtl.taf.auth.services.AuthStrategy;
 import ca.etsmtl.taf.auth.services.JwtService;
 import ca.etsmtl.taf.auth.services.UserOldService;
 import jakarta.validation.Valid;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import ca.etsmtl.taf.auth.payload.request.SignupRequest;
-import ca.etsmtl.taf.auth.payload.response.MessageResponse;
-import ca.etsmtl.taf.auth.payload.request.LoginRequest;
-import org.springframework.web.client.HttpClientErrorException;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -34,6 +33,12 @@ public class AuthController {
     @Autowired
     private UserOldService userService;
 
+    @Autowired
+    private TokenCache tokenCache;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
     private final AuthStrategy authStrategy;
 
     @Autowired
@@ -44,15 +49,24 @@ public class AuthController {
 
     @PostMapping("/signin")
     public ResponseEntity<JwtResponse> signin(@RequestBody @Valid LoginRequest authenticationRequest) throws Exception {
-        log.info("User {} attempting sign-in…", authenticationRequest.getUsername());
+        log.info("User '{}' attempting sign-in…", authenticationRequest.getUsername());
+
         ResponseEntity<JwtResponse> resp = authStrategy.signin(authenticationRequest);
-        log.info("User {} signed in successfully.", authenticationRequest.getUsername());
-        return resp;
+        JwtResponse body = resp.getBody();
+
+        if (body != null && body.getToken() != null) {
+            // Cache the tokens for auto-refresh
+            tokenCache.update(authenticationRequest.getUsername(), body, jwtUtil);
+            log.info("🟢 Token cached for '{}'.", authenticationRequest.getUsername());
+        }
+
+        log.info("User '{}' signed in successfully.", authenticationRequest.getUsername());
+        return ResponseEntity.ok(body);
     }
 
     @PostMapping("/validate-token")
     public ResponseEntity<Boolean> validateToken(@RequestBody @Valid ValidateTokenRequest validateTokenRequest) throws Exception {
-        boolean valid = authStrategy.validateToken(validateTokenRequest).getBody();
+        boolean valid = Boolean.TRUE.equals(authStrategy.validateToken(validateTokenRequest).getBody());
         log.info("Token validation result: {}", valid);
         return ResponseEntity.ok(valid);
     }
@@ -60,9 +74,19 @@ public class AuthController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestBody @Valid RefreshTokenRequest refreshTokenRequest) throws Exception {
-        // Strategy implements the try/catch details (e.g., HttpClientErrorException) so the controller stays thin.
         ResponseEntity<?> resp = authStrategy.refreshToken(refreshTokenRequest);
         log.info("Token refresh processed (status={})", resp.getStatusCode());
+
+        // If refresh succeeded, update cache
+        if (resp.getBody() instanceof JwtResponse jwtResponse) {
+            try {
+                String username = jwtUtil.extractUsername(jwtResponse.getToken());
+                tokenCache.update(username, jwtResponse, jwtUtil);
+                log.info("Token cache updated for '{}'.", username);
+            } catch (Exception e) {
+                log.warn("Could not update cache after refresh: {}", e.getMessage());
+            }
+        }
         return resp;
     }
 

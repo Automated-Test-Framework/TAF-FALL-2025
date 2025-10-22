@@ -60,4 +60,4 @@ logging:
 # Feature flags for authentication methods (can be overridden via env)
 feature:
   auth:
-    mode: ${FEATURE_AUTH_MODE:oauth}   # can be: jwt | oauth | basic
+    mode: ${FEATURE_AUTH_MODE:jwt}   # can be: jwt | oauth | basic
