@@ -1,7 +1,7 @@
 Flask==3.0.1
 ollama==0.4.7
 langchain==0.3.21
-langchain-google-genai==1.0.10
+langchain-google-genai==2.1.0
 pydantic==2.10.6
 requests==2.31.0
 dotenv==0.9.9
