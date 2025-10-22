@@ -48,7 +48,7 @@ springdoc:
     path: /api-docs
 
   swagger-ui:
-    path:  /swagger-ui.html
+    path: /swagger-ui.html
 
 logging:
   level:
@@ -57,9 +57,7 @@ logging:
     org.hibernate: ${LOG_HIBERNATE:INFO}
     org.springframework: ${LOG_FRAMEWORK:INFO}
 
-#endpoints:
-#  cors:
-#    allowed-origins: "*"
-#    allowed-methods: "*"
-#    allowed-headers: "*"
-#    allow-credentials: true
+# Feature flags for authentication methods (can be overridden via env)
+feature:
+  auth:
+    mode: ${FEATURE_AUTH_MODE:oauth}   # can be: jwt | oauth | basic

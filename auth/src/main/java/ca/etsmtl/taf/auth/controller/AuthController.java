@@ -1,5 +1,6 @@
 package ca.etsmtl.taf.auth.controller;
 
+import ca.etsmtl.taf.auth.services.AuthStrategy;
 import ca.etsmtl.taf.auth.payload.request.RefreshTokenRequest;
 import ca.etsmtl.taf.auth.payload.request.ValidateTokenRequest;
 import ca.etsmtl.taf.auth.payload.response.JwtResponse;
@@ -33,47 +34,50 @@ public class AuthController {
     @Autowired
     private UserOldService userService;
 
+    private final AuthStrategy authStrategy;
+
+    @Autowired
+    public AuthController(AuthStrategy authStrategy) {
+        this.authStrategy = authStrategy;
+    }
+
+
     @PostMapping("/signin")
-    public ResponseEntity<JwtResponse> createAuthenticationToken(@RequestBody @Valid LoginRequest authenticationRequest) throws Exception {
-        final JwtResponse response = this.jwtService.createJwtToken(authenticationRequest);
+    public ResponseEntity<JwtResponse> signin(@RequestBody @Valid LoginRequest authenticationRequest) throws Exception {
+        log.info("User {} attempting sign-in…", authenticationRequest.getUsername());
+        ResponseEntity<JwtResponse> resp = authStrategy.signin(authenticationRequest);
         log.info("User {} signed in successfully.", authenticationRequest.getUsername());
-        return ResponseEntity.ok(response);
+        return resp;
     }
 
     @PostMapping("/validate-token")
     public ResponseEntity<Boolean> validateToken(@RequestBody @Valid ValidateTokenRequest validateTokenRequest) throws Exception {
-        final boolean response = this.jwtService.validateJwtToken(validateTokenRequest);
-        log.info("Token validation result: {}", response);
-        return ResponseEntity.ok(response);
+        boolean valid = authStrategy.validateToken(validateTokenRequest).getBody();
+        log.info("Token validation result: {}", valid);
+        return ResponseEntity.ok(valid);
     }
+
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> validateToken(@RequestBody @Valid RefreshTokenRequest refreshTokenRequest) throws Exception {
-        try {
-            final JwtResponse response = this.jwtService.refreshJwtToken(refreshTokenRequest);
-            log.info("Token refreshed successfully");
-            return ResponseEntity.ok(response);
-        } catch (HttpClientErrorException err) {
-            log.error("Error refreshing token: {}", err.getMessage());
-            return ResponseEntity.status(err.getStatusCode()).body(err.getMessage());
-        }
+    public ResponseEntity<?> refreshToken(@RequestBody @Valid RefreshTokenRequest refreshTokenRequest) throws Exception {
+        // Strategy implements the try/catch details (e.g., HttpClientErrorException) so the controller stays thin.
+        ResponseEntity<?> resp = authStrategy.refreshToken(refreshTokenRequest);
+        log.info("Token refresh processed (status={})", resp.getStatusCode());
+        return resp;
     }
+
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody SignupRequest request) {
-        if (this.userService.existsByUsername(request.getUsername())) {
-            log.info("Attempted registration with existing username: {}", request.getUsername());
-            return ResponseEntity.badRequest().body("Username is already taken.");
+    public ResponseEntity<?> registerUser(@RequestBody @Valid SignupRequest request) {
+        log.info("User {} attempting signup…", request.getUsername());
+        ResponseEntity<MessageResponse> resp = authStrategy.signup(request);
+        if (resp.getStatusCode().is2xxSuccessful()) {
+            log.info("Signup succeeded for user {}", request.getUsername());
+        } else {
+            log.warn("Signup failed for user {} (status={})", request.getUsername(), resp.getStatusCode());
         }
-
-        if (this.userService.existsByEmail(request.getEmail())) {
-            log.error("Attempted registration with existing email: {}", request.getEmail());
-            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
-        }
-
-        this.userService.save(request);
-
-        return ResponseEntity.ok(new MessageResponse("Inscription Réussie.!"));
+        return resp;
     }
+
 
 }
