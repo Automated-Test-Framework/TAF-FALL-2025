@@ -34,7 +34,8 @@ public class TokenAutoRefresher {
 
                 if (tokenEntry == null || tokenEntry.getAccess() == null || tokenEntry.getRefresh() == null) continue;
 
-                if (jwtUtil.isExpiringSoon(tokenEntry.getAccess(), 120000)) {
+                if (jwtUtil.isExpiringSoon(tokenEntry.getAccess(), 120000) &&
+                        jwtUtil.isExpiringSoon(tokenEntry.getAccess(), 120000)){
                     log.info("Refreshing token for '{}'", username);
 
                     try {
