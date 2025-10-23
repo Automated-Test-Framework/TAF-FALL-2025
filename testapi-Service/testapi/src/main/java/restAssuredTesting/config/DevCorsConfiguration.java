@@ -1,4 +1,4 @@
-package org.config;
+package restAssuredTesting.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;

@@ -1,13 +1,13 @@
-package org.requests;
+package restAssuredTesting.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import org.requests.payload.request.Answer;
-import org.requests.payload.request.TestApiRequest;
-import org.utils.JsonComparator;
+import restAssuredTesting.requests.payload.request.Answer;
+import restAssuredTesting.requests.payload.request.TestApiRequest;
+import restAssuredTesting.utils.JsonComparator;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -4,8 +4,9 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://185.133.251.89:8762',
-  //apiUrl: 'http://198.7.119.0:4200/api'
+   // apiUrl: 'http://185.133.251.89:8762',
+  // apiUrl: 'http://198.7.119.0:4200/api'
+  apiUrl: 'http://localhost:8080/api/testapi'
 };
 
 /*

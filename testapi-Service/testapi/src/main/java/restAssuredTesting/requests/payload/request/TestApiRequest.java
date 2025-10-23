@@ -1,8 +1,7 @@
-package org.requests.payload.request;
+package restAssuredTesting.requests.payload.request;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.requests.Method;
-
+import restAssuredTesting.requests.Method;
 import javax.validation.constraints.NotBlank;
 import java.util.Map;
 

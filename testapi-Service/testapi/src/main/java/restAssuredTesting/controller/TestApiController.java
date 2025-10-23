@@ -1,17 +1,25 @@
-package org.requests;
+package restAssuredTesting.controller;
 
-import org.requests.payload.request.TestApiRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import restAssuredTesting.requests.payload.request.TestApiRequest;
 
-import javax.validation.Valid;
 import java.io.Serializable;
+import java.util.Map;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/microservice/testapi")
 public class TestApiController {
+
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, String>> health() {
+        return ResponseEntity.ok(Map.of("status", "OK"));
+    }
+
+
     @PostMapping("/checkApi")
-    public Serializable testApi(@Valid @RequestBody TestApiRequest testApiRequest) {
+    public Serializable testApi(@RequestBody TestApiRequest testApiRequest) {
         return (redirectMethod(testApiRequest));
     }
 

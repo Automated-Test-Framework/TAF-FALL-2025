@@ -1,4 +1,4 @@
-package org.requests.payload.request;
+package restAssuredTesting.requests.payload.request;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

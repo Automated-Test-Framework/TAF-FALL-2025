@@ -1,6 +1,5 @@
-package org.requests;
+package restAssuredTesting.requests;
 
-import org.requests.payload.request.TestApiRequest;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.response.Response;
 
