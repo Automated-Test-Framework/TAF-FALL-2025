@@ -22,11 +22,6 @@ spring:
     basename: validation
     encoding: ISO-8859-1
 
-  security:
-    user:
-      name: eureka
-      password: secret
-
 taf:
   app:
     jwtSecret: ${JWT_SECRET}

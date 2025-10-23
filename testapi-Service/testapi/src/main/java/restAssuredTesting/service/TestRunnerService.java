@@ -14,12 +14,12 @@ import java.util.List;
 public class TestRunnerService {
 
     // -------------------------------------------------------------------------
-    // 🔹 Global configuration block (executed once)
+    // Global configuration block (executed once)
     // -------------------------------------------------------------------------
     static {
         RestAssured.baseURI = "http://localhost:8080";
 
-        // ✅ Global timeout settings (in milliseconds)
+        // Global timeout settings (in milliseconds)
         RestAssured.config = RestAssuredConfig.config().httpClient(
                 HttpClientConfig.httpClientConfig()
                         .setParam("http.connection.timeout", 10000)          // 10s to connect
@@ -29,7 +29,7 @@ public class TestRunnerService {
     }
 
     // -------------------------------------------------------------------------
-    // 🔹 Run a full test plan (scenarios + cases)
+    // Run a full test plan (scenarios + cases)
     // -------------------------------------------------------------------------
     public TestPlanResult runTestPlan(TestPlan plan) {
         List<TestScenarioResult> scenarioResults = new ArrayList<>();
@@ -89,7 +89,7 @@ public class TestRunnerService {
     }
 
     // -------------------------------------------------------------------------
-    // 🔹 Execute a single test case with RestAssured
+    // Execute a single test case with RestAssured
     // -------------------------------------------------------------------------
     private Response executeTestCase(TestCase testCase) {
         String method = testCase.getMethod().toUpperCase();
