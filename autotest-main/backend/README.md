@@ -35,7 +35,6 @@ Une classe indépendante qui utilis une Java API code et Flask pour générer le
 
 Définir tous les paquets externes de Python qui sont obligatorie pour exécuter Autotest
 
-## Pour plus d'information, voir: ca.etsmtl.taf
 
 
 
