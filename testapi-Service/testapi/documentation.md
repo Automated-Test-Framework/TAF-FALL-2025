@@ -1,113 +1,83 @@
-```mermaid
-classDiagram
-    direction TB
+# 🧪 API de Tests RestAssured
 
-%% ======================== MODELS ===========================
-    class TestPlan {
-        +Long id
-        +String name
-        +String description
-        +List~TestScenario~ scenarios
-    }
+Une plateforme légère de **gestion et d’exécution de tests API** développée avec **Spring Boot** et **RestAssured**.  
+Elle permet de définir des **plans de test**, des **scénarios de test** et des **cas de test**, puis de les exécuter dynamiquement via des points d’accès REST.  
+Les résultats produits contiennent les **codes d’état**, les **temps de réponse** et les **indicateurs de réussite/échec**.
 
-    class TestScenario {
-        +Long id
-        +String name
-        +String description
-        +List~TestCase~ testCases
-    }
+---
 
-    class TestCase {
-        +Long id
-        +String name
-        +String description
-        +String method
-        +String endpoint
-        +String body
-        +int expectedStatus
-    }
+## 🚀 Fonctionnalités
 
-%% ======================== RESULTS ===========================
-    class TestPlanResult {
-        +String planName
-        +int totalScenarios
-        +int totalCases
-        +int passed
-        +int failed
-        +List~TestScenarioResult~ scenarioResults
-    }
+✅ Gestion des entités de test :
+- **Plans de test** → Regroupement de scénarios liés
+- **Scénarios de test** → Groupes logiques de cas (ex. “Flux d’authentification”)
+- **Cas de test** → Requêtes REST individuelles (méthode, endpoint, corps, statut attendu)
 
-    class TestScenarioResult {
-        +String scenarioName
-        +int totalCases
-        +int passed
-        +int failed
-        +List~TestResult~ caseResults
-    }
+✅ Exécution automatisée :
+- Utilise **RestAssured** pour envoyer les requêtes HTTP
+- Supporte `GET`, `POST`, `PUT`, `DELETE`
+- Compare les statuts attendus et réels
 
-    class TestResult {
-        +String testCaseName
-        +String method
-        +String endpoint
-        +int expectedStatus
-        +int actualStatus
-        +boolean passed
-        +long responseTimeMs
-    }
+✅ Données de démonstration intégrées :
+- 4 plans de test par défaut : Auth, Utilisateur, Commande, Régression complète
+- Exécution immédiate via `/api/testplans/1/run`
 
-%% ======================== SERVICES ===========================
-    class TestPlanService {
-        +findAll()
-        +findById(id)
-        +save(plan)
-        +update(id, plan)
-        +deleteById(id)
-    }
+✅ Documentation interactive :
+- Interface **Swagger / OpenAPI 3.0** intégrée
+- Regroupement des endpoints par catégorie (Plans, Scénarios, Cas)
 
-    class TestScenarioService {
-        +findAll()
-        +findById(id)
-        +save(scenario)
-        +update(id, scenario)
-        +deleteById(id)
-    }
+---
 
-    class TestCaseSe
+## 🧩 Architecture Générale
+
+### Vue d’ensemble
 ```
+Utilisateur → TestPlanController → TestRunnerService → RestAssured → Résultats
+```
+
+### Relations entre objets
+```
+TestPlan (1) → TestScenario (n)
+TestScenario (1) → TestCase (n)
+TestCase (1) → TestResult (1)
+```
+
+### Structure des packages
+```
+restAssuredTesting/
+ ├── model/         → Entités (TestPlan, TestScenario, TestCase, Results)
+ ├── service/       → Logique & exécution (TestPlanService, TestRunnerService)
+ ├── requests/      → Contrôleurs REST (Plan, Scénario, Cas)
+ ├── config/        → Configuration Swagger/OpenAPI
+ └── DemoDataInitializer.java
+```
+
+---
+
+## 📊 Diagramme de Séquence – Exécution Globale
 
 ```mermaid
 sequenceDiagram
-    participant U as 🧑‍💻 Utilisateur / Frontend
-    participant C as TestPlanController
-    participant S as TestPlanService
-    participant R as TestRunnerService
-    participant SC as TestScenario
-    participant TC as TestCase
-    participant RA as RestAssured
-    participant RES as TestPlanResult
+    participant Utilisateur
+    participant Contrôleur
+    participant Service
+    participant RestAssured
+    participant Résultat
 
-    U->>C: POST /api/testplans/{id}/run
-    C->>S: findById(id)
-    S-->>C: retourne TestPlan
-    C->>R: runTestPlan(plan)
-
-    loop Pour chaque TestScenario dans TestPlan
-        R->>SC: runScenario(scenario)
-
-        loop Pour chaque TestCase dans TestScenario
-            R->>TC: runCase(testCase)
-            TC->>RA: envoie requête HTTP (method, endpoint, body)
-            RA-->>TC: Response (statusCode, time, body)
-            TC-->>R: TestResult (expectedStatus, actualStatus, passed)
+    Utilisateur->>Contrôleur: POST /api/testplans/{id}/run
+    Contrôleur->>Service: runTestPlan(plan)
+    loop Pour chaque scénario
+        Service->>Service: runScenario()
+        loop Pour chaque cas de test
+            Service->>RestAssured: Exécution requête HTTP
+            RestAssured-->>Service: Réponse (status, body, temps)
+            Service->>Résultat: Création du TestResult
         end
-
-        SC-->>R: TestScenarioResult (cas réussis/échoués)
     end
-
-    R-->>C: TestPlanResult (résumé global)
-    C-->>U: JSON complet (planName, passed, failed, scenarioResults)
-
+    Service-->>Contrôleur: TestPlanResult
+    Contrôleur-->>Utilisateur: Réponse JSON (résumé succès/échecs)
 ```
+### Explication
 | Étape                             | Description                                                                                      |
 | --------------------------------- | ------------------------------------------------------------------------------------------------ |
 | **1. Requête utilisateur**        | L’utilisateur (via Swagger, Postman ou UI) appelle `POST /api/testplans/1/run`.                  |
@@ -120,150 +90,169 @@ sequenceDiagram
 | **8. Construction du rapport**    | Après tous les cas → création d’un `TestScenarioResult`, puis d’un `TestPlanResult`.             |
 | **9. Retour du résultat**         | `TestPlanController` renvoie au client un JSON hiérarchique des résultats.                       |
 
-```mermaid
-sequenceDiagram
-    participant C as TestPlanController
-    participant R as TestRunnerService
-    participant S as TestScenario
-    participant TC as TestCase
-    participant RA as RestAssured
-    participant TR as TestResult
-    participant SR as TestScenarioResult
+---
 
-    C->>R: runScenario(scenario)
-    activate R
+## ⚙️ Installation et Configuration
 
-    loop Pour chaque TestCase dans le scénario
-        R->>TC: runCase(testCase)
-        activate TC
+### Prérequis
+- Java 17+
+- Maven 3.8+
+- Spring Boot 3.3+
+- Optionnel : Docker (pour l’API testée)
 
-        TC->>RA: exécute requête HTTP<br/>(method, endpoint, body)
-        RA-->>TC: Response (statusCode, body, time)
-        deactivate TC
-
-        R->>TR: créer TestResult
-        note right of TR: Compare expectedStatus<br/>et actualStatus<br/>→ définit passed=true/false
-        R->>SR: ajouter TestResult
-    end
-
-    R-->>C: TestScenarioResult (passed, failed, totalCases)
-    deactivate R
-
-```
-| Étape                               | Description                                                                                            |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| **1. Appel `runScenario()`**        | Le contrôleur ou `TestRunnerService` appelle la méthode pour exécuter un seul scénario.                |
-| **2. Boucle sur les cas de test**   | Pour chaque `TestCase` contenu dans le scénario…                                                       |
-| **3. Envoi de la requête HTTP**     | `RestAssured` construit la requête (`method`, `endpoint`, `body`) et l’envoie vers l’API cible.        |
-| **4. Réception de la réponse**      | `RestAssured` retourne un objet `Response` (code, corps, temps d’exécution).                           |
-| **5. Validation**                   | Le service compare le `expectedStatus` et le `actualStatus`, calcule `passed` (true/false).            |
-| **6. Construction du `TestResult`** | Chaque résultat individuel est enregistré.                                                             |
-| **7. Agrégation**                   | Les résultats sont regroupés dans un `TestScenarioResult` contenant le nombre de tests passés/échoués. |
-| **8. Retour au contrôleur**         | `runScenario()` retourne le résultat complet du scénario.                                              |
-
-
-```mermaid
-sequenceDiagram
-    participant R as TestRunnerService
-    participant TC as TestCase
-    participant RA as RestAssured
-    participant RESP as Response
-    participant TR as TestResult
-
-    activate R
-    R->>TC: runCase(testCase)
-    activate TC
-
-    note over TC: Prépare requête HTTP<br/>avec method, endpoint, body
-
-    TC->>RA: envoyer requête HTTP
-    activate RA
-    RA-->>RESP: Response (statusCode, body, time)
-    deactivate RA
-
-    TC-->>R: retourne Response
-    deactivate TC
-
-    R->>TR: créer TestResult (expected vs actual)
-    note right of TR: Compare expectedStatus<br/>avec response.statusCode
-    deactivate R
-
-
+### Cloner le projet
+```bash
+git clone https://github.com/<votre-org>/restassured-testing-api.git
+cd restassured-testing-api
 ```
 
-```mermaid
-sequenceDiagram
-    participant U as 🧑‍💻 Utilisateur / Frontend
-    participant C as TestPlanController
-    participant PS as TestPlanService
-    participant RS as TestRunnerService
-    participant SC as TestScenario
-    participant TC as TestCase
-    participant RA as RestAssured
-    participant TR as TestResult
-    participant SR as TestScenarioResult
-    participant PR as TestPlanResult
-
-    %% --- Niveau 1 : Plan ---
-    U->>C: POST /api/testplans/{id}/run
-    activate C
-    C->>PS: findById(id)
-    activate PS
-    PS-->>C: retourne TestPlan
-    deactivate PS
-
-    C->>RS: runTestPlan(plan)
-    activate RS
-
-    %% --- Niveau 2 : Scénario ---
-    loop pour chaque TestScenario dans le plan
-        RS->>SC: runScenario(scenario)
-        activate SC
-
-        %% --- Niveau 3 : Cas de test ---
-        loop pour chaque TestCase dans le scénario
-            SC->>TC: runCase(testCase)
-            activate TC
-            note over TC: Prépare la requête (method, endpoint, body)
-            TC->>RA: exécute requête HTTP via RestAssured
-            activate RA
-            RA-->>TC: Response (statusCode, body, time)
-            deactivate RA
-            TC-->>SC: retourne Response
-            deactivate TC
-
-            SC->>TR: créer TestResult<br/>(expected vs actual)
-            note right of TR: Compare expectedStatus / actualStatus
-            SC->>SR: ajoute TestResult
-        end
-
-        SC-->>RS: TestScenarioResult (passed, failed, totalCases)
-        deactivate SC
-    end
-
-    %% --- Synthèse des résultats ---
-    RS->>PR: assembler tous les TestScenarioResult
-    RS-->>C: retourne TestPlanResult (global)
-    deactivate RS
-
-    %% --- Retour utilisateur ---
-    C-->>U: JSON TestPlanResult<br/>(planName, passed, failed, scenarioResults)
-    deactivate C
-
+### Compilation et exécution
+```bash
+mvn clean spring-boot:run
 ```
 
-| Niveau             | Élément                                        | Description                                                                              |
-| ------------------ | ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **1. Plan**        | `TestPlanController` → `TestPlanService`       | Le plan de test est récupéré en mémoire ou BD.                                           |
-| **2. Scénarios**   | `TestRunnerService` boucle sur chaque scénario | Chaque scénario représente une suite fonctionnelle (Auth, User, etc.).                   |
-| **3. Cas de test** | `RestAssured` exécute chaque requête API       | Chaque `TestCase` définit une requête REST, un code attendu, et produit un `TestResult`. |
-| **4. Résultats**   | `TestRunnerService` regroupe les résultats     | Agrégation → `TestScenarioResult` → `TestPlanResult`.                                    |
-| **5. Sortie**      | `Controller` renvoie un JSON                   | Résumé complet du plan exécuté, scénarios, cas, et succès/échecs.                        |
+---
 
+## 🌐 Swagger / OpenAPI
 
-💡 What’s new
-Change	Description
-Static block	Runs once when the class loads; sets RestAssured’s global configuration.
-Timeouts	http.connection.timeout, http.socket.timeout, http.connection-manager.timeout all set to 10 000 ms (10 s).
-Applies globally	Every RestAssured request (GET, POST, etc.) uses these limits automatically.
-Independent of CORS	This is a real network timeout — unrelated to @CrossOrigin(maxAge=3600).
+Une fois l’application démarrée :
+- **Swagger UI :** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- **Spécification OpenAPI JSON :** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+
+### Groupes de contrôleurs :
+| Contrôleur | Tag Swagger | Chemin |
+|-------------|-------------|--------|
+| `TestPlanController` | 🧩 **Plans de test** | `/api/testplans` |
+| `TestScenarioController` | 🧠 **Scénarios de test** | `/api/testscenarios` |
+| `TestCaseController` | ⚙️ **Cas de test** | `/api/testcases` |
+
+---
+
+## 🧠 Exemple d’Exécution
+
+Exécuter le plan de test par défaut :
+
+```bash
+curl -X POST http://localhost:8080/api/testplans/1/run
+```
+
+✅ Résultat :
+
+```json
+{
+  "planName": "Plan de Régression Complète",
+  "totalScenarios": 4,
+  "totalCases": 18,
+  "passed": 17,
+  "failed": 1
+}
+```
+
+---
+
+## 🧰 Stack Technique
+
+| Couche | Technologie |
+|--------|--------------|
+| **Langage** | Java 17 |
+| **Framework** | Spring Boot 3 |
+| **Moteur de test** | RestAssured 5.5.0 |
+| **Documentation** | Springdoc OpenAPI 2.5.0 |
+| **Build Tool** | Maven |
+
+---
+
+## 🧩 Classes Principales
+
+| Classe | Rôle |
+|--------|------|
+| `TestPlan` | Contient plusieurs `TestScenario` |
+| `TestScenario` | Regroupe plusieurs `TestCase` |
+| `TestCase` | Définit une requête REST et le résultat attendu |
+| `TestRunnerService` | Exécute les tests via RestAssured |
+| `TestPlanResult` | Regroupe les résultats d’exécution |
+
+---
+
+## ⏱️ Gestion Globale du Timeout
+
+Pour éviter que les requêtes API ne restent bloquées, le framework définit un **timeout global** pour toutes les requêtes exécutées par RestAssured.
+
+### Configuration globale
+
+Les délais sont définis dans le bloc statique de `TestRunnerService` :
+
+```java
+static {
+    RestAssured.baseURI = "http://localhost:8080";
+    RestAssured.config = RestAssuredConfig.config().httpClient(
+        HttpClientConfig.httpClientConfig()
+            .setParam("http.connection.timeout", 10000)          // 10s pour établir la connexion
+            .setParam("http.socket.timeout", 10000)              // 10s pour recevoir la réponse
+            .setParam("http.connection-manager.timeout", 10000)  // 10s pour le pool de connexions
+    );
+}
+```
+
+### Comportement du Timeout
+
+- Si une requête dépasse **10 secondes**, une `SocketTimeoutException` est levée.
+- Le framework intercepte cette erreur et enregistre le test comme **échoué** avec un message explicite.
+
+### Exemple de gestion
+
+```java
+try {
+    response = RestAssured.given()
+        .contentType("application/json")
+        .body(testCase.getBody())
+        .when()
+        .request(testCase.getMethod(), testCase.getEndpoint());
+} catch (Exception e) {
+    return new TestResult(
+        testCase.getName(),
+        testCase.getMethod(),
+        testCase.getEndpoint(),
+        testCase.getExpectedStatus(),
+        0,
+        0,
+        false,
+        "ÉCHEC - Timeout ou erreur réseau : " + e.getMessage()
+    );
+}
+```
+
+### Exemple de sortie JSON
+
+```json
+{
+  "testCaseName": "POST /orders - créer commande",
+  "expectedStatus": 201,
+  "actualStatus": 0,
+  "passed": false,
+  "durationMs": 10000,
+  "message": "ÉCHEC - Timeout ou erreur réseau : Read timed out"
+}
+```
+
+### Notes
+
+| Paramètre | Description |
+|------------|-------------|
+| `http.connection.timeout` | Temps max pour établir la connexion TCP |
+| `http.socket.timeout` | Temps max pour attendre la réponse |
+| `connection-manager.timeout` | Temps max d’attente d’une connexion disponible |
+| Valeur par défaut | 10 secondes (modifiable) |
+
+✅ Cette gestion garantit que les API lentes ou inaccessibles sont signalées sans bloquer l’exécution.
+
+---
+
+## 📈 Améliorations Futures
+- [ ] Persistance des résultats dans une base de données (H2 / PostgreSQL)
+- [ ] Gestion des en-têtes et authentifications par cas de test
+- [ ] Ajout d’assertions sur le corps de la réponse
+- [ ] Interface web pour visualiser les résultats
+- [ ] Intégration CI/CD (GitHub Actions, Jenkins, etc.)
+
+---
