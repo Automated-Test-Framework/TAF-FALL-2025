@@ -1,8 +1,10 @@
 package restAssuredTesting.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import restAssuredTesting.requests.payload.request.TestApiRequest;
+import restAssuredTesting.service.TestRunnerService;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -12,9 +14,23 @@ import java.util.Map;
 @RequestMapping("/microservice/testapi")
 public class TestApiController {
 
+    @Autowired
+    TestRunnerService testRunnerService;
+
     @GetMapping("/health")
     public ResponseEntity<Map<String, String>> health() {
         return ResponseEntity.ok(Map.of("status", "OK"));
+    }
+
+    @GetMapping("/slow")
+    public ResponseEntity<String> slowTest() {
+        try {
+            String result = testRunnerService.testSlowEndpoint();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body("Internal Error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
     }
 
 

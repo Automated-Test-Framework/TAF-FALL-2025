@@ -18,7 +18,7 @@ public class DemoDataInitializer {
         return args -> {
 
             // ---------------------------------------------------------------------
-            // 🧠 SCENARIO 1: AUTHENTICATION FLOW
+            // SCENARIO 1: AUTHENTICATION FLOW
             // ---------------------------------------------------------------------
             TestScenario authScenario = new TestScenario(null,
                     "Authentication Flow",
@@ -47,7 +47,7 @@ public class DemoDataInitializer {
                     ));
 
             // ---------------------------------------------------------------------
-            // 🧩 SCENARIO 2: USER MANAGEMENT
+            // SCENARIO 2: USER MANAGEMENT
             // ---------------------------------------------------------------------
             TestScenario userScenario = new TestScenario(null,
                     "User Management",
@@ -76,7 +76,7 @@ public class DemoDataInitializer {
                     ));
 
             // ---------------------------------------------------------------------
-            // 📦 SCENARIO 3: ORDER PROCESSING
+            // SCENARIO 3: ORDER PROCESSING
             // ---------------------------------------------------------------------
             TestScenario orderScenario = new TestScenario(null,
                     "Order Processing",
@@ -105,7 +105,7 @@ public class DemoDataInitializer {
                     ));
 
             // ---------------------------------------------------------------------
-            // ⚠️ SCENARIO 4: ERROR & VALIDATION CASES
+            // SCENARIO 4: ERROR & VALIDATION CASES
             // ---------------------------------------------------------------------
             TestScenario errorScenario = new TestScenario(null,
                     "Error and Validation",
@@ -126,7 +126,7 @@ public class DemoDataInitializer {
                     ));
 
             // ---------------------------------------------------------------------
-            // 🧱 TEST PLAN 1: AUTH PLAN
+            // TEST PLAN 1: AUTH PLAN
             // ---------------------------------------------------------------------
             TestPlan authPlan = new TestPlan(null,
                     "Auth Plan",
@@ -134,7 +134,7 @@ public class DemoDataInitializer {
                     List.of(authScenario));
 
             // ---------------------------------------------------------------------
-            // 🧱 TEST PLAN 2: USER PLAN
+            // TEST PLAN 2: USER PLAN
             // ---------------------------------------------------------------------
             TestPlan userPlan = new TestPlan(null,
                     "User Plan",
@@ -142,7 +142,7 @@ public class DemoDataInitializer {
                     List.of(userScenario));
 
             // ---------------------------------------------------------------------
-            // 🧱 TEST PLAN 3: ORDER PLAN
+            // TEST PLAN 3: ORDER PLAN
             // ---------------------------------------------------------------------
             TestPlan orderPlan = new TestPlan(null,
                     "Order Plan",
@@ -150,7 +150,7 @@ public class DemoDataInitializer {
                     List.of(orderScenario));
 
             // ---------------------------------------------------------------------
-            // 🧱 TEST PLAN 4: FULL REGRESSION PLAN
+            // TEST PLAN 4: FULL REGRESSION PLAN
             // ---------------------------------------------------------------------
             TestPlan regressionPlan = new TestPlan(null,
                     "Full Regression Plan",

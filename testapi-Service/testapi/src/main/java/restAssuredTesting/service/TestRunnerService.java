@@ -4,12 +4,17 @@ import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.response.Response;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.stereotype.Service;
 import restAssuredTesting.model.*;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class TestRunnerService {
 
@@ -17,17 +22,14 @@ public class TestRunnerService {
     // Global configuration block (executed once)
     // -------------------------------------------------------------------------
     static {
-        RestAssured.baseURI = "http://localhost:8080";
+        RestAssured.baseURI = "http://localhost:8082";
 
-        // Global timeout settings (in milliseconds)
-        RestAssured.config = RestAssuredConfig.config().httpClient(
-                HttpClientConfig.httpClientConfig()
-                        .setParam("http.connection.timeout", 10000)          // 10s to connect
-                        .setParam("http.socket.timeout", 10000)              // 10s to wait for response
-                        .setParam("http.connection-manager.timeout", 10000)  // 10s for connection pool
-        );
+        RestAssured.config = RestAssuredConfig.config()
+                .httpClient(HttpClientConfig.httpClientConfig()
+                        .setParam("http.connection.timeout", 10000)
+                        .setParam("http.socket.timeout", 10000)
+                        .setParam("http.connection-manager.timeout", 10000L));
     }
-
     // -------------------------------------------------------------------------
     // Run a full test plan (scenarios + cases)
     // -------------------------------------------------------------------------
@@ -111,6 +113,30 @@ public class TestRunnerService {
                 return RestAssured.when().delete(testCase.getEndpoint());
             default:
                 return RestAssured.when().get(testCase.getEndpoint());
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // NEW: Method to explicitly test the slow endpoint and verify timeout
+    // -------------------------------------------------------------------------
+    public String testSlowEndpoint() {
+        long start = System.currentTimeMillis();
+        try {
+            log.info("Calling /microservice/testapi/slow (expected 15s delay, 10s timeout)...");
+            RestAssured.given()
+                    .config(RestAssured.config)
+                    .when()
+                    .get("/microservice/testapi/slow")
+                    .then()
+                    .statusCode(200); // Won't reach if timeout happens
+            long duration = System.currentTimeMillis() - start;
+            return "Completed successfully in " + duration + " ms (no timeout)";
+        } catch (Exception e) {
+            long duration = System.currentTimeMillis() - start;
+            if (e.getCause() instanceof SocketTimeoutException || e instanceof SocketTimeoutException) {
+                return "Timeout triggered after " + duration + " ms (" + e.getClass().getSimpleName() + ")";
+            }
+            return "Unexpected error after " + duration + " ms: " + e.getClass().getSimpleName() + " - " + e.getMessage();
         }
     }
 }
