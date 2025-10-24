@@ -14,8 +14,8 @@ Class ApiAnalysis -> Il définit la structure des contrôleurs API
 
 Il continue en créant les modèles de prompts pour les deux: 
 
-1. 'generate_basic_test'
-2. 'enhance_test'
+1. generate_basic_test
+2. enhance_test
 
 def generate_basic_test -> Le prompt est correctement converti en chaîne JSON pour être envoyé au LLM 
 
@@ -38,8 +38,6 @@ Définir tous les paquets externes de Python qui sont obligatorie pour exécuter
 ## Pour plus d'information, voir: ca.etsmtl.taf
 
 ## 2. Frontend 
-
-![alt text](image.png)
 
 Composé de 3 frontends indépendants qui s'exécutent sur leurs propres ports: 
 1. TestAPI -> testapi-Service
