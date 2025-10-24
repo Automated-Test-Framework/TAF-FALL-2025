@@ -1,7 +1,7 @@
 
 {
-	"/": {
-		"target": "/taf",
-		"secure": false
-	}
+  "/": {
+    "target": "/taf",
+    "secure": false
+  }
 }

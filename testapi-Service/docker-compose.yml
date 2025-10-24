@@ -1,26 +1,40 @@
-version: "3.9"
-services:
-  testapi:
-    image: ${REGISTRY_BASE}/lionel-test-team2-testapi:${TEST_API_VERSION}
-    build:
-      context: ./testapi
-      dockerfile: ./Dockerfile
+  services:
+    mongo:
+      image: mongo:6.0
+      container_name: mongo
+      ports:
+        - "27017:27017"
+      volumes:
+        - ./mongo/data:/data/db
+      environment:
+        - MONGO_INITDB_DATABASE=taflocal
+    testapi:
+#      image: "${REGISTRY_BASE}lionel-test-team2-testapi:${TEST_API_VERSION:-latest}"
+      container_name: testapi
+      build:
+        context: ./testapi
+        dockerfile: ./Dockerfile
+      env_file:
+        - ./.docker_config.env
+      depends_on:
+        - backend
 
-  backend:
-    image: ${REGISTRY_BASE}/lionel-test-team2-backend:${BACKEND_VERSION}
-    build:
-      context: ./
-      dockerfile: ./backend/Dockerfile
+    backend:
+#      image: "${REGISTRY_BASE}/lionel-test-team2-backend:${BACKEND_VERSION:-latest}"
+      container_name: backend
+      build:
+        context: ./
+        dockerfile: ./backend/Dockerfile
+      env_file:
+        - ./.docker_config.env
 
-  frontend:
-    image: ${REGISTRY_BASE}/lionel-test-team2-frontend:${BACKEND_VERSION}
-    build:
-      context: ./
-      dockerfile: ./frontend/Dockerfile
-  
-  selenium:
-    image: ${REGISTRY_BASE}/lionel-test-team2-selenium:${BACKEND_VERSION}
-    container_name: selenium
-    build:
-      context: ./
-      dockerfile: ./selenium/Dockerfile
+    frontend:
+#      image: "${REGISTRY_BASE}/lionel-test-team2-frontend:${BACKEND_VERSION:-latest}"
+      container_name: frontend
+      build:
+        context: ./
+        dockerfile: ./frontend/Dockerfile
+      env_file:
+        - ./.docker_config.env
+      depends_on:
+        - backend

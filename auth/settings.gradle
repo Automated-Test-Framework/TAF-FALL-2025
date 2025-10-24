@@ -2,9 +2,15 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenCentral()
-        maven { url 'https://repo.spring.io/release' }
-        maven { url 'https://repo.spring.io/milestone' }
+        maven { url = 'https://repo.spring.io/release' }
+        maven { url = 'https://repo.spring.io/milestone' }
     }
 }
 rootProject.name = 'auth'
-include(":auth", ":web", ":api")
+def maybeInclude = [':auth', ':web', ':api']
+maybeInclude.each { proj ->
+    def dirName = proj.replaceFirst(':', '')
+    if (file(dirName).exists()) {
+        include(proj)
+    }
+}

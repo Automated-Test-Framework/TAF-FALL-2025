@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!-- ===========================================================
+     ✅ Checkstyle – Configuration stable et compatible
+     =========================================================== -->
+
+<module name="Checker">
+
+    <!-- Paramètres globaux -->
+    <property name="severity" value="warning"/>
+    <property name="charset" value="UTF-8"/>
+
+    <!-- Longueur de ligne -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+        <property name="ignorePattern" value="^import"/>
+    </module>
+
+    <!-- Ligne vide finale -->
+    <module name="NewlineAtEndOfFile"/>
+
+    <!-- Pas de tabulations -->
+    <module name="FileTabCharacter">
+        <property name="eachLine" value="true"/>
+    </module>
+
+    <!-- ===================== -->
+    <!-- 🔹 Analyse du code Java -->
+    <!-- ===================== -->
+    <module name="TreeWalker">
+
+        <!-- Déclaration de package -->
+        <module name="PackageDeclaration"/>
+
+        <!-- Imports -->
+        <module name="AvoidStarImport"/>
+        <module name="UnusedImports"/>
+        <module name="RedundantImport"/>
+
+        <!-- Noms -->
+        <module name="TypeName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+        </module>
+        <module name="MethodName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <module name="LocalVariableName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <module name="MemberName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <module name="StaticVariableName">
+            <property name="format" value="^[A-Z_]+$"/>
+        </module>
+
+        <!-- Accolades et indentation -->
+        <module name="LeftCurly">
+            <property name="option" value="eol"/>
+        </module>
+        <module name="RightCurly">
+            <property name="option" value="same"/>
+        </module>
+        <module name="Indentation">
+            <property name="basicOffset" value="4"/>
+            <property name="braceAdjustment" value="0"/>
+            <property name="caseIndent" value="4"/>
+        </module>
+
+        <!-- Longueur et complexité -->
+        <module name="MethodLength">
+            <property name="max" value="60"/>
+        </module>
+        <module name="ParameterNumber">
+            <property name="max" value="6"/>
+        </module>
+
+        <!-- Documentation -->
+        <module name="JavadocType"/>
+        <module name="JavadocMethod">
+            <property name="allowMissingParamTags" value="true"/>
+            <property name="allowMissingReturnTag" value="true"/>
+        </module>
+
+        <!-- Bonnes pratiques -->
+        <module name="FinalClass"/>
+        <module name="EqualsHashCode"/>
+        <module name="IllegalCatch"/>
+        <module name="MagicNumber"/>
+        <module name="SimplifyBooleanReturn"/>
+
+    </module>
+</module>
