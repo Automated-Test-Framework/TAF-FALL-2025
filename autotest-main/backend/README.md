@@ -35,13 +35,20 @@ Une classe indépendante qui utilis une Java API code et Flask pour générer le
 
 Définir tous les paquets externes de Python qui sont obligatorie pour exécuter Autotest
 
+## Pour plus d'information, voir: ca.etsmtl.taf
 
+## 2. Frontend 
 
+![alt text](image.png)
 
+Composé de 3 frontends indépendants qui s'exécutent sur leurs propres ports: 
+1. TestAPI -> testapi-Service
+2. Testperformance -> test-performance-Service
+3. Testselenium -> selenium-test-Service
 
+Les requêtes des frontends sont dirigées vers l'API Gateway (Spring Cloud Gateway), qui utilise le Service Discovery (Eureka Registry) pour trouver l'adresse IP. L'adresse IP est ensuite envoyée au User Service (Spring Boot), qui effectue une opération de lecture/écriture dans MongoDB. Finalement, la réponse est retournée au frontend.
 
-
-
-
-
-
+De plus, bien que les frontends soient indépendants ils ont aussi leurs propres backends composé des outils suivants: 
+1. Selenium -> Font des tests UI
+2. Gatling -> Font des tests charges/performances
+3. JMeter -> Font des tests API
