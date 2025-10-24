@@ -35,8 +35,6 @@ Une classe indépendante qui utilis une Java API code et Flask pour générer le
 
 Définir tous les paquets externes de Python qui sont obligatorie pour exécuter Autotest
 
-## Pour plus d'information, voir: ca.etsmtl.taf
-
 ## 2. Frontend 
 
 Composé de 3 frontends indépendants qui s'exécutent sur leurs propres ports: 
