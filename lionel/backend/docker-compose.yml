@@ -1,0 +1,94 @@
+networks:
+  lionel:
+    external: true
+
+services:
+  backend1:
+    image: ${REGISTRY_BASE}/lionel-test-team1-backend:${BACKEND1_VERSION}
+    container_name: lionel-test-team1-backend
+    restart: unless-stopped
+    #ports:
+    #  - "8083:8083"
+    environment:
+      DB_URI: ${DB_URI}
+      DB_AUTH: ${DB_AUTH}
+      DB_NAME: ${DB_NAME}
+      API_BASE_URL: ${API1_BASE_URL}
+      SELENIUM_URL: ${SELENIUM1_URL}
+      SELENIUM_PORT: ${SELENIUM1_PORT}
+      API_TEST_URL: ${API1_TEST_URL}
+      API_TEST_PORT: ${API1_TEST_PORT}
+      API_TEST_TOKEN: ${API_TEST_TOKEN}
+      API_TEST_EXP_TIME: ${API_TEST_EXP_TIME}
+      EUREKA_HOST: ${EUREKA_HOST}
+      EUREKA_PORT: ${EUREKA_PORT}
+      EUREKA_USERNAME: ${EUREKA_USERNAME}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
+    networks:
+      - lionel
+
+  backend2:
+    image: ${REGISTRY_BASE}/lionel-test-team2-backend:${BACKEND2_VERSION}
+    container_name: lionel-test-team2-backend
+    restart: unless-stopped
+    #ports:
+    #  - "8084:8080"
+    environment:
+      DB_URI: ${DB_URI}
+      DB_AUTH: ${DB_AUTH}
+      DB_NAME: ${DB_NAME}
+      MONGO_DB_URI: ${DB_URI}
+      MONGO_DB_AUTH: ${DB_AUTH}
+      MONGO_DB_NAME: ${DB_NAME}
+      PERFORMACE_DB_URI: ${DB_URI}
+      PERFORMACE_DB_NAME: ${DB_NAME}
+      #SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      #SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      #SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      #SPRING_JPA_PROPERTIES_HIBERNETE_DIALECT: ${SPRING_JPA_PROPERTIES_HIBERNETE_DIALECT}
+      TEST_API_SERVICE_URL: ${TEST_API2_SERVICE_URL}
+      TEST_API_SERVICE_PORT: ${TEST_API2_SERVICE_PORT}
+      JWT_SECRET: ${API_TEST_TOKEN}
+      JWT_EXPIRES: ${API_TEST_EXP_TIME}
+      SELENIUM_URL: ${SELENIUM2_URL}
+      SELENIUM_PORT: ${SELENIUM2_PORT}
+      EUREKA_HOST: ${EUREKA_HOST}
+      EUREKA_PORT: ${EUREKA_PORT}
+      EUREKA_USERNAME: ${EUREKA_USERNAME}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}  
+    networks:
+      - lionel
+
+  backend3:
+    image: ${REGISTRY_BASE}/lionel-test-team3-backend:${BACKEND3_VERSION}
+    container_name: lionel-test-team3-backend
+    restart: unless-stopped
+    #ports:
+    #  - "8085:8080"
+    environment:
+      DB_URI: ${DB_URI}
+      DB_AUTH: ${DB_AUTH}
+      DB_NAME: ${DB_NAME}
+      MONGO_DB_URI: ${DB_URI}
+      MONGO_DB_AUTH: ${DB_AUTH}
+      MONGO_DB_NAME: ${DB_NAME}
+      PERFORMACE_DB_URI: ${DB_URI}
+      PERFORMACE_DB_NAME: ${DB_NAME}
+      #SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      #SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      #SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      #SPRING_DATA_MONGODB_URL: ${DB_URI}
+      API_TEST_TOKEN: ${API_TEST_TOKEN}
+      API_TEST_EXP_TIME: ${API_TEST_EXP_TIME}
+      API_TEST_URL: ${TEST_API3_SERVICE_URL}
+      API_TEST_PORT: ${TEST_API3_SERVICE_PORT}
+      SELENIUM_URL: ${SELENIUM3_URL}
+      SELENIUM_PORT: ${SELENIUM3_PORT}
+      EUREKA_HOST: ${EUREKA_HOST}
+      EUREKA_PORT: ${EUREKA_PORT}
+      EUREKA_USERNAME: ${EUREKA_USERNAME}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
+    networks:
+      - lionel
+
+

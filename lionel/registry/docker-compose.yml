@@ -1,0 +1,59 @@
+networks:
+  lionel:
+    external: true
+
+services:
+  registry:
+    image: ${REGISTRY_BASE}/lionel-test-registry:${REGISTRY_VERSION}
+    container_name: lionel-test-registry
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    env_file:
+      - .env
+    networks:
+      - lionel
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    image: ${REGISTRY_BASE}/lionel-test-gateway:${GATEWAY_VERSION}
+    container_name: lionel-test-gateway
+    restart: unless-stopped
+    depends_on:
+      - registry
+    ports:
+      - "8762:8080"
+    env_file:
+      - .env
+    networks:
+      - lionel
+
+  auth:
+    image: ${REGISTRY_BASE}/lionel-test-auth:${AUTH_VERSION}
+    container_name: lionel-test-auth
+    restart: unless-stopped
+    depends_on:
+      - registry
+    #ports:
+    #  - "8763:8080"
+    env_file:
+      - .env
+    networks:
+      - lionel
+
+  user:
+    image: ${REGISTRY_BASE}/lionel-test-user:${USER_VERSION}
+    container_name: lionel-test-user
+    restart: unless-stopped
+    depends_on:
+      - registry
+    #ports:
+    #  - "8764:8080"
+    env_file:
+      - .env
+    networks:
+      - lionel

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-parent</artifactId>
+                <version>${spring-boot.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+	<groupId>ca.etsmtl</groupId>
+	<artifactId>taf</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<name>Test Automation Framework</name>
+	<description>Test Automation Framework - Docker Build (Backend Only)</description>
+
+    <properties>
+		<java.version>17</java.version>
+		<lombok.version>1.18.24</lombok.version>
+        <spring-boot.version>3.3.5</spring-boot.version>
+    </properties>
+    <packaging>pom</packaging>
+    <modules>
+        <module>backend</module>
+    </modules>
+</project>
+
+

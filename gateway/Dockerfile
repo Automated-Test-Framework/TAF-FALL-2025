@@ -1,9 +1,14 @@
-FROM openjdk:21-jdk
-ARG ROOT_DIR
-ENV ROOT_DIR $ROOT_DIR
+FROM eclipse-temurin:21-jdk
 
-WORKDIR /opt/app
-COPY  ./build/libs/*.jar /app.jar
-EXPOSE 8080
+WORKDIR /app
 
-ENTRYPOINT ["java","-jar","/app.jar"]
+COPY . .
+
+# Fix line endings and make gradlew executable
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
+
+# Build the JAR inside Docker
+RUN ./gradlew bootJar
+
+# Run the app
+CMD ["java", "-jar", "build/libs/gateway-0.0.1-SNAPSHOT.jar"]

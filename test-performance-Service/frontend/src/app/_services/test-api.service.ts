@@ -19,7 +19,7 @@ export class TestApiService {
   executeTests(dataTests: testModel2[]): Observable<TestResponseModel[]> {
     return forkJoin(
       dataTests.map(test =>
-        this.http.post<TestResponseModel>(`${this.REST_API}/microservice/testapi/checkApi`, test)
+        this.http.post<TestResponseModel>(`${this.REST_API}/testapi/checkApi`, test)
       )
     );
   }

@@ -1,0 +1,58 @@
+networks:
+  lionel:
+    external: true
+
+services:
+  selenium1:
+    image: ${REGISTRY_BASE}/lionel-test-team1-selenium:${SELENIUM1_VERSION}
+    container_name: lionel-test-team1-selenium
+    #ports:
+    #  - "8090:8090"
+    networks:
+      - lionel
+
+  testapi1:
+    image: ${REGISTRY_BASE}/lionel-test-team1-testapi:${TEST_API1_VERSION}
+    container_name: lionel-test-team1-testapi1
+    #ports:
+    #  - "8082:8082"
+    env_file:
+      - .env
+    networks:
+      - lionel
+
+  selenium2:
+    image: ${REGISTRY_BASE}/lionel-test-team2-selenium:${SELENIUM2_VERSION}
+    container_name: lionel-test-team2-selenium
+    #ports:
+    #  - "8090:8090"
+    networks:
+      - lionel
+
+  testapi2:
+    image: ${REGISTRY_BASE}/lionel-test-team2-testapi:${TEST_API2_VERSION}
+    container_name: lionel-test-team2-testapi
+    #ports:
+    #  - "8082:8082"
+    env_file:
+      - .env
+    networks:
+      - lionel
+        
+  selenium3:
+    image: ${REGISTRY_BASE}/lionel-test-team3-selenium:${SELENIUM3_VERSION}
+    container_name: lionel-test-team3-selenium
+    #ports:
+    #  - "8090:8090"
+    networks:
+      - lionel
+
+  testapi3:
+    image: ${REGISTRY_BASE}/lionel-test-team3-testapi:${TEST_API3_VERSION}
+    container_name: lionel-test-team3-testapi
+    #ports:
+    #  - "8082:8082"
+    env_file:
+      - .env
+    networks:
+      - lionel

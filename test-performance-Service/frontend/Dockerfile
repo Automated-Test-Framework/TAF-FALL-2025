@@ -25,8 +25,8 @@ COPY frontend/nginx.conf .
 
 COPY frontend/envsubst-file.sh .
 
-# Grant execute permissions to the entrypoint script
-RUN chmod +x /app/envsubst-file.sh
+# Fix line endings and grant execute permissions to the entrypoint script
+RUN sed -i 's/\r$//' /app/envsubst-file.sh && chmod +x /app/envsubst-file.sh
 
 # Ensure the cache directory exists and set ownership
 RUN mkdir -p /var/cache/nginx

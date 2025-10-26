@@ -387,7 +387,7 @@ describe('TestApiService', () => {
       expect(response).toEqual(mockResponse);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/microservice/testapi/checkApi`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/testapi/checkApi`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(dataTests[0]);
     req.flush(mockResponse);
