@@ -1,0 +1,458 @@
+networks:
+  taf-local:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+  mysql-data:
+
+services:
+  # ============================================
+  # DATABASE LAYER
+  # ============================================
+  
+  mongodb:
+    image: mongo:latest
+    container_name: taf-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: taf
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - taf-local
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql:
+    image: mysql:8.0
+    container_name: taf-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: taf
+      MYSQL_USER: taf
+      MYSQL_PASSWORD: taf123
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # SERVICE REGISTRY (EUREKA)
+  # ============================================
+  
+  registry:
+    build:
+      context: ./registry
+      dockerfile: Dockerfile.local
+    container_name: taf-registry
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_USERNAME: eureka
+      EUREKA_PASSWORD: eureka
+      EUREKA_PORT: 8761
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-u", "eureka:eureka", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ============================================
+  # API GATEWAY
+  # ============================================
+  
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: taf-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT_GATEWAY: 8080
+      EUREKA_HOST: registry
+      EUREKA_PORT: 8761
+      EUREKA_USERNAME: eureka
+      EUREKA_PASSWORD: eureka
+      ALLOWED_PATTERN: "*"
+      ALLOWED_HEADERS: "*"
+    depends_on:
+      - registry
+    networks:
+      - taf-local
+
+  # ============================================
+  # AUTHENTICATION SERVICE
+  # ============================================
+  
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    container_name: taf-auth
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      PORT_AUTH: 8080
+      DB_URI: mongodb://admin:admin123@mongodb:27017/taf?authSource=admin
+      DB_AUTH: admin
+      DB_NAME: taf
+      API_TEST_TOKEN: tafSecretKeyForJWTTokenGeneration2024
+      API_TEST_EXP_TIME: 86400000
+      EUREKA_HOST: registry
+      EUREKA_PORT: 8761
+      EUREKA_USERNAME: eureka
+      EUREKA_PASSWORD: eureka
+      LOG_ROOT: INFO
+      LOG_WEB: INFO
+      LOG_HIBERNATE: INFO
+      LOG_FRAMEWORK: INFO
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ============================================
+  # USER SERVICE
+  # ============================================
+  
+  user:
+    build:
+      context: ./user
+      dockerfile: Dockerfile.local
+    container_name: taf-user
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    environment:
+      PORT_USER: 8080
+      DB_URI: mongodb://admin:admin123@mongodb:27017/taf?authSource=admin
+      DB_AUTH: admin
+      DB_NAME: taf
+      API_TEST_TOKEN: tafSecretKeyForJWTTokenGeneration2024
+      API_TEST_EXP_TIME: 86400000
+      EUREKA_HOST: registry
+      EUREKA_PORT: 8761
+      EUREKA_USERNAME: eureka
+      EUREKA_PASSWORD: eureka
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ============================================
+  # TESTING BACKEND - TEAM 1 (SELENIUM-TEST-SERVICE)
+  # ============================================
+  
+  backend-team1:
+    build:
+      context: ./selenium-test-Service
+      dockerfile: Dockerfile.local
+    container_name: taf-backend-team1
+    restart: unless-stopped
+    ports:
+      - "8083:8080"
+    environment:
+      SPRING_APPLICATION_NAME: team1
+      SERVER_PORT: 8080
+      DB_URI: mongodb://admin:admin123@mongodb:27017/taf?authSource=admin
+      DB_AUTH: admin
+      DB_NAME: taf
+      API_TEST_TOKEN: tafSecretKeyForJWTTokenGeneration2024
+      API_TEST_EXP_TIME: 86400000
+      EUREKA_HOST: registry
+      EUREKA_PORT: 8761
+      EUREKA_USERNAME: eureka
+      EUREKA_PASSWORD: eureka
+      SELENIUM_URL: http://selenium-team1
+      SELENIUM_PORT: 4444
+      API_TEST_URL: http://testapi-team1
+      API_TEST_PORT: 8080
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # ============================================
+  # TESTING BACKEND - TEAM 2 (TESTAPI-SERVICE)
+  # ============================================
+  
+  backend-team2:
+    build:
+      context: ./testapi-Service
+      dockerfile: Dockerfile.local
+    container_name: taf-backend-team2
+    restart: unless-stopped
+    ports:
+      - "8084:8080"
+    environment:
+      SPRING_APPLICATION_NAME: team2
+      SERVER_PORT: 8080
+      DB_URI: mongodb://admin:admin123@mongodb:27017/taf?authSource=admin
+      DB_AUTH: admin
+      DB_NAME: taf
+      JWT_SECRET: tafSecretKeyForJWTTokenGeneration2024
+      JWT_EXPIRES: 86400000
+      EUREKA_HOST: registry
+      EUREKA_PORT: 8761
+      EUREKA_USERNAME: eureka
+      EUREKA_PASSWORD: eureka
+      SELENIUM_URL: http://selenium-team2
+      SELENIUM_PORT: 4444
+      TEST_API_SERVICE_URL: http://testapi-team2
+      TEST_API_SERVICE_PORT: 8080
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # ============================================
+  # TESTING BACKEND - TEAM 3 (TEST-PERFORMANCE-SERVICE)
+  # ============================================
+  
+  backend-team3:
+    build:
+      context: ./test-performance-Service
+      dockerfile: Dockerfile.local
+    container_name: taf-backend-team3
+    restart: unless-stopped
+    ports:
+      - "8085:8080"
+    environment:
+      SPRING_APPLICATION_NAME: team3
+      SERVER_PORT: 8080
+      DB_URI: mongodb://admin:admin123@mongodb:27017/taf?authSource=admin
+      DB_AUTH: admin
+      DB_NAME: taf
+      API_TEST_TOKEN: tafSecretKeyForJWTTokenGeneration2024
+      API_TEST_EXP_TIME: 86400000
+      EUREKA_HOST: registry
+      EUREKA_PORT: 8761
+      EUREKA_USERNAME: eureka
+      EUREKA_PASSWORD: eureka
+      SELENIUM_URL: http://selenium-team3
+      SELENIUM_PORT: 4444
+      API_TEST_URL: http://testapi-team3
+      API_TEST_PORT: 8080
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      registry:
+        condition: service_healthy
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # ============================================
+  # SELENIUM GRID - TEAM 1
+  # ============================================
+  
+  selenium-team1:
+    image: selenium/standalone-chrome:latest
+    container_name: taf-selenium-team1
+    restart: unless-stopped
+    ports:
+      - "4444:4444"
+      - "7900:7900"  # VNC server for viewing tests
+    shm_size: 2gb
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # SELENIUM GRID - TEAM 2
+  # ============================================
+  
+  selenium-team2:
+    image: selenium/standalone-chrome:latest
+    container_name: taf-selenium-team2
+    restart: unless-stopped
+    ports:
+      - "4445:4444"
+      - "7901:7900"
+    shm_size: 2gb
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # SELENIUM GRID - TEAM 3
+  # ============================================
+  
+  selenium-team3:
+    image: selenium/standalone-chrome:latest
+    container_name: taf-selenium-team3
+    restart: unless-stopped
+    ports:
+      - "4446:4444"
+      - "7902:7900"
+    shm_size: 2gb
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # FRONTEND - TEAM 1 (SELENIUM-TEST-SERVICE)
+  # ============================================
+  
+  frontend-team1:
+    build:
+      context: ./selenium-test-Service
+      dockerfile: frontend/Dockerfile
+    container_name: taf-frontend-team1
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    environment:
+      API_BASE_URL: http://gateway:8080
+    depends_on:
+      - gateway
+      - backend-team1
+    networks:
+      - taf-local
+
+  # ============================================
+  # FRONTEND - TEAM 2 (TESTAPI-SERVICE)
+  # ============================================
+  
+  frontend-team2:
+    build:
+      context: ./testapi-Service
+      dockerfile: frontend/Dockerfile
+    container_name: taf-frontend-team2
+    restart: unless-stopped
+    ports:
+      - "4300:80"
+    environment:
+      API_BASE_URL: http://gateway:8080
+    depends_on:
+      - gateway
+      - backend-team2
+    networks:
+      - taf-local
+
+  # ============================================
+  # FRONTEND - TEAM 3 (TEST-PERFORMANCE-SERVICE)
+  # ============================================
+  
+  frontend-team3:
+    build:
+      context: ./test-performance-Service
+      dockerfile: frontend/Dockerfile
+    container_name: taf-frontend-team3
+    restart: unless-stopped
+    ports:
+      - "4400:80"
+    environment:
+      API_BASE_URL: http://gateway:8080
+    depends_on:
+      - gateway
+      - backend-team3
+    networks:
+      - taf-local
+
+  # ============================================
+  # MONITORING (Optional)
+  # ============================================
+  
+  adminer:
+    image: adminer:latest
+    container_name: taf-adminer
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    networks:
+      - taf-local
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: taf-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8091:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongodb:27017/
+    depends_on:
+      - mongodb
+    networks:
+      - taf-local
+

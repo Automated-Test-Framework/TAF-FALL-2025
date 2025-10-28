@@ -22,28 +22,27 @@ COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 WORKDIR /app
 
 COPY frontend/nginx.conf .
-
 COPY frontend/envsubst-file.sh .
 
-# Grant execute permissions to the entrypoint script
-RUN chmod +x /app/envsubst-file.sh
+# Fix line endings and grant execute permissions to the entrypoint script
+RUN sed -i 's/\r$//' /app/envsubst-file.sh && chmod +x /app/envsubst-file.sh
 
 # Ensure the cache directory exists and set ownership
 RUN mkdir -p /var/cache/nginx
 RUN chown -R "$USER_NAME":"$GROUP_NAME" /var/cache/nginx
 
-# Ensure the cache directory exists and set ownership
+# Ensure the pid file exists and set ownership
 RUN touch /var/run/nginx.pid
 RUN chown -R "$USER_NAME":"$GROUP_NAME" /var/run/nginx.pid
-
-#RUN envsubst '${BACKEND_API_URL}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf
 
 # Set ownership of relevant directories/files to the non-root user
 RUN chown -R "$USER_NAME":"$GROUP_NAME" /app/nginx.conf
 RUN chown -R "$USER_NAME":"$GROUP_NAME" /app/envsubst-file.sh
 RUN chown -R "$USER_NAME":"$GROUP_NAME" /etc/nginx/conf.d
-# Set read permissions for the user on the config file
-RUN chmod u+r /etc/nginx/conf.d/default.conf
+RUN chown -R "$USER_NAME":"$GROUP_NAME" /usr/share/nginx/html
+
+# Give write permissions to nginx config directory
+RUN chmod -R u+w /etc/nginx/conf.d
 
 USER $USER_NAME
 

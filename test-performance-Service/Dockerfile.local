@@ -1,0 +1,51 @@
+FROM maven:3.9.5-eclipse-temurin-17 AS builder
+
+WORKDIR /build
+
+# Copy simplified Docker-specific parent POM (backend only)
+COPY pom.docker.xml ./pom.xml
+
+# Copy simplified backend POM (without performance module dependencies)
+COPY backend/pom.docker.xml ./backend/pom.xml
+
+# Download dependencies (layer cached)
+RUN mvn dependency:go-offline -B || true
+
+# Copy source code (excluding pom.xml which we already have)
+COPY backend/src ./backend/src
+
+# Build the application (backend only)
+RUN mvn clean package -pl backend -DskipTests -B
+
+# Runtime stage with JMeter
+FROM eclipse-temurin:17-jre
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy JMeter tarball
+COPY apache-jmeter-5.6.3.tgz /tmp/apache-jmeter-5.6.3.tgz
+
+# Install JMeter
+RUN if [ -f /tmp/apache-jmeter-5.6.3.tgz ]; then \
+        cd /opt && \
+        tar -xzf /tmp/apache-jmeter-5.6.3.tgz && \
+        mv apache-jmeter-5.6.3 jmeter && \
+        rm /tmp/apache-jmeter-5.6.3.tgz && \
+        mkdir -p /jmeter/tests /jmeter/results; \
+    fi
+
+# Set JMeter environment variables
+ENV JMETER_HOME=/opt/jmeter
+ENV PATH=$PATH:$JMETER_HOME/bin
+ENV JMETER_INSTALL_DIR=/opt/jmeter
+
+# Copy the built JAR from builder
+COPY --from=builder /build/backend/target/*.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+

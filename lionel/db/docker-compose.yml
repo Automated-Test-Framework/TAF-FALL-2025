@@ -1,0 +1,44 @@
+networks:
+  lionel:
+    external: true
+
+volumes:
+  lionel-mongo2-data:
+  lionel-mysql-data:
+
+services:  
+  mysqldb:
+    image: mysql
+    container_name: lionel-test-mysql
+    restart: always
+    #ports:
+    #  - '4306:3306'
+    volumes:
+      - lionel-mysql-data:/var/lib/mysql
+    env_file:
+      # Specifying the env file with necessaries values
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      MYSQL_DATABASE: ${SPRING_DATASOURCE_DATABSE}
+      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME}
+      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+    networks:
+      - lionel
+
+  mongodb:
+    image: mongo:latest
+    container_name: lionel-test-mongo
+    restart: always
+    ports:
+      - '47017:27017'
+    volumes:
+      - lionel-mongo2-data:/data/db
+    env_file:
+      # Specifying the env file with necessaries values
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - lionel

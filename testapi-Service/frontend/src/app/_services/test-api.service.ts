@@ -26,7 +26,7 @@ export class TestApiService {
         console.log('Payload envoyé:', sanitizedTest); // Vérifie ce qui est envoyé
 
         return this.http.post<TestResponseModel>(
-          `${this.REST_API}/microservice/testapi/checkApi`,
+          `${this.REST_API}/testapi/checkApi`,
           sanitizedTest,
           { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
         ).pipe(

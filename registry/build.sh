@@ -5,6 +5,10 @@ USERNAME=$DOKCER_USER
 PASSWORD=$DOKCER_PASWORD
 REGISTRY=$REGISTRY_BASE
 
+rm -rf ./build
+
+bash gradlew bootJar
+
 docker compose -f docker-compose-build.yml build
 
 echo '>>>> PUSH Image REGISTRY_VERSION : ' REGISTRY_VERSION

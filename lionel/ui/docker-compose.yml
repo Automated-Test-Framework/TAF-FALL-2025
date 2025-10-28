@@ -1,0 +1,34 @@
+networks:
+   lionel:
+     external: true
+
+services:
+  frontend1:
+    image: ${REGISTRY_BASE}/lionel-test-team1-frontend:${FRONTEND1_VERSION}
+    container_name: lionel-test-team1-frontend
+    ports:
+      - "4200:80"
+    env_file:
+      - .env
+    networks:
+       - lionel
+
+  frontend2:
+    image: ${REGISTRY_BASE}/lionel-test-team2-frontend:${FRONTEND2_VERSION}
+    container_name: lionel-test-team2-frontend
+    ports:
+      - "4300:80"
+    env_file:
+      - .env
+    networks:
+       - lionel
+ 
+  frontend3:
+    image: ${REGISTRY_BASE}/lionel-test-team3-frontend:${FRONTEND3_VERSION}
+    container_name: lionel-test-team3-frontend
+    ports:
+      - "4400:80"
+    env_file:
+      - .env
+    networks:
+       - lionel
