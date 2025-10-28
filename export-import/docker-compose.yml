@@ -1,0 +1,29 @@
+services:
+  mongo-import-export:
+    image: mongo:5.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+      - ./db-init:/docker-entrypoint-initdb.d
+
+  import-export:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      -   mongo-import-export
+    environment:
+      - MONGO_HOST=mongo-import-export
+      - MONGO_PORT=27017
+      - TESTRAIL_URL=${TESTRAIL_URL}
+      - TESTRAIL_USER=${TESTRAIL_USER}
+      - TESTRAIL_APIKEY=${TESTRAIL_APIKEY}
+      - DB_PATH=/app/data/testrail_cache.db
+    volumes:
+      - ./data:/app/data
+
+volumes:
+  mongo_data:
+  mongo_config:
