@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.io.File;
 import java.sql.Timestamp;
 
 import org.springframework.web.bind.annotation.*;
@@ -30,17 +32,17 @@ public class UseSelenium {
         seleniumResponse.setSeleniumActions(seleniumActions);
         long currentTimestamp = (new Timestamp(System.currentTimeMillis())).getTime();
         seleniumResponse.setTimestamp(currentTimestamp/1000);
-        
+
         try {
             System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver");
-            
+
             ChromeOptions options = new ChromeOptions();
             options.addArguments("--no-sandbox");
             options.addArguments("--headless");
             options.addArguments("--disable-dev-shm-usage");
             options.addArguments("--window-size=1920x1080");
             WebDriver driver = new ChromeDriver(options);
-            
+
             long startTime = System.currentTimeMillis();
 
             try {
@@ -62,25 +64,22 @@ public class UseSelenium {
                             WebElement webElement = driver.findElement(By.name(seleniumAction.getTarget()));
                             String pageAttribute = webElement.getAttribute(seleniumAction.getObject());
                             if (!pageAttribute.equals(seleniumAction.getInput())) {
-                                seleniumResponse.setSuccess(false);
-                                seleniumResponse.setOutput("Attribute " + seleniumAction.getObject() + " of " + seleniumAction.getTarget() + " is " + pageAttribute + " instead of " + seleniumAction.getInput());
-                                driver.quit();
-                                long endTime = System.currentTimeMillis();
-                                long totalTime = endTime - startTime;
-                                seleniumResponse.setDuration(totalTime);
-                                return seleniumResponse;
+                                String outputMessage = "Attribute " + seleniumAction.getObject()
+                                        + " of " + seleniumAction.getTarget()
+                                        + " is " + pageAttribute
+                                        + " instead of " + seleniumAction.getInput();
+                                return finalizeTest(driver, seleniumResponse, startTime, false, outputMessage);
                             }
                             break;
                         case 4: //GetPageTitle
+                            System.out.println("Verifying page title...");
                             String pageTitle = driver.getTitle();
+
                             if (!pageTitle.equals(seleniumAction.getTarget())) {
-                                seleniumResponse.setSuccess(false);
-                                seleniumResponse.setOutput("Page title is " + pageTitle + " instead of " + seleniumAction.getTarget());
-                                driver.quit();
-                                long endTime = System.currentTimeMillis();
-                                long totalTime = endTime - startTime;
-                                seleniumResponse.setDuration(totalTime);
-                                return seleniumResponse;
+                                String outputMessage = "Page title is \""
+                                        + pageTitle + "\" instead of \""
+                                        + seleniumAction.getTarget() + "\"";
+                                return finalizeTest(driver, seleniumResponse, startTime, false, outputMessage);
                             }
                             break;
                         case 5: //Clear
@@ -95,29 +94,174 @@ public class UseSelenium {
                             WebElement message = driver.findElement(By.name(seleniumAction.getObject()));
                             message.getText();
                             break;
+                        case 8: // VerifyText
+                            try {
+                                System.out.println("Verify text of : " + seleniumAction.getObject() + " is " + seleniumAction.getInput());
+                                WebElement textElement = driver.findElement(By.name(seleniumAction.getObject()));
+                                String actualText = textElement.getText().trim();
+
+                                if (!actualText.equals(seleniumAction.getInput().trim())) {
+                                    String outputMessage = "Text of " + seleniumAction.getObject() + " is '" + actualText
+                                            + "' instead of '" + seleniumAction.getInput() + "'";
+                                    return finalizeTest(driver, seleniumResponse, startTime, false, outputMessage);
+                                }
+                            } catch (Exception ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Error verifying text for element: " + seleniumAction.getObject() + " - " + ex.getMessage());
+                            }
+                            break;
+
+                        case 9: // SelectDropdown
+                            try {
+                                System.out.println("Select option : " + seleniumAction.getInput()
+                                        + " in dropdown " + seleniumAction.getObject());
+                                WebElement selectElement = driver.findElement(By.name(seleniumAction.getObject()));
+                                Select select = new Select(selectElement);
+                                select.selectByVisibleText(seleniumAction.getInput());
+                            } catch (NoSuchElementException ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Option '" + seleniumAction.getInput()
+                                                + "' not found in dropdown '" + seleniumAction.getObject() + "'");
+                            } catch (Exception ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Error selecting dropdown: " + seleniumAction.getObject() + " - " + ex.getMessage());
+                            }
+                            break;
+
+                        case 10: // HoverOver
+                            try {
+                                System.out.println("Hovering over element: " + seleniumAction.getObject());
+                                WebElement hoverElement = driver.findElement(By.name(seleniumAction.getObject()));
+                                new Actions(driver).moveToElement(hoverElement).pause(Duration.ofMillis(500)).perform();
+                            } catch (Exception ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Failed to hover over element: " + seleniumAction.getObject() + " (" + ex.getMessage() + ")");
+                            }
+                            break;
+
+                        case 11: // ToggleCheckbox
+                            try {
+                                System.out.println("Toggling checkbox: " + seleniumAction.getObject() + " to " + seleniumAction.getInput());
+                                WebElement checkbox = driver.findElement(By.name(seleniumAction.getObject()));
+                                boolean shouldBeChecked = "check".equalsIgnoreCase(seleniumAction.getInput());
+
+                                if (checkbox.isSelected() != shouldBeChecked) {
+                                    checkbox.click();
+                                }
+
+                                if (checkbox.isSelected() != shouldBeChecked) {
+                                    return finalizeTest(driver, seleniumResponse, startTime, false,
+                                            "Checkbox '" + seleniumAction.getObject() + "' state not updated correctly.");
+                                }
+                            } catch (Exception ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Failed to toggle checkbox: " + seleniumAction.getObject() + " - " + ex.getMessage());
+                            }
+                            break;
+
+                        case 12: // SelectRadio
+                            try {
+                                System.out.println("Selecting radio button: " + seleniumAction.getObject());
+                                WebElement radio = driver.findElement(By.name(seleniumAction.getObject()));
+                                if (!radio.isSelected()) {
+                                    radio.click();
+                                }
+                                if (!radio.isSelected()) {
+                                    return finalizeTest(driver, seleniumResponse, startTime, false,
+                                            "Radio button '" + seleniumAction.getObject() + "' not selected.");
+                                }
+                            } catch (Exception ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Failed to select radio: " + seleniumAction.getObject() + " - " + ex.getMessage());
+                            }
+                            break;
+
+                        case 13: // File upload
+                            try {
+                                System.out.println("Upload file : " + seleniumAction.getInput() + " to field " + seleniumAction.getObject());
+                                File file = new File(seleniumAction.getInput());
+                                if (!file.exists()) {
+                                    return finalizeTest(driver, seleniumResponse, startTime, false,
+                                            "File not found: " + seleniumAction.getInput());
+                                }
+                                WebElement fileUploadElement = driver.findElement(By.name(seleniumAction.getObject()));
+                                fileUploadElement.sendKeys(file.getAbsolutePath());
+                            } catch (Exception ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Failed to upload file: " + seleniumAction.getObject() + " - " + ex.getMessage());
+                            }
+                            break;
+
+                        case 14: // JS alert
+                            try {
+                                System.out.println("Accepting JavaScript alert.");
+                                Alert alert = driver.switchTo().alert();
+                                alert.accept();
+                            } catch (NoAlertPresentException ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false, "No alert found to accept.");
+                            } catch (Exception ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Error handling JavaScript alert: " + ex.getMessage());
+                            }
+                            break;
+
+                        case 15: // Generic input (similar to FillField)
+                            try {
+                                System.out.println("Generic input action on : " + seleniumAction.getObject()
+                                        + " with " + seleniumAction.getInput());
+                                WebElement genericInput = driver.findElement(By.name(seleniumAction.getObject()));
+                                genericInput.clear();
+                                genericInput.sendKeys(seleniumAction.getInput());
+                            } catch (Exception ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Failed to perform generic input on: " + seleniumAction.getObject() + " - " + ex.getMessage());
+                            }
+                            break;
+
+                        case 16: // Redirect link (similaire à goToUrl)
+                            try {
+                                System.out.println("Redirecting to : " + seleniumAction.getTarget());
+                                driver.get(seleniumAction.getTarget());
+                                String currentUrl = driver.getCurrentUrl();
+                                if (!currentUrl.contains(seleniumAction.getTarget())) {
+                                    return finalizeTest(driver, seleniumResponse, startTime, false,
+                                            "Redirection failed. Current URL: " + currentUrl);
+                                }
+                            } catch (Exception ex) {
+                                return finalizeTest(driver, seleniumResponse, startTime, false,
+                                        "Error redirecting to URL: " + seleniumAction.getTarget() + " - " + ex.getMessage());
+                            }
+                            break;
+
+                        case 17: // CallCase (modularité)
+                            System.out.println("Calling sub-scenario with ID : " + seleniumAction.getTarget()
+                                    + " (Requires DB/Repository for full implementation)");
+                            // Ici, on implémentera la logique MongoDB via SeleniumCaseRepository à l’avenir
+                            break;
+
                         default:
                             System.out.println("action type id : " + seleniumAction.getAction_type_id() + " not found");
                             break;
                     }
                 }
-        
+
                 driver.quit();
 
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
                 seleniumResponse.setDuration(totalTime);
-                
+
                 seleniumResponse.setSuccess(true);
 
             }
-        
+
             catch(Exception e) {
                 driver.quit();
 
                 long endTime = System.currentTimeMillis();
                 long totalTime = endTime - startTime;
                 seleniumResponse.setDuration(totalTime);
-                
+
                 seleniumResponse.setSuccess(false);
                 seleniumResponse.setOutput(e.getMessage());
                 return seleniumResponse;
@@ -133,6 +277,30 @@ public class UseSelenium {
         }
 
         return seleniumResponse;
+    }
+    // finalizeTest
+    private SeleniumResponse finalizeTest(
+            WebDriver driver,
+            SeleniumResponse response,
+            long startTime,
+            boolean success,
+            String output) {
+        if (driver != null) {
+            try {
+                driver.quit();
+            } catch (Exception e) {
+                // TODO : Logger l’erreur si nécessaire
+            }
+        }
+
+        long totalTime = System.currentTimeMillis() - startTime;
+
+        response.setDuration(totalTime);
+        response.setSuccess(success);
+        if (!success) {
+            response.setOutput(output);
+        }
+        return response;
     }
 
     @GetMapping("/all")
