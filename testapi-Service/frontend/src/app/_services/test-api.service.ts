@@ -6,6 +6,12 @@ import { environment } from '../../environments/environment';
 import {testModel} from "../models/test-model";
 import {testModel2} from "../models/testmodel2";
 import {TestResponseModel} from "../models/testResponseModel";
+import {CreateSuiteReq} from "../models/CreateSuiteReq";
+import {CreateSuiteRes} from "../models/CreateSuiteRes";
+import {CreateRunReq} from "../models/CreateRunReq";
+import {CreateRunRes} from "../models/CreateRunRes";
+import {TestRun} from "../models/TestRun";
+import {TestCaseResult} from "../models/TestCaseResult";
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +20,39 @@ import {TestResponseModel} from "../models/testResponseModel";
 export class TestApiService {
   REST_API: string = `${environment.apiUrl}/team2/api`;
   constructor(private http: HttpClient) { }
+
+
+
+
+  createSuite(body: CreateSuiteReq): Observable<CreateSuiteRes> {
+    return this.http.post<CreateSuiteRes>(`${this.REST_API}/testapi/suites`, body);
+  }
+
+  getAllSuite(): Observable<CreateSuiteReq[]> {
+    return this.http.get<CreateSuiteReq[]>(`${this.REST_API}/testapi/suites`);
+  }
+
+  createRun(body: CreateRunReq): Observable<CreateRunRes> {
+    return this.http.post<CreateRunRes>(`${this.REST_API}/testapi/runs`, body);
+  }
+
+  getRun(runId: string): Observable<TestRun> {
+    return this.http.get<TestRun>(`${this.REST_API}/testapi/runs?runId=${runId}`);
+  }
+
+  getCases(runId: string): Observable<TestCaseResult[]> {
+    return this.http.get<TestCaseResult[]>(`${this.REST_API}/testapi/runs/cases?runId=${runId}`);
+  }
+
+  /** Le backend renvoie du HTML (string). */
+  getReportHtml(runId: string): Observable<string> {
+    const headers = new HttpHeaders({ Accept: 'text/html' });
+    return this.http.get(`${this.REST_API}/testapi/runs/report?runId=${runId}`, { headers, responseType: 'text' });
+  }
+
+
+
+
 
   executeTests(dataTests: testModel2[]): Observable<TestResponseModel[]> {
     return forkJoin(

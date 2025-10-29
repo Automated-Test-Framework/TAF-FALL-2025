@@ -97,6 +97,16 @@ public class JwtUtil {
 
     /**
      *
+     * @param email
+     * @return
+     */
+    public String generateTokenWithEmail(String email) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, email);
+    }
+
+    /**
+     *
      * @param token
      * @return
      */

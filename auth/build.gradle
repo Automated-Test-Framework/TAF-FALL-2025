@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
@@ -27,6 +27,9 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	//implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// OAuth 2 integration
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	//
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation 'io.jsonwebtoken:jjwt:0.9.1'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -65,18 +68,22 @@ tasks.named('test') {
 }
 
 bootRun{
+	jvmArgs = ["-Djava.io.tmpdir=C:\\Temp"]
 	workingDir("..")
 	environment = [
 		//EUREKA_HOST: "185.133.251.89",
-		EUREKA_HOST: "185.133.251.89",
+		EUREKA_HOST: "localhost",
         EUREKA_PORT: "8761",
         CONTAINER_IP: "localhost",
         EUREKA_USERNAME: "eureka",
         EUREKA_PASSWORD: "eureka",
         PORT_AUTH: "8081",
-        HOSTNAME: "185.133.251.89",
-        DB_URI: "mongodb://admin:secret@185.133.251.89:47017/mydb?authSource=admin",
-        DB_NAME: "taf_database",
+        //HOSTNAME: "185.133.251.89",
+		HOSTNAME: "localhost",
+        //DB_URI: "mongodb://admin:secret@185.133.251.89:47017/mydb?authSource=admin",
+		DB_URI: "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false",
+        //DB_NAME: "taf_database",
+		DB_NAME: "taf",
         DB_AUTH: "admin",
         API_TEST_TOKEN: "bezKoderSecretKey",
         API_TEST_EXP_TIME: "86400000"

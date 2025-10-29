@@ -16,9 +16,12 @@ import ca.etsmtl.taf.auth.payload.response.MessageResponse;
 import ca.etsmtl.taf.auth.payload.request.LoginRequest;
 import org.springframework.web.client.HttpClientErrorException;
 // import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.security.core.Authentication;
+
+import java.util.Map;
 
 @RestController
-// @CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 @RequestMapping("/api")
 public class AuthController {
 
@@ -32,6 +35,12 @@ public class AuthController {
 
   @Autowired
   private UserOldService userService;
+
+  @GetMapping("/me")
+  public Map<String,Object> me(Authentication auth) {
+    return Map.of("authenticated", auth != null, "user", auth != null ? auth.getName() : null);
+  }
+
 
   @PostMapping("/signin")
   public ResponseEntity<JwtResponse> createAuthenticationToken(@RequestBody @Valid LoginRequest authenticationRequest) throws Exception {

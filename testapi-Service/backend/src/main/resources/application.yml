@@ -8,9 +8,9 @@ spring:
 
   data:
     mongodb:
-      uri: ${DB_URI}
-      authentication-database: ${DB_AUTH}
-      database: ${DB_NAME}
+      uri: ${DB_URI:mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false}
+      authentication-database: ${DB_AUTH:admin}
+      database:  ${DB_NAME:taf}
       auto-index-creation: true
 
   jpa:
@@ -24,15 +24,15 @@ spring:
 
 taf:
   app:
-    jwtSecret: ${JWT_SECRET}
-    jwtExpirationMs: ${JWT_EXPIRES}
-    testAPI_url: ${TEST_API_SERVICE_URL}
-    testAPI_port: ${TEST_API_SERVICE_PORT}
-    selenium_container_url: ${SELENIUM_URL}
-    selenium_container_port: ${SELENIUM_PORT}
+    jwtSecret: ${JWT_SECRET:bezKoderSecretKey}
+    jwtExpirationMs: ${JWT_EXPIRES:86400000}
+    testAPI_url:  ${TEST_API_SERVICE_URL:http://localhost}
+    testAPI_port: ${TEST_API_SERVICE_PORT:8082}
+    selenium_container_url: ${SELENIUM_URL:http://localhost}
+    selenium_container_port: ${SELENIUM_PORT:8090}
 
 server:
-  port: 8080
+  port: 8085
   error:
     whitelabel:
       enabled: false
@@ -46,7 +46,7 @@ eureka:
     registerWithEureka: true
     fetchRegistry: true
     serviceUrl:
-      defaultZone: http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:${EUREKA_PORT}/eureka
+      defaultZone: http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:eureka}@${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka
 
 springdoc:
   api-docs:
@@ -55,3 +55,6 @@ springdoc:
   swagger-ui:
     enabled: true
     path:  /swagger-ui.html
+
+qa:
+  reports-dir: target/cucumber-ui

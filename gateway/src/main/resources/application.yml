@@ -16,14 +16,16 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOriginPatterns: ${ALLOWED_PATTERN}
+            #allowedOriginPatterns: ${ALLOWED_PATTERN}
+            allowedOrigins: "http://localhost:4200"
             allowedMethods:
               - GET
               - POST
               - PUT
               - DELETE
               - OPTIONS
-            allowedHeaders: ${ALLOWED_HEADERS}
+            #allowedHeaders: ${ALLOWED_HEADERS}
+            allowedHeaders: "*"
             allowCredentials: true
 
 eureka:

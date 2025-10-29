@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
@@ -43,6 +43,7 @@ tasks.named('test') {
 
 
 bootRun{
+	jvmArgs = ["-Djava.io.tmpdir=C:\\Temp"]
 	workingDir("..")
 	environment = [
         EUREKA_PORT: "8761",

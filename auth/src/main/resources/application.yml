@@ -1,12 +1,23 @@
 server:
   servlet:
     context-path:
-  port: ${PORT_AUTH:8080}
+  port: ${PORT_AUTH:8085}
 
 spring:
   application:
     name: auth
-
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 17634257131-187iegl711i90p3q38smbldrdr7ao8pm.apps.googleusercontent.com
+            client-secret: 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
+            scope: [ openid, profile, email ]
+            redirect-uri: "http://localhost:8080/auth/login/oauth2/code/{registrationId}"
+        provider:
+          google:
+            issuer-uri: https://accounts.google.com
   cloud:
     compatibility-verifier:
       enabled: false
@@ -52,10 +63,10 @@ springdoc:
 
 logging:
   level:
-    root: ${LOG_ROOT}
-    org.springframework.web: ${LOG_WEB}
-    org.hibernate: ${LOG_HIBERNATE}
-    org.springframework: ${LOG_FRAMEWORK}
+    root: DEBUG #${LOG_ROOT}
+    org.springframework.web: DEBUG #${LOG_WEB}
+    org.hibernate: DEBUG #${LOG_HIBERNATE}
+    org.springframework: DEBUG #${LOG_FRAMEWORK}
 
 #endpoints:
 #  cors:
