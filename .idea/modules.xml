@@ -3,7 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/testapi-Service/backend/backend.iml" filepath="$PROJECT_DIR$/testapi-Service/backend/backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/testapi-Service/frontend/frontend.iml" filepath="$PROJECT_DIR$/testapi-Service/frontend/frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/lionel.iml" filepath="$PROJECT_DIR$/.idea/lionel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/testapi-Service/selenium/selenium.iml" filepath="$PROJECT_DIR$/testapi-Service/selenium/selenium.iml" />
+      <module fileurl="file://$PROJECT_DIR$/testapi-Service/taf.iml" filepath="$PROJECT_DIR$/testapi-Service/taf.iml" />
     </modules>
   </component>
 </project>
