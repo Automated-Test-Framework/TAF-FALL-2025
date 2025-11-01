@@ -1,0 +1,116 @@
+[
+  {
+    "runId": "gha-2025-10-19-0012",
+    "project": "TAF",
+    "suite": "Regression Suite",
+    "type": "ui",
+    "tool": "selenium",
+    "name": "Login form validation",
+    "status": "failed",
+    "executedBy": "Takiyeddin",
+    "executedAt": "2025-10-19T11:12:55Z",
+    "durationMs": 1530,
+    "env": {
+      "os": "Ubuntu 22.04",
+      "browser": "chrome@128",
+      "resolution": "1920x1080"
+    },
+    "steps": [
+      {
+        "name": "Open login page",
+        "status": "passed",
+        "durationMs": 200
+      },
+      {
+        "name": "Enter invalid password",
+        "status": "passed",
+        "durationMs": 150
+      },
+      {
+        "name": "Click login",
+        "status": "failed",
+        "durationMs": 80,
+        "error": "ElementClickInterceptedException"
+      }
+    ],
+    "metrics": {
+      "ui": {
+        "actionsCount": 5,
+        "screenshots": [
+          "s3://taf/gha-0012/selenium/login_step3.png"
+        ]
+      }
+    },
+    "requirements": [
+      {
+        "id": "REQ-001",
+        "status": "validated"
+      }
+    ],
+    "defects": [
+      {
+        "id": "BUG-432",
+        "status": "open"
+      }
+    ],
+    "links": {
+      "reportUrl": "https://ci.example.com/job/taf-run-0012",
+      "artifactUrl": "s3://taf/gha-0012/selenium/report.zip"
+    }
+  },
+  {
+    "runId": "gha-2025-10-19-0012",
+    "project": "TAF",
+    "suite": "API Smoke",
+    "type": "api",
+    "tool": "restAssured",
+    "name": "GET /users returns 200",
+    "status": "passed",
+    "executedAt": "2025-10-19T11:14:10Z",
+    "durationMs": 412,
+    "metrics": {
+      "api": {
+        "request": {
+          "method": "GET",
+          "url": "/users"
+        },
+        "response": {
+          "statusCode": 200,
+          "latencyMs": 120,
+          "sizeBytes": 13840
+        },
+        "auth": "Bearer"
+      }
+    }
+  },
+  {
+    "runId": "gha-2025-10-19-0012",
+    "project": "TAF",
+    "suite": "Checkout Perf",
+    "type": "performance",
+    "tool": "gatling",
+    "name": "Checkout latency P95 < 500ms",
+    "status": "failed",
+    "executedAt": "2025-10-19T11:16:00Z",
+    "durationMs": 180000,
+    "metrics": {
+      "performance": {
+        "vus": 250,
+        "throughputRps": 180.5,
+        "latencyMs": {
+          "p50": 220,
+          "p90": 410,
+          "p95": 520,
+          "p99": 980
+        },
+        "errorRatePct": 0.11
+      }
+    },
+    "artifacts": [
+      {
+        "type": "report",
+        "path": "s3://taf/gatling/gha-0012/index.html"
+      }
+    ]
+  }
+]

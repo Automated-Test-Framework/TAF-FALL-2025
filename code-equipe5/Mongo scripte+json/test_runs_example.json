@@ -1,0 +1,130 @@
+{
+  "project": {
+    "key": "TAF",
+    "name": "Test Automation Framework"
+  },
+  "pipeline": {
+    "runId": "gha-2025-10-19-0012",
+    "workflow": "regression-suite",
+    "git": {
+      "branch": "main",
+      "commit": "a8c32fd",
+      "author": "takiyeddin"
+    }
+  },
+  "suite": {
+    "name": "Regression Suite",
+    "type": "mixed",
+    "version": "1.4.0"
+  },
+  "environment": {
+    "name": "staging",
+    "os": "Ubuntu 22.04",
+    "browser": "chrome@128",
+    "baseUrl": "https://staging.example.com"
+  },
+  "run": {
+    "status": "failed",
+    "startedAt": "2025-10-19T11:10:00Z",
+    "endedAt": "2025-10-19T11:18:42Z",
+    "stats": {
+      "total": 42,
+      "passed": 39,
+      "failed": 3,
+      "skipped": 0,
+      "durationMs": 522000
+    }
+  },
+  "cases": [
+    {
+      "id": "UI-Login-001",
+      "name": "User can log in",
+      "type": "ui",
+      "tool": "selenium",
+      "status": "passed",
+      "durationMs": 8421,
+      "tags": [
+        "smoke",
+        "auth"
+      ],
+      "details": {
+        "selenium": {
+          "browser": "chrome-128",
+          "resolution": "1920x1080"
+        }
+      },
+      "artifacts": [
+        {
+          "type": "screenshot",
+          "path": "s3://taf/artifacts/gha-0012/UI-Login-001.png"
+        }
+      ]
+    },
+    {
+      "id": "API-Users-GET-200",
+      "name": "GET /users returns 200",
+      "type": "api",
+      "tool": "restAssured",
+      "status": "passed",
+      "durationMs": 412,
+      "details": {
+        "restAssured": {
+          "request": {
+            "method": "GET",
+            "url": "/users"
+          },
+          "response": {
+            "status": 200,
+            "timeMs": 120,
+            "sizeBytes": 13840
+          }
+        }
+      }
+    },
+    {
+      "id": "PERF-Checkout-P95",
+      "name": "Checkout latency P95 < 500ms",
+      "type": "performance",
+      "tool": "gatling",
+      "status": "failed",
+      "durationMs": 180000,
+      "details": {
+        "gatling": {
+          "users": 250,
+          "latencyMs": {
+            "p50": 220,
+            "p90": 410,
+            "p95": 520,
+            "p99": 980
+          },
+          "requests": {
+            "total": 32450,
+            "ok": 32413,
+            "ko": 37
+          }
+        }
+      },
+      "artifacts": [
+        {
+          "type": "report",
+          "path": "s3://taf/gatling/gha-0012/index.html"
+        }
+      ]
+    }
+  ],
+  "integrations": {
+    "jira": {
+      "projectKey": "TAF",
+      "issueKeys": [
+        "TAF-1234",
+        "TAF-1235"
+      ]
+    }
+  },
+  "createdAt": "2025-10-19T11:18:43Z",
+  "tags": [
+    "nightly",
+    "regression",
+    "release-1.9"
+  ]
+}
