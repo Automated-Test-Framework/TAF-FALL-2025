@@ -10,5 +10,5 @@ import java.util.Optional;
 
 @Repository
 public interface SeleniumCaseRepository extends MongoRepository<SeleniumTestCase, String> {
-  // Vous pouvez ajouter des méthodes personnalisées pour rechercher des cas spécifiques si nécessaire
+    // Vous pouvez ajouter des méthodes personnalisées pour rechercher des cas spécifiques si nécessaire
 }
