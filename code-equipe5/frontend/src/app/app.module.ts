@@ -1,6 +1,9 @@
 
+
+
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 
@@ -10,12 +13,13 @@ import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 import { HomeComponent } from './home/home.component';
 import { ProfileComponent } from './profile/profile.component';
-import { BoardAdminComponent } from './board-admin/board-admin.component';
+import {BoardAdminComponent} from './board-admin/board-admin.component';
 import { BoardUserComponent } from './board-user/board-user.component';
 
 import { authInterceptorProviders } from './_helpers/auth.interceptor';
 import { ProjectComponent } from './project/project.component';
 import { TestApiComponent } from './interface-test-api/test-api/test-api.component';
+
 
 import { MatTableModule } from '@angular/material/table';
 
@@ -29,6 +33,8 @@ import {MatCardModule} from "@angular/material/card";
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { CaseDetailDialogComponent } from '../app/board-admin/case-detail-dialog.component';
+
 import { TestSeleniumComponent } from './selenium/test-selenium.component';
 
 import { PerformanceTestApiModule } from './performance-test-api/performance-test-api.module';
@@ -37,7 +43,10 @@ import { GatlingApiComponent } from './performance-test-api/gatling-api/gatling-
 import { JmeterApiComponent } from './performance-test-api/jmeter-api/jmeter-api.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {BusyConfig, NgBusyModule} from 'ng-busy';
-import {BaseChartDirective} from 'ng2-charts';
+
+import { NgChartsModule } from 'ng2-charts';
+
+
 
 
 @NgModule({
@@ -56,12 +65,14 @@ import {BaseChartDirective} from 'ng2-charts';
     TestSeleniumComponent,
     PerformanceTestApiComponent,
     GatlingApiComponent,
-    JmeterApiComponent
+    JmeterApiComponent,
+    CaseDetailDialogComponent,
+    CaseDetailDialogComponent,
+
   ],
 
     imports: [
         BrowserModule,
-        BaseChartDirective,
         AppRoutingModule,
         FormsModule,
         HttpClientModule,
@@ -76,6 +87,8 @@ import {BaseChartDirective} from 'ng2-charts';
         ReactiveFormsModule,
         MatInputModule,
         MatSelectModule,
+        NgChartsModule,
+
         NgBusyModule.forRoot(new BusyConfig({
           message: 'Veuillez patienter',
         })),
@@ -83,4 +96,11 @@ import {BaseChartDirective} from 'ng2-charts';
   providers: [authInterceptorProviders],
   bootstrap: [AppComponent]
 })
+
+// @NgModule({
+//   imports: [BrowserModule, AppRoutingModule, HttpClientModule, FormsModule, NgChartsModule]
+// })
+
 export class AppModule { }
+
+

@@ -1,0 +1,47 @@
+<h2 class="dialog-title">Détails du cas</h2>
+
+<div class="dialog-body">
+  <div class="detail">
+    <span class="label">Nom du test :</span>
+    <span class="value">{{ data?.name || '—' }}</span>
+  </div>
+
+  <div class="detail">
+    <span class="label">Outil :</span>
+    <span class="value">{{ data?.tool || '—' }}</span>
+  </div>
+
+  <div class="detail">
+    <span class="label">Type :</span>
+    <span class="value">{{ data?.type || '—' }}</span>
+  </div>
+
+  <div class="detail">
+    <span class="label">Suite :</span>
+    <span class="value">{{ data?.suite || '—' }}</span>
+  </div>
+
+  <div class="detail">
+    <span class="label">Statut :</span>
+    <span class="value"><span [class]="statusClass">{{ data?.status }}</span></span>
+  </div>
+
+  <div class="detail">
+    <span class="label">Run ID :</span>
+    <span class="value">{{ data?.runId || '—' }}</span>
+  </div>
+
+  <div class="detail">
+    <span class="label">Date d’exécution :</span>
+    <span class="value">{{ data?.executedAt | date: 'medium' }}</span>
+  </div>
+
+  <div class="detail" *ngIf="data?.duration">
+    <span class="label">Durée :</span>
+    <span class="value">{{ data.duration }} ms</span>
+  </div>
+</div>
+
+<div class="dialog-footer">
+  <button (click)="close()">Fermer</button>
+</div>

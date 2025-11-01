@@ -29,4 +29,4 @@ taf:
     selenium_container_port: 8090
 
 server:
-  port: 8083
+  port: 8085

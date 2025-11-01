@@ -1,66 +1,169 @@
-<div class="container">
-  <header class="jumbotron">
-    <h2>Tableau de bord des Tests Automatisés</h2>
+<div class="page">
+  <h2>Dashboard – {{ project }}</h2>
 
-    <!-- Filtres -->
-    <div class="filters">
-      <label>Filtrer par outil :</label>
-      <select [(ngModel)]="selectedTool" (change)="filterResults()">
-        <option *ngFor="let tool of tools" [value]="tool">{{ tool }}</option>
-      </select>
+  <!-- Filtres -->
+  <div class="filters card">
+    <div class="row">
+      <div class="col">
+        <label>Statut</label>
+        <select [(ngModel)]="fStatus" (change)="loadAll()">
+          <option value="all">Tous</option>
+          <option value="passed">Passés</option>
+          <option value="failed">Échoués</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Outil</label>
+        <select [(ngModel)]="fTool" (change)="loadAll()">
+          <option value="all">Tous</option>
+          <option value="gatling">Gatling</option>
+          <option value="selenium">Selenium</option>
+          <option value="restAssured">Rest Assured</option>
+          <option value="other">Autre</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Fenêtre</label>
+        <div class="segmented">
+          <button [class.active]="days===7"  (click)="changeDays(7)">7 j</button>
+          <button [class.active]="days===14" (click)="changeDays(14)">14 j</button>
+          <button [class.active]="days===30" (click)="changeDays(30)">30 j</button>
+          <button [class.active]="days===60" (click)="changeDays(60)">60 j</button>
+        </div>
+      </div>
+      <div class="col right">
+        <button class="primary" (click)="loadAll()">Appliquer</button>
+      </div>
+    </div>
+  </div>
 
-      <label>Filtrer par statut :</label>
-      <select [(ngModel)]="selectedStatus" (change)="filterResults()">
-        <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
-      </select>
+  <!-- KPI -->
+  <div class="kpis">
+    <div class="kpi-card total">
+      <div class="kpi-title">Total runs ({{ days }} j)</div>
+      <div class="kpi-value">{{ totalRuns | number }}</div>
+    </div>
+    <div class="kpi-card passed">
+      <div class="kpi-title">Passés</div>
+      <div class="kpi-value">{{ totalPassed | number }}</div>
+    </div>
+    <div class="kpi-card rate">
+      <div class="kpi-title">Passrate global</div>
+      <div class="kpi-value">{{ passPct }}%</div>
+    </div>
+  </div>
 
-      <label>Filtrer par date :</label>
-      <input type="date" [(ngModel)]="selectedDate" (change)="filterResults()">
-
-      <label>Filtrer par utilisateur :</label>
-      <select [(ngModel)]="selectedExecutedBy" (change)="filterResults()">
-        <option *ngFor="let user of executedBys" [value]="user">{{ user }}</option>
-      </select>
+  <!-- Charts : rangée 1 (compacte) -->
+  <div class="charts">
+    <div class="card chart-compact">
+      <h3 class="section-title">Répartition (pass/échec)</h3>
+      <div *ngIf="loadingRate" class="skeleton chart"></div>
+      <canvas *ngIf="!loadingRate" baseChart [data]="pieData" [options]="pieOptions" [type]="'doughnut'"></canvas>
+      <div class="legend-inline">
+        <span class="dot pass"></span> Passés
+        <span class="dot fail"></span> Échoués
+      </div>
     </div>
 
-    <!-- KPI -->
-    <div class="kpis">
-      <p>Total des tests : {{ totalTests }}</p>
-      <p>Pourcentage de tests réussis : {{ passedPercentage }}%</p>
-      <p>Temps moyen d'exécution : {{ avgExecutionTime }}</p>
+    <div class="card wide chart-compact">
+      <h3 class="section-title">Passrate journalier ({{ days }} jours)</h3>
+      <div *ngIf="loadingRate" class="skeleton chart"></div>
+      <canvas *ngIf="!loadingRate" baseChart [data]="lineData" [options]="lineOptions" [type]="'line'"></canvas>
+    </div>
+  </div>
+
+  <!-- Charts : rangée 2 -->
+  <div class="charts">
+    <div class="card">
+      <h3 class="section-title">% pass des 5 derniers runs</h3>
+      <div *ngIf="loadingRuns" class="skeleton chart"></div>
+      <canvas *ngIf="!loadingRuns" baseChart [data]="runsBarData" [options]="runsBarOptions" [type]="'bar'"></canvas>
     </div>
 
-    <!-- Graphiques -->    
-    <div class="chart-container">
-      <canvas id="MyDoughnutChart"></canvas>
-      <canvas id="MyBarChart"></canvas>
+    <div class="card">
+      <h3 class="section-title">Taux de succès par outil</h3>
+      <div *ngIf="loadingTool" class="skeleton chart"></div>
+      <canvas *ngIf="!loadingTool" baseChart [data]="toolBarData" [options]="toolBarOptions" [type]="'bar'"></canvas>
     </div>
 
-    <!-- Tableau des résultats -->
-    <table class="table table-bordered table-striped">
+    <div class="card">
+      <h3 class="section-title">Par type de test (empilé)</h3>
+      <div *ngIf="loadingType" class="skeleton chart"></div>
+      <canvas *ngIf="!loadingType" baseChart [data]="stackedTypeData" [options]="stackedTypeOptions" [type]="'bar'"></canvas>
+    </div>
+  </div>
+
+
+  <!-- Top échecs & Flaky -->
+  <div class="two-cols">
+    <div class="card">
+      <div class="section-title">Top échecs ({{ days }} j)</div>
+      <ol class="list top-fails">
+        <li *ngFor="let t of topFails" (click)="fStatus='failed'; loadAll()" class="row-click">
+          <strong>{{ t.name }}</strong>
+          <span class="muted">({{ t.tool || '—' }})</span>
+          <span class="badge fail">{{ t.count }}</span>
+        </li>
+        <li *ngIf="!topFails?.length" class="muted">Aucun échec récurrent.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Tests instables ({{ days }} j)</div>
+      <ol class="list">
+        <li *ngFor="let t of flaky" (click)="fStatus='all'; loadAll()" class="row-click">
+          <strong>{{ t.name }}</strong>
+          <span class="muted">({{ t.tool || '—' }})</span>
+          <span class="badge warn">fails: {{ t.count }}</span>
+        </li>
+        <li *ngIf="!flaky?.length" class="muted">Rien à signaler.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Derniers runs -->
+  <h3>Derniers runs</h3>
+  <div *ngIf="loadingRuns" class="skeleton row"></div>
+  <div *ngIf="!loadingRuns && runs.length === 0" class="muted">Aucun run.</div>
+  <ul class="runs" *ngIf="!loadingRuns && runs.length">
+    <li *ngFor="let r of runs">
+      <span class="dot-status" [class.pass]="r.status==='passed'" [class.fail]="r.status==='failed'"></span>
+      <strong>{{ r.runId }}</strong>
+      <span class="{{ statusClass(r.status) }}">{{ r.status }}</span>
+      <span class="muted">• {{ (r.passed||0) }}/{{ r.total||0 }} passés • {{ asDate(r.createdAt) }}</span>
+    </li>
+  </ul>
+
+  <!-- Derniers cas -->
+  <h3>Derniers cas</h3>
+  <div class="table-wrap" *ngIf="!loadingCases && casesResp.total; else noCases">
+    <table class="table">
       <thead>
-        <tr>
-          <th>Nom du Test</th>
-          <th>Outil</th>
-          <th>Statut</th>
-          <th>Temps d'Exécution</th>
-          <th>Date</th>
-          <th>Exécuté par</th>
-        </tr>
+      <tr>
+        <th>Run</th><th>Suite</th><th>Type</th><th>Outil</th><th>Nom</th><th>Statut</th><th>Date</th>
+      </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let test of filteredTestResults">
-          <td>{{ test.label }}</td> <!-- Nom ou label du test -->
-          <td>{{ test.tool }}</td> <!-- Nom de l'outil utilisé pour le test -->
-          <td [ngClass]="{
-            'text-success': test.success,
-            'text-danger': !test.success
-          }">{{ test.success ? 'passed' : 'failed' }}</td> <!-- Statut avec classe -->
-          <td>{{ test.elapsed }}ms</td> <!-- Temps d'exécution -->
-          <td>{{ test.date | date: 'dd/MM/yyyy HH:mm' }}</td> <!-- Date formatée -->
-          <td>{{ test.threadName }}</td> <!-- Utilisateur qui a exécuté le test -->
-        </tr>
+      <tr *ngFor="let c of casesResp.items" (click)="openCaseDetail(c)" class="row-click">
+        <td>{{ c.runId }}</td>
+        <td>{{ c.suite }}</td>
+        <td>{{ c.type }}</td>
+        <td>{{ c.tool }}</td>
+        <td class="ellipsis" [title]="c.name">{{ c.name }}</td>
+        <td><span class="{{ statusClass(c.status) }}">{{ c.status }}</span></td>
+        <td>{{ asDate(c.executedAt) }}</td>
+      </tr>
       </tbody>
     </table>
-  </header>
+
+    <div class="pager">
+      <button (click)="changePage(-1)" [disabled]="casesResp.page <= 0">◀</button>
+      <span>Page {{ (casesResp.page + 1) }} / {{ Math.max(1, Math.ceil(casesResp.total / size)) }}</span>
+      <button (click)="changePage(1)" [disabled]="(casesResp.page + 1) >= Math.ceil(casesResp.total / size)">▶</button>
+    </div>
+  </div>
+  <ng-template #noCases>
+    <div *ngIf="loadingCases" class="skeleton table"></div>
+    <div *ngIf="!loadingCases" class="muted">Aucun cas.</div>
+  </ng-template>
 </div>

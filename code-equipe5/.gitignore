@@ -42,7 +42,6 @@ bin/
 *.log
 
 # local config
-application-local.yml
 node_modules
 
 

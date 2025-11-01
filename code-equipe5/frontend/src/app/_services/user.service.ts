@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { tap } from 'rxjs/operators';
 
 const API_URL = `${environment.apiUrl}/api/test/`;
 
@@ -20,6 +21,9 @@ export class UserService {
   }
 
   getAdminBoard(): Observable<any> {
-    return this.http.get(API_URL + 'admin', { responseType: 'text' });
+    return this.http.get(API_URL + 'admin', { responseType: 'text' }).pipe(
+      tap(data => console.log('📦 Réponse backend /admin :', data))
+    );
+
   }
 }

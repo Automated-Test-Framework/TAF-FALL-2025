@@ -1,0 +1,61 @@
+.dialog-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.detail {
+  display: flex;
+  justify-content: space-between;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.value {
+  font-weight: 600;
+  color: #111827;
+}
+
+.badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+.badge.pass {
+  background: #eafaf1;
+  color: #136c37;
+}
+
+.badge.fail {
+  background: #fde8e7;
+  color: #b42318;
+}
+
+.dialog-footer {
+  text-align: center;
+}
+
+.dialog-footer button {
+  background: #111827;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+}

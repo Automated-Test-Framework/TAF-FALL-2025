@@ -1,0 +1,85 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: taf-backend
+
+  datasource:                 # === SQL pour l'authentification ===
+    url: jdbc:mysql://nostrasoft.com:3306/nostr321_taf-db        # <-- mets ta vraie URL
+    username: nostr321_taf
+    password: JKaVLX75iHwtrHc                                      # <-- mot de passe local
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update           # or validate / update selon ton besoin
+      dialect : ${spring.jpa.properties.hibernate.dialect}
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: false
+
+  data:                        # === MongoDB pour le dashboard ===
+    mongodb:
+      uri: mongodb://localhost:27017/tafdb
+
+
+
+
+#----------------------------------------
+
+#server:
+#  port: 8083
+
+#
+#  spring:
+#    application:
+#      name: taf-dashboard
+#    data:
+#      mongodb:
+#        uri: mongodb://localhost:27017/tafdb
+
+    # Désactive toute l’auto-config JDBC/JPA (évite Hikari/Hibernate/Postgres/MySQL)
+#    autoconfigure:
+#      exclude:
+#        - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+#        - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+
+#spring:
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/taf
+#    username: taf
+#    password: taf
+#    driver-class-name: org.postgresql.Driver
+
+
+#spring:
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+##    url: jdbc:mysql://nostrasoft.com:3306/nostr321_taf-db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
+#    # Exemple de connexion (remplace par l’URI réel de la BD de l’équipe 4)
+#    url: spring.data.mongodb.uri=mongodb://taf_rw:taf_rw_pass@localhost:27017/tafdb?authSource=tafdb
+#
+#    username: taf_rw
+#    password: taf_rw_pass
+#    username: nostr321_taf
+#    password: JKaVLX75iHwtrHc
+
+#  spring:
+##    application:
+##      name: taf-dashboard
+#    data:
+#      mongodb:
+#        uri: mongodb://localhost:27017/tafdb
+
+
+#  jpa:
+#    defer-datasource-initialization: true
+#    hibernate:
+#      ddl-auto: update
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQL8Dialect
+#
+#      show-sql: true
