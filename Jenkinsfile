@@ -309,3 +309,29 @@ PYTHON_EOF
     }
   }
 }
+
+stage('Deploy to TAF (A - minimal)') {
+  when { branch 'main' }
+  steps {
+    sh '''
+      set -eux
+      TAF_HOST="172.31.21.242"
+      TAF_USER="ubuntu"
+
+      mkdir -p /var/jenkins_home/.ssh
+      chmod 700 /var/jenkins_home/.ssh
+      ssh-keyscan -H "${TAF_HOST}" >> /var/jenkins_home/.ssh/known_hosts
+
+      ssh ${TAF_USER}@${TAF_HOST} "
+        set -eux
+        cd ~/TAF-FALL-2025
+        git pull
+        if [ -f docker-compose-local-test.yml ]; then
+          docker compose -f docker-compose-local-test.yml up -d --build
+        else
+          docker compose up -d --build
+        fi
+      "
+    '''
+  }
+}
