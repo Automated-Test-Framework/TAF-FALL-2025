@@ -7,14 +7,12 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
 
 @Service
 public class ReportService {
-    private final String REPORT_PATH = "/reports/performance/gatling/dashboard/";
+    private final String REPORT_PATH = "../../reports-gatling/";
 
     public GatlingTestResult getLatestReportResult() throws IOException {
         File reportsDirFile = getReportsDir();
@@ -24,7 +22,7 @@ public class ReportService {
             if (reportFile.exists()) {
                 return buildReportResult(reportFile);
             } else {
-                throw new RuntimeException("Aucun rapport de résultats n’a été trouvé dans le dernier répertoire.");
+                throw new RuntimeException("Aucun rapport de résultats n’a été trouvé dans le dernier répertoire: " + latestReportDir.getName());
             }
         } else {
             throw new RuntimeException("Aucun répertoire de rapport trouvé.");
@@ -47,16 +45,22 @@ public class ReportService {
     }
 
     private File getReportsDir() {
-        Path reportsDir = Paths.get(GatlingConfigurator.getGatlingResultsFolder()).toAbsolutePath().normalize();
-        File reportsDirFile = reportsDir.toFile();
+        String resultsFolder = GatlingConfigurator.getGatlingResultsFolder();
+        File reportsDirFile = new File(resultsFolder);
         if (!reportsDirFile.exists() || !reportsDirFile.isDirectory()) {
-            throw new RuntimeException("Le répertoire des résultats Gatling n'existe pas.");
+            throw new RuntimeException("Le répertoire des résultats Gatling n'existe pas : " + resultsFolder);
         }
         return reportsDirFile;
     }
 
     private File findLatestReportDirectory(File reportsDirFile) {
-        return Arrays.stream(reportsDirFile.listFiles(File::isDirectory))
+        File[] files = reportsDirFile.listFiles(File::isDirectory);
+        if (files == null || files.length == 0) {
+            File[] allFiles = reportsDirFile.listFiles();
+            String allFilesStr = (allFiles == null) ? "null" : Arrays.toString(Arrays.stream(allFiles).map(File::getName).toArray());
+            throw new RuntimeException("Aucun répertoire de rapport trouvé dans " + reportsDirFile.getAbsolutePath() + ". Contenu : " + allFilesStr);
+        }
+        return Arrays.stream(files)
                 .max(Comparator.comparingLong(File::lastModified))
                 .orElse(null);
     }

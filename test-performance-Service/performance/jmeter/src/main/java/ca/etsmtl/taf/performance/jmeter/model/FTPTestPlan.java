@@ -10,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @Data
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 public class FTPTestPlan extends TestPlanBase {
   private String remoteFile;
@@ -26,17 +27,17 @@ public class FTPTestPlan extends TestPlanBase {
 
   @Override
   protected String replaceVariables(String xmlContent, String templateKey) {
-    xmlContent = xmlContent.replace("$NB_THREADS$", nbThreads)
-            .replace("$RAMP_TIME$", rampTime)
-            .replace("$DURATION$", duration)
-            .replace("$DOMAIN$", domain)
-            .replace("$PORT$", port)
-            .replace("$REMOTEFILE$", remoteFile)
-            .replace("$LOCALFILE$", localFile)
+    xmlContent = xmlContent.replace("$NB_THREADS$", escapeXml(nbThreads))
+            .replace("$RAMP_TIME$", escapeXml(rampTime))
+            .replace("$DURATION$", escapeXml(duration))
+            .replace("$DOMAIN$", escapeXml(domain))
+            .replace("$PORT$", escapeXml(port))
+            .replace("$REMOTEFILE$", escapeXml(remoteFile))
+            .replace("$LOCALFILE$", escapeXml(localFile))
             .replace("$METHOD$", getFtpMethod())
-            .replace("$USERNAME$", username)
-            .replace("$PASSWORD$", password)
-            .replace("$LOOP_COUNTER$", loop);
+            .replace("$USERNAME$", escapeXml(username))
+            .replace("$PASSWORD$", escapeXml(password))
+            .replace("$LOOP_COUNTER$", escapeXml(loop));
 
     return xmlContent;
   }

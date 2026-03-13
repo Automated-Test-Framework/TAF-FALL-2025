@@ -18,6 +18,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 @ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class HttpTestPlan extends TestPlanBase {
 
   private String protocol;
@@ -48,21 +49,21 @@ public class HttpTestPlan extends TestPlanBase {
       Files.writeString(Paths.get(target), xmlContent);
 
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException("Failed to generate JMeter test plan: " + e.getMessage(), e);
     }
   }
 
   private String replaceVariables(String xmlContent) throws JsonProcessingException {
     // Replace variables in the XML content using instance fields
-    xmlContent = xmlContent.replace("$NB_THREADS$", nbThreads)
-        .replace("$RAMP_TIME$", rampTime)
-        .replace("$DURATION$", duration)
-        .replace("$DOMAIN$", domain)
-        .replace("$PORT$", port)
-        .replace("$PROTOCOL$", protocol)
-        .replace("$PATH$", path)
-        .replace("$METHOD$", method)
-        .replace("$LOOP_COUNTER$", loop);
+    xmlContent = xmlContent.replace("$NB_THREADS$", escapeXml(nbThreads))
+        .replace("$RAMP_TIME$", escapeXml(rampTime))
+        .replace("$DURATION$", escapeXml(duration))
+        .replace("$DOMAIN$", escapeXml(domain))
+        .replace("$PORT$", escapeXml(port))
+        .replace("$PROTOCOL$", escapeXml(protocol))
+        .replace("$PATH$", escapeXml(path))
+        .replace("$METHOD$", escapeXml(method))
+        .replace("$LOOP_COUNTER$", escapeXml(loop));
 
     if (data != null && !data.isEmpty()) {
       ObjectMapper objectMapper = new ObjectMapper();
@@ -73,8 +74,8 @@ public class HttpTestPlan extends TestPlanBase {
       String formattedJsonString = objectMapper.writeValueAsString(jsonMap);
       String xmlString = " <elementProp name=\"\" elementType=\"HTTPArgument\">\n" +
           "                <boolProp name=\"HTTPArgument.always_encode\">false</boolProp>\n" +
-          "                <stringProp name=\"Argument.value\"><stringProp name=\"Argument.value\">"
-          + formattedJsonString + "</stringProp></stringProp>\n" +
+          "                <stringProp name=\"Argument.value\">"
+          + escapeXml(formattedJsonString) + "</stringProp>\n" +
           "                <stringProp name=\"Argument.metadata\">=</stringProp>\n" +
           "              </elementProp>";
 

@@ -260,6 +260,29 @@ services:
       retries: 3
       start_period: 90s
 
+        # ============================================
+  # TEST GENERATION SERVICE - TEAM 3 (PYTHON + BAML)
+  # ============================================
+
+  test-generation-team3:
+    build:
+      context: ./test-performance-Service
+      dockerfile: ./test-generation-service/Dockerfile
+    container_name: taf-test-generation-team3
+    restart: unless-stopped
+    ports:
+      - "8096:8090"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    networks:
+      - taf-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   # ============================================
   # SELENIUM GRID - TEAM 1
   # ============================================

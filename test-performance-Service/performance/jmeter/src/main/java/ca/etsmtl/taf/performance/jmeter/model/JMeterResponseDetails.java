@@ -27,7 +27,7 @@ public class JMeterResponseDetails {
     public void setLocationURL(String url) {
         Path dashboardPath = new File(JMeterConfigurator.getJmeterResultsFolder()).toPath()
                 .relativize(new File(url).toPath());
-        this.locationURL = "/reports/performance/jmeter/dashboard/" + dashboardPath
+        this.locationURL = "/team3/reports/performance/jmeter/dashboard/" + dashboardPath
                 + "/index.html";
     }
 }

@@ -25,6 +25,7 @@
 
     <modules>
         <module>backend</module>
+        <module>performance</module>
     </modules>
 
     <dependencyManagement>

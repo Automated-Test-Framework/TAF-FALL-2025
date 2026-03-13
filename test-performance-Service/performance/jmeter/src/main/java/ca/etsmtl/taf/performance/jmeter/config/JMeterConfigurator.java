@@ -24,7 +24,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.resource.EncodedResourceResolver;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 
 /**
@@ -58,7 +57,7 @@ public class JMeterConfigurator implements WebMvcConfigurer {
             "user.properties");
 
     private static final List<String> JMETER_TEMPLATES_FILES = List.of("FTPSamplerTemplate.jmx",
-            "HTTPSamplerTemplate.jmx");
+            "HttpSamplerTemplate.jmx");
 
     @Autowired
     ResourceLoader resourceLoader;
@@ -110,7 +109,7 @@ public class JMeterConfigurator implements WebMvcConfigurer {
      * @return The absolute path path
      */
     public static String getHTTPSamplerTemplate() {
-        return new File(JMETER_TEMPLATES_FOLDER, "HTTPSamplerTemplate.jmx").getAbsolutePath();
+        return new File(JMETER_TEMPLATES_FOLDER, "HttpSamplerTemplate.jmx").getAbsolutePath();
     }
 
     /**
@@ -159,12 +158,13 @@ public class JMeterConfigurator implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/reports/performance/jmeter/dashboard/**")
-                .addResourceLocations(JMETER_RESULTS_FOLDER.toPath().toUri().toString()) // ToUri() puts trailing slash
+        String location = "file:" + JMETER_RESULTS_FOLDER.getAbsolutePath() + "/";
+        registry.addResourceHandler("/reports/performance/jmeter/dashboard/**", "/team3/reports/performance/jmeter/dashboard/**")
+                .addResourceLocations(location)
                 .setCachePeriod(3600)
                 .resourceChain(true)
-                .addResolver(new EncodedResourceResolver())
                 .addResolver(new PathResourceResolver());
+        logger.info("JMeter resource handler configured for location: {}", location);
     }
 
     /**

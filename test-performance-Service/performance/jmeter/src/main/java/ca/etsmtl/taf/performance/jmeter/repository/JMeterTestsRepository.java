@@ -6,4 +6,3 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface JMeterTestsRepository extends MongoRepository<JMeterTestDocument, ObjectId> {
 }
-

@@ -167,7 +167,7 @@ public class JMeterRunner {
 
       // Generate HTML dashboard report in dashboardDir folder
       String dashboardDir = new File(JMeterConfigurator.getJmeterResultsFolder(),
-          "dashboard_" + getResultsFile().getName().replace(".csv", "")).getAbsolutePath();
+          "dashboard_" + resultsFile.getName().replace(".csv", "")).getAbsolutePath();
       JMeterUtils.setProperty("jmeter.reportgenerator.exporter.html.property.output_dir", dashboardDir);
       JMeterUtils.setProperty("jmeter.reportgenerator.exporter.json.property.output_dir", dashboardDir);
       ReportGenerator generator = new ReportGenerator(resultsFile.getAbsolutePath(), null);

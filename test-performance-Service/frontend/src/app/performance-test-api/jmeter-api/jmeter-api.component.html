@@ -3,8 +3,8 @@
   <div id="myModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <span class="close" (click)="closeModal()">&times;</span>
         <h2>Résultat des tests</h2>
+        <span class="close" (click)="closeModal()">&times;</span>
       </div>
       <div class="modal-body">
 
@@ -96,12 +96,12 @@
           réalistes pour évaluer les performances de l'application dans différentes conditions de trafic.
           <br><br><b>Temps de montée :</b> Le temps nécessaire pour augmenter progressivement le nombre
           d'utilisateurs simultanés.
-          <br><br><b>Durée du test :</b> La durée totale du test.
+          <br><br><b>Durée du test :</b> La durée totale du test en secondes.
           <br><br><b>Nombre de boucles :</b> Le nombre de fois que le test sera répété.
-          <br><br><b>Domaine :</b> Le domaine de l'application à tester.
+          <br><br><b>URL :</b> L'URL de l'application à tester.
           <br><br><b>Port :</b> Le port à utiliser pour la connexion.
-          <br><br><b>Chemin :</b> Le chemin de l'URL après le domaine et le port. etc.).
-          <br><br><b>Protocole :</b> Le protocole à utiliser pour la connexion (ex. HTTP, HTTPS).
+          <br><br><b>Chemin :</b> Le chemin de l'URL après le domaine et le port.
+          <br><br><b>Protocole :</b> Le protocole à utiliser pour la connexion (ex. HTTP, HTTPS, FTP).
           <br><br><b>Données :</b> Les données à inclure dans la requête.
         </p>
       </div>
@@ -130,11 +130,11 @@
           réalistes pour évaluer les performances de l'application dans différentes conditions de trafic.
           <br><br><b>Temps de montée :</b> Le temps nécessaire pour augmenter progressivement le nombre
           d'utilisateurs simultanés.
-          <br><br><b>Durée du test :</b> La durée totale du test.
+          <br><br><b>Durée du test :</b> La durée totale du test en secondes.
           <br><br><b>Boucle :</b> Indique le nombre de fois que le test sera répété.
-          <br><br><b>Domaine :</b> Définit le domaine de l'application testée (URL du serveur FTP).
+          <br><br><b>URL :</b> Définit l'adresse du serveur FTP testé.
           <br><br><b>Port :</b> Spécifie le port utilisé pour la connexion FTP.
-          <br><br><b>Méthode :</b> Indique la méthode FTP à utiliser (ex. : Get, Post).
+          <br><br><b>Méthode FTP :</b> Indique l'opération FTP à effectuer (ex. : Retrieve, Store).
           <br><br><b>Fichier distant :</b> Spécifie le chemin d'accès au fichier distant pour les opérations
           FTP.
           <br><br><b>Fichier local :</b> Définit le chemin d'accès au fichier local utilisé dans les
@@ -148,254 +148,266 @@
 
 
 
-  <!-- Titre formulaire : Configuration de test pour JMeter -->
-  <div class="container">
-    <div class="switch-container-fixed">
-      <label class="switch">
-        <input type="checkbox" id="formSwitch" (change)="toggleForms()">
-        <span class="slider"></span>
-      </label>
-      <span id="switchLabel">HTTP</span>
-    </div>
+  <div class="main" [ngClass]="{'sidebar-visible': isHttpSidebarVisible || isFtpSidebarVisible}">
+    <div class="content">
 
-    <div class="main" [ngClass]="{'sidebar-visible': isHttpSidebarVisible || isFtpSidebarVisible}">
-      <div class="content">
-        
-        <div class="form-title">
-          <img src="assets/logo/jmeter-logo.png" alt="JMeter Icon" class="jmeter-icon">
-          <span class="hover-text">Apache JMeter : Outil de test de performance</span>
-        </div>
-
-        <div class="form-group scenario-selector">
-          <label for="scenarioSelect"><strong>Preconfigured Scenarios</strong></label>
-          <select class="form-control" id="scenarioSelect" [(ngModel)]="selectedScenario"
-            (change)="onScenarioSelect()" name="scenarioSelect">
-            <option value="">Select a scenario...</option>
-            <option *ngFor="let scenario of filteredScenarios" [value]="scenario.name">
-              {{ scenario.name }}
-          </select>
-        </div>
-
-        <form id="http-form" (ngSubmit)="onHttpSubmit()">
-
-          <!-- Configuration de base -->
-          <div class="section-title"
-            title="Pour configurer un test avec JMeter HTTP, vous devez définir les paramètres suivants :">
-            <h2>Configuration de base HTTP</h2>
-          </div>
-          <!-- Configuration -->
-          <div class="row">
-            <div class="form-group col">
-              <label for="nbThreads"
-                title="Le nombre d'utilisateurs simultanés, simulant des charges réalistes pour évaluer les performances de l'application dans différentes conditions de trafic.">
-                <strong>Nombre d'utilisateurs <span class="required-star">*</span></strong>
-              </label>
-              <input type="text" class="form-control" [(ngModel)]="http_request.nbThreads" name="nbThreads"
-                placeholder="Exemple">
-            </div>
-            <div class="form-group col">
-              <label for="rampTime"
-                title="Le temps nécessaire pour augmenter progressivement le nombre d'utilisateurs simultanés. (ex. 5)">
-                <strong>Temps de montée <span class="required-star"> </span></strong>
-              </label>
-              <input type="text" class="form-control" [(ngModel)]="http_request.rampTime" name="rampTime"
-                placeholder="Exemple">
-            </div>
-            <div class="form-group col">
-              <label for="duration" title="La durée totale du test.">
-                <strong>Durée du test <span class="required-star"> </span></strong>
-              </label>
-              <input type="text" class="form-control" [(ngModel)]="http_request.duration" name="duration"
-                placeholder="Exemple">
-            </div>
-            <div class="form-group col">
-              <label for="loop" title="Le nombre de fois que le test sera répété. (ex. 3)">
-                <strong>Nombre de boucles <span class="required-star">*</span></strong>
-              </label>
-              <input type="text" class="form-control" [(ngModel)]="http_request.loop" name="loop" placeholder="Exemple">
-            </div>
-          </div>
-
-          <!-- Détails de la requête -->
-          <div class="section-title">
-            <h2> Détails de la requête</h2>
-          </div>
-
-
-          <div class="row">
-            <label for="fullUri" title="Addresse http, ">
-              <strong>URI automatique</strong>
-            </label>
-            <input type="text" class="form-control" [(ngModel)]="http_uri" name="http_uri"
-              placeholder="http://localhost:8080" (blur)="parseUri()" />
-          </div>
-
-          <div class="row">
-            <div class="form-group col">
-              <label for="domain" title="Le domaine de l'application à tester. (ex. https://httpbin.org/)">
-                <strong>Domaine <span class="required-star">*</span></strong>
-              </label>
-              <input type="text" class="form-control" [(ngModel)]="http_request.domain" name="domain"
-                placeholder="Exemple">
-            </div>
-            <div class="form-group col">
-              <label for="port" title="Le port à  utiliser pour la connexion.">
-                <strong>Port</strong>
-              </label>
-              <input type="text" class="form-control" [(ngModel)]="http_request.port" name="port" placeholder="Exemple">
-            </div>
-            <div class="form-group col">
-              <label for="protocol" title="Le protocole à utiliser pour la connexion (ex. HTTP, HTTPS).">
-                <strong>Protocole <span class="required-star">*</span></strong>
-              </label>
-              <input type="text" class="form-control" [(ngModel)]="http_request.protocol" name="protocol"
-                placeholder="Exemple">
-            </div>
-            <div class="form-group col">
-              <label for="path" title="Le chemin de l'URL après le domaine et le port. (ex. get)">
-                <strong>Chemin <span class="required-star">*</span></strong>
-              </label>
-              <input type="text" class="form-control" [(ngModel)]="http_request.path" name="path" placeholder="Exemple">
-            </div>
-          </div>
-
-          <!-- Paramètres de la requête -->
-          <div class="section-title">
-            <h2> Paramètres de la requête</h2>
-          </div>
-          <div class="row">
-            <div class="form-group col">
-              <label for="typeRequete" title="Le type de requête à utiliser (ex. GET, POST, PUT, DELETE, PATCH).">
-                <strong>Type de requête <span class="required-star">*</span></strong>
-              </label>
-              <select class="form-control" id="typeRequete" [(ngModel)]="http_request.method" name="methodType">
-                <option disabled selected value="">GET, POST...</option>
-                <option>GET</option>
-                <option>POST</option>
-                <option>PUT</option>
-                <option>DELETE</option>
-                <option>PATCH</option>
-              </select>
-            </div>
-            <div class="form-group col">
-              <label for="data" title="Les données à inclure dans la requête.">
-                <strong>Données</strong>
-              </label>
-              <input type="text" class="form-control" [(ngModel)]="http_request.data" name="data" placeholder="Exemple">
-            </div>
-          </div>
-
-          <div class="row button-row">
-            <button type="button" mat-raised-button class="test-button" color="primary"
-              (click)="onHttpSubmit()">Tester</button>
-          </div>
-        </form>
-
-        <form id="ftp-form" (ngSubmit)="onFtpSubmit()" style="display: none;">
-          <!-- Configuration de base -->
-          <div class="section-title">
-            <h2> Configuration de base FTP</h2>
-          </div>
-          <div class="row">
-            <div class="form-group col">
-              <label for="nbThreadsFtp"
-                title="Le nombre d'utilisateurs simultanés, simulant des charges réalistes pour évaluer les performances de l'application dans différentes conditions de trafic."><strong>Nombre
-                  d'utilisateurs <span class="required-star">*</span></strong></label>
-              <input type="text" class="form-control" [(ngModel)]="ftp_request.nbThreads" name="nbThreadsFtp"
-                placeholder="entrez nombre d'utilisateurs" required>
-            </div>
-            <div class="form-group col">
-              <label for="rampTime"
-                title="Le temps nécessaire pour augmenter progressivement le nombre d'utilisateurs simultanés."><strong>Temps
-                  de montée</strong></label>
-              <input type="text" class="form-control" [(ngModel)]="ftp_request.rampTime" name="rampTime"
-                placeholder="entrez temps de montée">
-            </div>
-            <div class="form-group col">
-              <label for="duration" title="La durée totale du test."><strong>Durée du test</strong></label>
-              <input type="text" class="form-control" [(ngModel)]="ftp_request.duration" name="duration"
-                placeholder="ex 100 secondes">
-            </div>
-            <div class="form-group col">
-              <label for="loopFtp" title=" Indique le nombre de fois que le test sera répété."><strong>Nombre de boucles
-                  <span class="required-star">*</span></strong></label>
-              <input type="text" class="form-control" [(ngModel)]="ftp_request.loop" name="loopFtp"
-                placeholder="1,2,3.." required>
-            </div>
-          </div>
-
-          <!-- Détails de la requête -->
-          <div class="section-title">
-            <h2> Détails de la requête</h2>
-          </div>
-          <div class="row">
-            <div class="form-group col">
-              <label for="domainFtp"
-                title="Définit le domaine de l'application testée (URL du serveur FTP)."><strong>Domaine <span
-                    class="required-star">*</span></strong></label>
-              <input type="text" class="form-control" [(ngModel)]="ftp_request.domain" name="domainFtp"
-                placeholder="ex ftp.testserver.com" required>
-            </div>
-            <div class="form-group col">
-              <label for="port" title="Spécifie le port utilisé pour la connexion FTP."><strong>Port</strong></label>
-              <input type="text" class="form-control" [(ngModel)]="ftp_request.port" name="port" placeholder="ex 21">
-            </div>
-            <div class="form-group col">
-              <label for="method" title="ndique la méthode FTP à utiliser (ex. : Get, Post)."><strong>Type de requête
-                  <span class="required-star">*</span></strong></label>
-              <select class="form-control" id="method" [(ngModel)]="ftp_request.method" name="methodTypeFtp" required>
-                <option disabled selected value="">GET(Retrive), POST(Store)...</option>
-                <option>Retrive</option>
-                <option>Store</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Paramètres de la requête -->
-          <div class="section-title">
-            <h2> Paramètres de la requête</h2>
-          </div>
-          <div class="row">
-            <div class="form-group col">
-              <label for="remotefile"
-                title="Spécifie le chemin d'accès au fichier distant pour les opérations FTP."><strong>Fichier
-                  distant</strong></label>
-              <input type="text" class="form-control" [(ngModel)]="ftp_request.remotefile" name="remotefile"
-                placeholder="jmeter.docx">
-            </div>
-            <div class="form-group col">
-              <label for="localfile"
-                title="Définit le chemin d'accès au fichier local utilisé dans les interactions FTP."><strong>Fichier
-                  local</strong></label>
-              <input type="text" class="form-control" [(ngModel)]="ftp_request.localfile" name="localfile"
-                placeholder="C:/Users/mgl805/Downloads/jmeter.docx">
-            </div>
-          </div>
-
-          <!-- Authentification -->
-          <div class="section-title">
-            <h2>Authentification</h2>
-          </div>
-          <div class="row">
-            <div class="form-group col">
-              <label for="username" title="Représente le nom d'utilisateur FTP pour l'authentification."><strong>Nom
-                  d'utilisateur</strong></label>
-              <input type="text" class="form-control" [(ngModel)]="ftp_request.username" name="username"
-                placeholder="Exemple">
-            </div>
-            <div class="form-group col">
-              <label for="password" title="Spécifie le mot de passe FTP pour l'authentification."><strong>Mot de
-                  passe</strong></label>
-              <input type="password" class="form-control" [(ngModel)]="ftp_request.password" name="password"
-                placeholder="Exemple">
-            </div>
-          </div>
-
-          <div class="row button-row">
-            <button type="button" mat-raised-button class="test-button" color="primary"
-              (click)="onFtpSubmit()">Tester</button>
-          </div>
-        </form>
+      <div class="form-title">
+        <img src="assets/logo/jmeter-logo.png" alt="JMeter Icon" class="jmeter-icon">
+        <span class="hover-text">Apache JMeter : Outil de test de performance</span>
       </div>
+      
+      <div class="ai-generator-panel">
+        <button type="button" class="btn-ai-generate" (click)="toggleAIPrompt()">
+          Générer le test avec IA
+        </button>
+
+        <div class="ai-prompt-box" *ngIf="showAIPrompt">
+          <label><strong>Décrivez le test à générer</strong></label>
+          <textarea class="form-control" [(ngModel)]="aiPrompt" [ngModelOptions]="{standalone: true}" rows="4"
+            placeholder="Ex: Génère un test HTTP GET sur /api/users avec 20 utilisateurs, ramp-up 10s, pendant 2 minutes."></textarea>
+          <button type="button" class="btn-ai-submit" (click)="generateFromPrompt()" [disabled]="aiGenerating">
+            {{ aiGenerating ? 'Génération...' : 'Générer' }}
+          </button>
+        </div>
+      </div>
+
+      <mat-horizontal-stepper [linear]="true" #stepper class="glass-stepper">
+
+        <!-- Step 1: Protocol Selection -->
+        <mat-step [stepControl]="protocolFormGroup">
+          <form [formGroup]="protocolFormGroup">
+            <ng-template matStepLabel>Protocole</ng-template>
+            <div class="step-container">
+              <div class="section-title">
+                <h2>Étape 1: Choisir le protocole</h2>
+              </div>
+              <div class="row justify-content-center">
+                <div class="form-group col-md-6">
+                  <label for="protocol"><strong>Protocole <span class="required-star">*</span></strong></label>
+                  <select class="form-control" formControlName="protocol" id="protocol">
+                    <option value="HTTP">HTTP</option>
+                    <option value="HTTPS">HTTPS</option>
+                    <option value="FTP">FTP</option>
+                  </select>
+                </div>
+              </div>
+              <div class="stepper-actions">
+                <button mat-button matStepperNext class="btn-next">Suivant</button>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 2: Request Details -->
+        <mat-step [stepControl]="detailsFormGroup">
+          <form [formGroup]="detailsFormGroup">
+            <ng-template matStepLabel>Détails</ng-template>
+            <div class="step-container">
+              <div class="section-title">
+                <h2>Étape 2: Détails de la requête ({{ selectedProtocol }})</h2>
+              </div>
+              <div class="row">
+                <div class="form-group col">
+                  <label for="domain"><strong>URL/Domaine <span class="required-star">*</span></strong></label>
+                  <input type="text" class="form-control" formControlName="domain" placeholder="api.example.com">
+                </div>
+                <div class="form-group col-md-3">
+                  <label for="port"><strong>Port</strong></label>
+                  <input type="text" class="form-control" formControlName="port" placeholder="8080">
+                </div>
+              </div>
+
+              <!-- Specific FTP Details (Dynamic) -->
+              <div *ngIf="selectedProtocol === 'FTP'" class="additional-ftp-details">
+                <div class="row">
+                  <div class="form-group col">
+                    <label><strong>Username</strong></label>
+                    <input type="text" class="form-control" [(ngModel)]="ftp_request.username"
+                      [ngModelOptions]="{standalone: true}" placeholder="user">
+                  </div>
+                  <div class="form-group col">
+                    <label><strong>Password</strong></label>
+                    <input type="password" class="form-control" [(ngModel)]="ftp_request.password"
+                      [ngModelOptions]="{standalone: true}" placeholder="****">
+                  </div>
+                </div>
+              </div>
+
+              <div class="stepper-actions">
+                <button mat-button matStepperPrevious class="btn-prev">Retour</button>
+                <button mat-button matStepperNext class="btn-next">Suivant</button>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 3: Parameters & Scenarios -->
+        <mat-step [stepControl]="paramsFormGroup">
+          <form [formGroup]="paramsFormGroup">
+            <ng-template matStepLabel>Paramètres</ng-template>
+            <div class="step-container">
+              <div class="section-title">
+                <h2>Étape 3: Paramètres</h2>
+              </div>
+
+              <div class="row">
+                <div class="form-group col-md-4">
+                  <label><strong>{{ selectedProtocol === 'FTP' ? 'Méthode FTP' : 'Méthode HTTP' }} <span
+                        class="required-star">*</span></strong></label>
+                  <select class="form-control" formControlName="method" *ngIf="selectedProtocol !== 'FTP'">
+                    <option>GET</option>
+                    <option>POST</option>
+                    <option>PUT</option>
+                    <option>DELETE</option>
+                    <option>PATCH</option>
+                  </select>
+                  <select class="form-control" formControlName="method" *ngIf="selectedProtocol === 'FTP'">
+                    <option>Retrieve</option>
+                    <option>Store</option>
+                  </select>
+                </div>
+                <div class="form-group col" *ngIf="selectedProtocol !== 'FTP'">
+                  <label><strong>Chemin <span class="required-star">*</span></strong></label>
+                  <input type="text" class="form-control" formControlName="path" placeholder="/api/v1/resource">
+                </div>
+                <div class="form-group col" *ngIf="selectedProtocol === 'FTP'">
+                  <label><strong>Remote File <span class="required-star">*</span></strong></label>
+                  <input type="text" class="form-control" [(ngModel)]="ftp_request.remotefile"
+                    [ngModelOptions]="{standalone: true}" placeholder="remote/path/file.txt">
+                </div>
+              </div>
+
+              <div class="row" *ngIf="selectedProtocol !== 'FTP'">
+                <div class="form-group col">
+                  <label><strong>Données (Body)</strong></label>
+                  <textarea class="form-control" formControlName="data" placeholder='{"key": "value"}'
+                    rows="3"></textarea>
+                </div>
+              </div>
+
+              <div class="stepper-actions">
+                <button mat-button matStepperPrevious class="btn-prev">Retour</button>
+                <button mat-button matStepperNext class="btn-next">Suivant</button>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 4: Test Configuration -->
+        <mat-step [stepControl]="configFormGroup">
+          <form [formGroup]="configFormGroup">
+            <ng-template matStepLabel>Configuration</ng-template>
+            <div class="step-container">
+              <div class="section-title">
+                <h2>Étape 4: Profil de charge</h2>
+              </div>
+
+              <button type="button" class="btn-scenario-toggle" (click)="toggleGlossary()">
+                <i class="fas" [ngClass]="isGlossaryVisible ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                {{ isGlossaryVisible ? 'Masquer les profils' : 'Appliquer un profil de charge' }}
+              </button>
+
+              <div class="test-types-glossary" *ngIf="isGlossaryVisible">
+                <div class="glossary-header">
+                  <h3>Scénarios préconfigurés</h3>
+                  <span class="glossary-hint">Cliquez sur un type pour charger les paramètres de performance</span>
+                </div>
+                <div class="glossary-grid">
+                  <div class="glossary-item" (click)="selectTestType('smoke')"
+                    title="Vérification rapide des fonctions de base.">
+                    <strong>Smoke Test</strong>
+                    <span>Charge minimale pour valider la stabilité.</span>
+                  </div>
+                  <div class="glossary-item" (click)="selectTestType('load')"
+                    title="Performance sous une charge normale prévue.">
+                    <strong>Load Test</strong>
+                    <span>Simule le trafic utilisateur attendu.</span>
+                  </div>
+                  <div class="glossary-item" (click)="selectTestType('stress')" title="Trouver les limites du système.">
+                    <strong>Stress Test</strong>
+                    <span>Pousse le système jusqu'à ses limites.</span>
+                  </div>
+                  <div class="glossary-item" (click)="selectTestType('spike')" title="Pic de trafic soudain.">
+                    <strong>Spike Test</strong>
+                    <span>Vérifie la robustesse face aux pics.</span>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group col-md-6">
+                  <label><strong>Nombre d'utilisateurs <span class="required-star">*</span></strong></label>
+                  <input type="text" class="form-control" formControlName="nbThreads" placeholder="10">
+                </div>
+                <div class="form-group col-md-6">
+                  <label><strong>Temps de montée (s)</strong></label>
+                  <input type="text" class="form-control" formControlName="rampTime" placeholder="5">
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group col-md-6">
+                  <label><strong>Durée du test (s)</strong></label>
+                  <input type="text" class="form-control" formControlName="duration" placeholder="60">
+                </div>
+                <div class="form-group col-md-6">
+                  <label><strong>Nombre de boucles <span class="required-star">*</span></strong></label>
+                  <input type="text" class="form-control" formControlName="loop" placeholder="1">
+                </div>
+              </div>
+              <div class="stepper-actions">
+                <button mat-button matStepperPrevious class="btn-prev">Retour</button>
+                <button mat-button matStepperNext class="btn-next">Suivant</button>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 5: Review -->
+        <mat-step>
+          <ng-template matStepLabel>Révision</ng-template>
+          <div class="step-container">
+            <div class="section-title">
+              <h2>Étape 5: Récapitulatif</h2>
+            </div>
+
+            <div class="review-card">
+              <div class="review-section">
+                <h4>Cibles</h4>
+                <p><strong>Protocole:</strong> {{ selectedProtocol }}</p>
+                <p><strong>URL:</strong> {{ detailsFormGroup.get('domain')?.value }}</p>
+                <p *ngIf="detailsFormGroup.get('port')?.value"><strong>Port:</strong> {{
+                  detailsFormGroup.get('port')?.value }}</p>
+              </div>
+              <hr>
+              <div class="review-section">
+                <h4>Requête</h4>
+                <p><strong>Méthode:</strong> {{ paramsFormGroup.get('method')?.value }}</p>
+                <p *ngIf="selectedProtocol !== 'FTP'"><strong>Chemin:</strong> {{ paramsFormGroup.get('path')?.value }}
+                </p>
+                <p *ngIf="selectedProtocol === 'FTP'"><strong>Remote File:</strong> {{ ftp_request.remotefile }}</p>
+              </div>
+              <hr>
+              <div class="review-section">
+                <h4>Profil de charge</h4>
+                <div class="row">
+                  <div class="col-md-6">
+                    <p><strong>Nombre d'utilisateurs:</strong> {{ configFormGroup.get('nbThreads')?.value }}</p>
+                    <p><strong>Temps de montée:</strong> {{ configFormGroup.get('rampTime')?.value }}s</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p><strong>Durée:</strong> {{ configFormGroup.get('duration')?.value }}s</p>
+                    <p><strong>Boucles:</strong> {{ configFormGroup.get('loop')?.value }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stepper-actions">
+              <button mat-button matStepperPrevious class="btn-prev">Retour</button>
+              <button mat-button class="btn-launch" (click)="onFinalSubmit()">Lancer le test</button>
+            </div>
+          </div>
+        </mat-step>
+
+      </mat-horizontal-stepper>
     </div>
   </div>

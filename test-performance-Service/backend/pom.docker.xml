@@ -91,7 +91,17 @@
 			<version>4.12.0</version>
 		</dependency>
 
-		<!-- Performance module dependencies removed for Docker build -->
+		<!-- dependencies to other TAF modules -->
+		<dependency>
+			<groupId>ca.etsmtl</groupId>
+			<artifactId>taf-performance-jmeter</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>ca.etsmtl</groupId>
+			<artifactId>taf-performance-gatling</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>

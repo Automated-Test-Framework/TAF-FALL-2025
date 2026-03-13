@@ -17,6 +17,14 @@ public class GatlingTestRequest {
     private String simulationStrategy;
     @JsonAlias("testBaseUrl")
     private String baseUrl;
+
+    public void setBaseUrl(String baseUrl) {
+        if (baseUrl != null && !baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+            this.baseUrl = "http://" + baseUrl;
+        } else {
+            this.baseUrl = baseUrl;
+        }
+    }
     @JsonAlias("testScenarioName")
     private String scenarioName;
     @JsonAlias("testRequestName")

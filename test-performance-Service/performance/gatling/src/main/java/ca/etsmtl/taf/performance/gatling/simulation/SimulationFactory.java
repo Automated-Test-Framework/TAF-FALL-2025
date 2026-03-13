@@ -1,11 +1,8 @@
 package ca.etsmtl.taf.performance.gatling.simulation;
 
-
-import io.gatling.core.scenario.Simulation;
-
 public class SimulationFactory {
     public String getSimulationName(String simulationType) {
-        switch(simulationType) {
+        switch (simulationType) {
             case "DEFAULT":
                 return DefaultSimulation.class.getName();
             case "LOAD_TEST":

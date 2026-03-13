@@ -5,17 +5,24 @@ WORKDIR /build
 # Copy simplified Docker-specific parent POM (backend only)
 COPY pom.docker.xml ./pom.xml
 
-# Copy simplified backend POM (without performance module dependencies)
+# Copy simplified backend POM (with performance module dependencies)
 COPY backend/pom.docker.xml ./backend/pom.xml
+
+# Copy performance POM
+COPY performance/pom.xml ./performance/pom.xml
+COPY performance/gatling/pom.xml ./performance/gatling/pom.xml
+COPY performance/jmeter/pom.xml ./performance/jmeter/pom.xml
 
 # Download dependencies (layer cached)
 RUN mvn dependency:go-offline -B || true
 
-# Copy source code (excluding pom.xml which we already have)
+# Copy source code
 COPY backend/src ./backend/src
+COPY performance/gatling/src ./performance/gatling/src
+COPY performance/jmeter/src ./performance/jmeter/src
 
-# Build the application (backend only)
-RUN mvn clean package -pl backend -DskipTests -B
+# Build the application (including performance modules)
+RUN mvn clean package -DskipTests -B
 
 # Runtime stage with JMeter
 FROM eclipse-temurin:17-jre

@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 
 @Primary
 @Service
@@ -34,8 +33,8 @@ public class GatlingFacadeService implements GatlingFacade {
             resultService.saveTestResults(gatlingRequest, testResponse);
 
             GatlingTestResult results = reportService.getLatestReportResult();
-            return new MessageResponse("Simulation executed successfully: " + output, results);
-        } catch (IOException e) {
+            return new MessageResponse("Simulation finished. Output:\n" + output, results);
+        } catch (Exception e) {
             return new MessageResponse("Error executing simulation: " + e.getMessage(), null);
         }
     }

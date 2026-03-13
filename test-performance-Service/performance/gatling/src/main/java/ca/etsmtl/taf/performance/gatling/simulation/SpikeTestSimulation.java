@@ -34,9 +34,15 @@ public class SpikeTestSimulation extends Simulation {
             return null;
         }
     }
-    private HttpProtocolBuilder httpProtocol = http.baseUrl(gatlingTestRequest.getBaseUrl())
-            .acceptHeader("application/json")
-            .contentTypeHeader("application/json");
+    private HttpProtocolBuilder httpProtocol;
+    private ScenarioBuilder scn;
+
+    private static String ensureProtocol(String url) {
+        if (url != null && !url.startsWith("http://") && !url.startsWith("https://")) {
+            return "http://" + url;
+        }
+        return url;
+    }
 
     private ChainBuilder createHttpRequest() {
         String methodType = gatlingTestRequest.getMethodType();
@@ -69,10 +75,22 @@ public class SpikeTestSimulation extends Simulation {
                 .check(status().not(404), status().not(500)));
     }
 
-    private ScenarioBuilder scn = scenario(gatlingTestRequest.getScenarioName())
+    private ScenarioBuilder createScenario() {
+        return scenario(gatlingTestRequest.getScenarioName())
                 .exec(createHttpRequest());
+    }
 
     {
+        if (gatlingTestRequest == null) {
+            throw new RuntimeException("Could not parse GatlingTestRequest from property requestJson: " + requestJson);
+        }
+
+        this.httpProtocol = http.baseUrl(ensureProtocol(gatlingTestRequest.getBaseUrl()))
+                .acceptHeader("application/json")
+                .contentTypeHeader("application/json");
+
+        this.scn = createScenario();
+
         List<Assertion> assertions = new ArrayList<>();
 
         if (gatlingTestRequest.getMeanResponseTime() >= 0) {
@@ -83,7 +101,7 @@ public class SpikeTestSimulation extends Simulation {
             assertions.add(global().failedRequests().percent().lt(gatlingTestRequest.getFailedRequestsPercent()));
         }
 
-        if (gatlingTestRequest.getResponseTimePerPercentile().size() > 0) {
+        if (gatlingTestRequest.getResponseTimePerPercentile() != null && gatlingTestRequest.getResponseTimePerPercentile().size() > 0) {
             for(GatlingTestRequestPercentileResponseTime assertion : gatlingTestRequest.getResponseTimePerPercentile()){
                 assertions.add(global().responseTime().percentile(assertion.getPercentile()).lt(assertion.getResponseTime()));
             }

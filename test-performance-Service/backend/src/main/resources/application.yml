@@ -8,9 +8,9 @@ spring:
 
   data:
     mongodb:
-      uri: ${DB_URI}
-      authentication-database: ${DB_AUTH}
-      database: ${DB_NAME}
+      uri: ${DB_URI:mongodb://admin:admin123@mongodb:27017/taf?authSource=admin}
+      authentication-database: ${DB_AUTH:admin}
+      database: ${DB_NAME:taf}
       auto-index-creation: true
 
   jpa:

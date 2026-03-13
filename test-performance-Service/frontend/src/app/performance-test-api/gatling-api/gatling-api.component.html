@@ -2,8 +2,8 @@
   <div id="myModal" class="modal">
     <div class="modal-content">
       <div class="modal-header" [ngClass]="{ 'failure': testResult && !isSuccessfull() }">
-        <span class="close" (click)="closeModal()">&times;</span>
         <h2>Résultat de test</h2>
+        <span class="close" (click)="closeModal()">&times;</span>
       </div>
       <div class="modal-body">
         <!--Start: The test is successful -->
@@ -14,27 +14,32 @@
         <!--Start: The test fails-->
         <span *ngIf="testResult && !isSuccessfull()" class="result-icon test-result-failure">&#10060;</span>
         <p *ngIf="testResult == null || !isSuccessfull()">Certains critères d’acceptation n’ont pas été validés.</p>
+        <p *ngIf="testResult?.reportGenerated" class="text-success">
+          <mat-icon>assessment</mat-icon> Le rapport Gatling a été généré avec succès.
+        </p>
         <!--End: test fails-->
 
         <table *ngIf="testResult" class="assertions-table">
           <thead>
-          <tr>
-            <th>Assertion</th>
-            <th>Valeur</th>
-            <th>Statut</th>
-          </tr>
+            <tr>
+              <th>Assertion</th>
+              <th>Valeur</th>
+              <th>Statut</th>
+            </tr>
           </thead>
           <tbody>
-          <tr [ngClass]="assertion.result ? 'assertion-success' : 'assertion-fail'" *ngFor="let assertion of testResult.assertions">
-            <td>{{ assertion.message }}</td>
-            <td>{{ assertion.actualValue}}</td>
-            <td>{{ assertion.result ? 'SUCCÈS' : 'ÉCHEC' }}</td>
-          </tr>
+            <tr [ngClass]="assertion.result ? 'assertion-success' : 'assertion-fail'"
+              *ngFor="let assertion of testResult.assertions">
+              <td>{{ assertion.message }}</td>
+              <td>{{ assertion.actualValue}}</td>
+              <td>{{ assertion.result ? 'SUCCÈS' : 'ÉCHEC' }}</td>
+            </tr>
           </tbody>
         </table>
 
-        <button mat-raised-button class="showbutton" color="primary" (click)="showLatestReport()">Afficher le rapport
-        </button>
+        <a mat-raised-button class="linkbutton" color="primary" [href]="getLatestReportUrl()" target="_blank">Afficher
+          le rapport
+        </a>
       </div>
       <div class="modal-footer">
         <button mat-raised-button class="newtestbutton" color="accent" (click)="newTest()">Nouveau Test</button>
@@ -44,262 +49,323 @@
   </div>
 
   <div class="main">
-    <div class="content">
-      <form (ngSubmit)="onSubmit()">
-        <div class="form-title">
-          <!-- <h1>Configuration de test</h1> -->
-          <img src="assets/logo/Gatling-logo-RVB.png" alt="Gatling Logo" class="gatling-logo"
-               matTooltip="Gatling est un outil de test de performance open-source qui évalue la réactivité des applications web et des API. Pour lancer un test avec Gatling, vous avez besoin de définir la configuration de l'application à tester.">
-        </div>
+    <div class="content glass-stepper">
+      <div class="form-title text-center">
+        <img src="assets/logo/Gatling-logo-RVB.png" alt="Gatling Logo" class="gatling-logo"
+          matTooltip="Gatling est un outil de test de performance open-source qui évalue la réactivité des applications web et des API.">
+      </div>
 
-        <div class="form-subtitle">
-          <h1>Requête de test</h1>
-        </div>
-
-        <div class="form-group dropdown-wrapper">
-          <label for="strategySelect"><strong>Stratégie de test</strong></label>
-          <select class="form-control" id="strategySelect"  name="strategySelect" [(ngModel)]="selectedStrategy" (change)="onStrategySelect()">
-            <option *ngFor="let strategy of strategies" [value]="strategy">
-              {{ strategy }}
-          </select>
-        </div>
-
-        <div class="row">
-          <div class="form-group col">
-            <label for="scenarioName"><b>Nom de scénario <span class="required-star">*</span></b></label>
-            <span mat-icon-button matTooltip="Nom unique pour identifier le scénario de test.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="text" class="form-control" id="scenarioName" [(ngModel)]="request.testScenarioName"
-                   name="testScenarioName" placeholder="Exemple">
-          </div>
-          <div class="form-group col">
-            <label for="requestName"><b>Nom de la requête</b></label>
-            <span mat-icon-button matTooltip="Nom unique pour identifier la requête de test.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="text" class="form-control" id="requestName" [(ngModel)]="request.testRequestName"
-                   name="testRequestName" placeholder="Exemple">
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="form-group col">
-            <label for="baseUrl"><b>Url de base <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="L'URL de base de l'application à tester, pour indiquer l'emplacement précis de l'application ou de l'API à tester.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="text" class="form-control" id="baseUrl" [(ngModel)]="request.testBaseUrl" name="testBaseUrl"
-                   placeholder="https://exemple.api.domain">
-          </div>
-          <div class="form-group col">
-            <label for="params"><b>Paramètres de requête <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Les paramètres que l'on inclut dans une URL pour transmettre des données.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="text" class="form-control" id="params" [(ngModel)]="request.testUri" name="testUri"
-                   placeholder="/params?param=exemple&page=1">
-          </div>
-          <div class="form-group col">
-            <label for="typeRequete"><b>Type de requête <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le type de requête (GET, POST, etc.) que vous souhaitez tester,  définit le comportement de l'utilisateur virtuel dans le scénario de test.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <select class="form-control" id="typeRequete" [(ngModel)]="request.testMethodType" name="testMethodType">
-              <option disabled selected value="">GET, POST...</option>
-              <option>GET</option>
-              <option>POST</option>
-              <option>PUT</option>
-              <option>DELETE</option>
-              <option>PATCH</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="requestBody"><b>Corps de la requête</b></label>
-          <span mat-icon-button matTooltip="Le corps de la requête HTTP.">
-            <mat-icon>info</mat-icon>
-          </span>
-          <textarea class="form-control" id="requestBody" [(ngModel)]="request.testRequestBody" name="requestBody"
-                    rows="5"></textarea>
-        </div>
-
-        <div *ngIf="[strategiesEnum.DEFAULT.valueOf(), strategiesEnum.LOAD_TEST.valueOf()].includes(request.simulationStrategy)" class="row">
-          <div class="form-group col">
-            <label for="testUsersNumber"><b>Nombre d'utilisateurs (sur durée de montée)<span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le nombre d'utilisateurs par seconde dans une duree de montée.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="number" class="form-control" id="testUsersNumber" [(ngModel)]="request.testUsersNumber"
-                   name="testUsersNumber">
-          </div>
-          <div class="form-group col">
-            <label for="testRampUpDuration"><b>Durée de montée (en Seconde)<span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le nombre d'utilisateurs dans une duree de montée.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="number" class="form-control" id="testRampUpDuration" [(ngModel)]="request.testRampUpDuration"
-                   name="testRampUpDuration">
-          </div>
-        </div>
-
-        <div *ngIf="[strategiesEnum.STRESS_TEST.valueOf()].includes(request.simulationStrategy)" class="row">
-          <div class="form-group col">
-            <label for="testUserRampUpPerSecondMin"><b>Nombre d'utilisateurs au départ <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le nombre d'utilisateurs au début de la montée.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="number" class="form-control" id="testUserRampUpPerSecondMin" [(ngModel)]="request.testUserRampUpPerSecondMin"
-                   name="testUserRampUpPerSecondMin">
-          </div>
-          <div class="form-group col">
-            <label for="testUserRampUpPerSecondMax"><b>Nombre d'utilisateurs à la fin <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le nombre d'utilisateurs à la fin de la montée.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="number" class="form-control" id="testUserRampUpPerSecondMax" [(ngModel)]="request.testUserRampUpPerSecondMax"
-                   name="testUserRampUpPerSecondMax">
-          </div>
-          <div class="form-group col">
-            <label for="testUserRampUpPerSecondDuration"><b>Durée de la montée (en Seconde) <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le nombre d'utilisateurs à la fin de la montée.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="number" class="form-control" id="testUserRampUpPerSecondDuration" [(ngModel)]="request.testUserRampUpPerSecondDuration"
-                   name="testUserRampUpPerSecondDuration">
-          </div>
-        </div>
-
-        <div *ngIf="[strategiesEnum.SPIKE_TEST.valueOf()].includes(request.simulationStrategy)" class="row">
-          <div class="form-group col">
-            <label for="testConstantUsers"><b>Nombre d'utilisateurs constants par seconde <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le nombre d'utilisateurs constant par seconde sur la durée spécifiée.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="number" class="form-control" id="testConstantUsers" [(ngModel)]="request.testConstantUsers"
-                   name="testConstantUsers">
-          </div>
-          <div class="form-group col">
-            <label for="testConstantUsersDuration"><b>Durée (en Seconde) <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le nombre d'utilisateurs à la fin de la montée.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="number" class="form-control" id="testConstantUsersDuration" [(ngModel)]="request.testConstantUsersDuration"
-                   name="testConstantUsersDuration">
-          </div>
-        </div>
-
-        <div *ngIf="[strategiesEnum.SPIKE_TEST.valueOf(), strategiesEnum.SMOKE_TEST.valueOf()].includes(request.simulationStrategy)" class="row">
-          <div class="form-group col">
-            <label for="testUsersAtOnce"><b>Nombre d'utilisateurs simultanés <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le nombre d'utilisateurs simultanés.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="number" class="form-control" id="testUsersAtOnce" [(ngModel)]="request.testUsersAtOnce"
-                   name="testUsersAtOnce">
-          </div>
-        </div>
-
-        <div class="form-subtitle" style="margin-top: 50px">
-          <h1>Critères d’acceptation</h1>
-        </div>
-
-        <div class="row">
-          <div class="form-group col">
-            <label for="meanResponseTime"><b>Temps de réponse moyen (ms) <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le temps de réponse moyen (en ms) attendu. Pour valider ce critère, le temps de réponse moyen devra être inférieur à la valeure choisie.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="text" class="form-control" id="meanResponseTime" [(ngModel)]="request.assertionMeanResponseTime"
-                   name="assertionMeanResponseTime" placeholder="50">
-          </div>
-          <div class="form-group col">
-            <label for="failedRequestsPercent"><b>Pourcentage d'échecs (%) <span class="required-star">*</span></b></label>
-            <span mat-icon-button
-                  matTooltip="Le pourcentage d'échec maximum toléré. Pour valider ce critère, le pourcentage d'échec devra être inférieur à la valeure choisie.">
-              <mat-icon>info</mat-icon>
-            </span>
-            <input type="text" class="form-control" id="failedRequestsPercent" [(ngModel)]="request.assertionFailedRequestsPercent"
-                   name="assertionFailedRequestsPercent" placeholder="2">
-          </div>
-        </div>
-
-        <div class="form-subtitle" style="margin-top: 20px">
-          <label><b>Temps de réponse par percentile</b></label>
-        </div>
-
-        <div class="row">
-            <div class="form-group dropdown-wrapper col">
-              <label><b>Percentile (%)</b></label>
-              <select class="form-control" [(ngModel)]="newPercentile" name="newPercentile">
-                <option *ngFor="let p of percentiles" [value]="p">{{ p }}%</option>
-              </select>
+      <mat-horizontal-stepper linear #stepper>
+        <!-- Step 1: Scenario Setup -->
+        <mat-step [stepControl]="setupFormGroup">
+          <form [formGroup]="setupFormGroup">
+            <ng-template matStepLabel>Configuration</ng-template>
+            <div class="step-container">
+              <div class="section-title">
+                <h2>Étape 1: Configuration du scénario</h2>
+              </div>
+              <div class="row">
+                <div class="form-group col-md-6">
+                  <label><strong>Nom du scénario <span class="required-star">*</span></strong></label>
+                  <input type="text" class="form-control" formControlName="testScenarioName"
+                    placeholder="Scénario Test">
+                </div>
+                <div class="form-group col-md-6">
+                  <label><strong>Nom de la requête</strong></label>
+                  <input type="text" class="form-control" formControlName="testRequestName" placeholder="Requête Test">
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group col">
+                  <label><strong>URL de base <span class="required-star">*</span></strong></label>
+                  <input type="text" class="form-control" formControlName="testBaseUrl"
+                    placeholder="https://api.monsite.com">
+                </div>
+              </div>
+              <div class="stepper-actions">
+                <span></span>
+                <button mat-button matStepperNext class="btn-next">Suivant</button>
+              </div>
             </div>
-            <div class="form-group col">
-              <label><b>Temps max de réponse (ms)</b></label>
-              <input type="number" class="form-control" [(ngModel)]="newResponseTime"
-                     name="newResponseTime">
-            </div>
-            <div class="form-group col" style="display: flex; align-items: flex-end;">
-              <button mat-raised-button color="accent" type="button" (click)="addPercentile()">Ajouter</button>
-            </div>
-          </div>
+          </form>
+        </mat-step>
 
-        <table class="table table-bordered request-assertions-table">
-          <thead>
-          <tr>
-            <th>Percentile (%)</th>
-            <th>Temps de réponse (ms)</th>
-            <th>Actions</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr *ngFor="let item of request.assertionsResponseTimePerPercentile; let i = index">
-            <td>
-              <input
-                type="number"
-                class="form-control"
-                [(ngModel)]="item.percentile"
-                name="percentile_{{ i }}"
-              />
-            </td>
-            <td>
-              <input
-                type="number"
-                class="form-control"
-                [(ngModel)]="item.responseTime"
-                name="responseTime_{{ i }}"
-              />
-            </td>
-            <td>
-              <button mat-icon-button color="warn" (click)="removePercentile(i)">
-                <mat-icon>delete</mat-icon>
+        <!-- Step 2: Request Details -->
+        <mat-step [stepControl]="requestFormGroup">
+          <form [formGroup]="requestFormGroup">
+            <ng-template matStepLabel>Requête</ng-template>
+            <div class="step-container">
+              <div class="section-title">
+                <h2>Étape 2: Détails de la requête</h2>
+              </div>
+              <div class="row">
+                <div class="form-group col-md-4">
+                  <label><strong>Méthode HTTP <span class="required-star">*</span></strong></label>
+                  <select class="form-control" formControlName="testMethodType">
+                    <option>GET</option>
+                    <option>POST</option>
+                    <option>PUT</option>
+                    <option>DELETE</option>
+                    <option>PATCH</option>
+                  </select>
+                </div>
+                <div class="form-group col-md-8">
+                  <label><strong>Chemin (URI) <span class="required-star">*</span></strong></label>
+                  <input type="text" class="form-control" formControlName="testUri" placeholder="/v1/users/login">
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group col">
+                  <label><strong>Corps de la requête (JSON)</strong></label>
+                  <textarea class="form-control" formControlName="testRequestBody" rows="5"
+                    placeholder='{ "username": "test" }'></textarea>
+                </div>
+              </div>
+              <div class="stepper-actions">
+                <button mat-button matStepperPrevious class="btn-prev">Retour</button>
+                <button mat-button matStepperNext class="btn-next">Suivant</button>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 3: Load Profile -->
+        <mat-step [stepControl]="strategyFormGroup">
+          <form [formGroup]="strategyFormGroup">
+            <ng-template matStepLabel>Profil de charge</ng-template>
+            <div class="step-container">
+              <div class="section-title">
+                <h2>Étape 3: Profil de charge</h2>
+              </div>
+
+              <button type="button" class="btn-scenario-toggle" (click)="toggleGlossary()">
+                <i class="fas" [ngClass]="isGlossaryVisible ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                {{ isGlossaryVisible ? 'Masquer les profils' : 'Appliquer un profil de charge' }}
               </button>
-            </td>
-          </tr>
-          </tbody>
-        </table>
 
-        <div class="row button-row">
-          <div class="col-12 text-center">
-            <button mat-raised-button class="test-button" color="primary" type="submit">Tester</button>
+              <div class="test-types-glossary" *ngIf="isGlossaryVisible">
+                <div class="glossary-header">
+                  <h3>Scénarios préconfigurés</h3>
+                  <span class="glossary-hint">Cliquez sur un type pour charger les paramètres de performance</span>
+                </div>
+                <div class="glossary-grid">
+                  <div class="glossary-item" (click)="selectTestType('smoke')"
+                    title="Vérification rapide des fonctions de base.">
+                    <strong>Smoke Test</strong>
+                    <span>Charge minimale pour valider la stabilité.</span>
+                  </div>
+                  <div class="glossary-item" (click)="selectTestType('load')"
+                    title="Performance sous une charge normale prévue.">
+                    <strong>Load Test</strong>
+                    <span>Simule le trafic utilisateur attendu.</span>
+                  </div>
+                  <div class="glossary-item" (click)="selectTestType('stress')" title="Trouver les limites du système.">
+                    <strong>Stress Test</strong>
+                    <span>Pousse le système jusqu'à ses limites.</span>
+                  </div>
+                  <div class="glossary-item" (click)="selectTestType('spike')" title="Pic de trafic soudain.">
+                    <strong>Spike Test</strong>
+                    <span>Vérifie la robustesse face aux pics.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="form-group col">
+                  <label><strong>Type de test</strong></label>
+                  <select class="form-control" formControlName="simulationStrategy">
+                    <option *ngFor="let s of strategies" [value]="s">{{ s }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Strategy Specific Fields -->
+              <div *ngIf="['DEFAULT', 'LOAD_TEST'].includes(selectedStrategy)" class="row animate-fade">
+                <div class="form-group col-md-6">
+                  <label><strong>Utilisateurs totaux <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="testUsersNumber">
+                </div>
+                <div class="form-group col-md-6">
+                  <label><strong>Durée de montée (s) <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="testRampUpDuration">
+                </div>
+              </div>
+
+              <div *ngIf="selectedStrategy === 'STRESS_TEST'" class="row animate-fade">
+                <div class="form-group col-md-4">
+                  <label><strong>Users Min <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="testUserRampUpPerSecondMin">
+                </div>
+                <div class="form-group col-md-4">
+                  <label><strong>Users Max <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="testUserRampUpPerSecondMax">
+                </div>
+                <div class="form-group col-md-4">
+                  <label><strong>Durée (s) <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="testUserRampUpPerSecondDuration">
+                </div>
+              </div>
+
+              <div *ngIf="selectedStrategy === 'SPIKE_TEST'" class="row animate-fade">
+                <div class="form-group col-md-4">
+                  <label><strong>Users Constants <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="testConstantUsers">
+                </div>
+                <div class="form-group col-md-4">
+                  <label><strong>Durée (s) <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="testConstantUsersDuration">
+                </div>
+                <div class="form-group col-md-4">
+                  <label><strong>Users à l'instant t <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="testUsersAtOnce">
+                </div>
+              </div>
+
+              <div *ngIf="selectedStrategy === 'SMOKE_TEST'" class="row animate-fade">
+                <div class="form-group col">
+                  <label><strong>Users At Once <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="testUsersAtOnce">
+                </div>
+              </div>
+
+              <div class="stepper-actions">
+                <button mat-button matStepperPrevious class="btn-prev">Retour</button>
+                <button mat-button matStepperNext class="btn-next">Suivant</button>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 4: Acceptance Criteria -->
+        <mat-step [stepControl]="criteriaFormGroup">
+          <form [formGroup]="criteriaFormGroup">
+            <ng-template matStepLabel>Validation</ng-template>
+            <div class="step-container">
+              <div class="section-title">
+                <h2>Étape 4: Critères d'acceptation</h2>
+              </div>
+              <div class="row">
+                <div class="form-group col-md-6">
+                  <label><strong>Temps moyen max (ms) <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="assertionMeanResponseTime">
+                </div>
+                <div class="form-group col-md-6">
+                  <label><strong>% Échecs max toléré (%) <span class="required-star">*</span></strong></label>
+                  <input type="number" class="form-control" formControlName="assertionFailedRequestsPercent">
+                </div>
+              </div>
+
+              <div class="divider"></div>
+              <h4>Temps de réponse par percentile</h4>
+              <div class="row align-items-end">
+                <div class="form-group col-md-4">
+                  <label><strong>Percentile (%)</strong></label>
+                  <select class="form-control" [(ngModel)]="newPercentile" [ngModelOptions]="{standalone: true}">
+                    <option *ngFor="let p of percentiles" [value]="p">{{ p }}%</option>
+                  </select>
+                </div>
+                <div class="form-group col-md-4">
+                  <label><strong>Temps max (ms)</strong></label>
+                  <input type="number" class="form-control" [(ngModel)]="newResponseTime"
+                    [ngModelOptions]="{standalone: true}">
+                </div>
+                <div class="form-group col-md-4">
+                  <button mat-raised-button type="button" (click)="addPercentile()"
+                    class="btn-add-percentile w-100">Ajouter</button>
+                </div>
+              </div>
+
+              <table class="table table-custom mt-3" *ngIf="request.assertionsResponseTimePerPercentile.length > 0">
+                <thead>
+                  <tr>
+                    <th>Percentile (%)</th>
+                    <th>Seuil (ms)</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of request.assertionsResponseTimePerPercentile; let i = index">
+                    <td>{{ item.percentile }}%</td>
+                    <td>{{ item.responseTime }}ms</td>
+                    <td>
+                      <button mat-icon-button color="warn" (click)="removePercentile(i)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="stepper-actions">
+                <button mat-button matStepperPrevious class="btn-prev">Retour</button>
+                <button mat-button matStepperNext class="btn-next">Suivant</button>
+              </div>
+            </div>
+          </form>
+        </mat-step>
+
+        <!-- Step 5: Review -->
+        <mat-step>
+          <ng-template matStepLabel>Révision</ng-template>
+          <div class="step-container">
+            <div class="section-title">
+              <h2>Étape 5: Récapitulatif</h2>
+            </div>
+
+            <div class="review-card">
+              <div class="review-section">
+                <h4>Scénario & Requête</h4>
+                <p><strong>Nom:</strong> {{ setupFormGroup.value.testScenarioName }}</p>
+                <p><strong>Cible:</strong> {{ setupFormGroup.value.testBaseUrl }}{{ requestFormGroup.value.testUri }}
+                </p>
+                <p><strong>Méthode:</strong> {{ requestFormGroup.value.testMethodType }}</p>
+              </div>
+              <hr>
+              <div class="review-section">
+                <h4>Profil de charge</h4>
+                <p><strong>Type:</strong> {{ strategyFormGroup.value.simulationStrategy }}</p>
+                <p *ngIf="['DEFAULT', 'LOAD_TEST'].includes(selectedStrategy)">
+                  <strong>Utilisateurs:</strong> {{ strategyFormGroup.value.testUsersNumber }} |
+                  <strong>Montée:</strong> {{ strategyFormGroup.value.testRampUpDuration }}s
+                </p>
+              </div>
+              <hr>
+              <div class="review-section">
+                <h4>Seuils</h4>
+                <p><strong>Temps moyen:</strong>
+                  < {{ criteriaFormGroup.value.assertionMeanResponseTime }}ms</p>
+                    <p><strong>Échecs:</strong>
+                      < {{ criteriaFormGroup.value.assertionFailedRequestsPercent }}%</p>
+              </div>
+            </div>
+
+            <div class="stepper-actions">
+              <button mat-button matStepperPrevious class="btn-prev">Retour</button>
+              <button mat-raised-button color="primary" class="btn-launch" (click)="onFinalSubmit()">
+                Lancer le test Gatling
+              </button>
+            </div>
           </div>
-        </div>
-        <div [ngBusy]="busy"></div>
-      </form>
+        </mat-step>
+      </mat-horizontal-stepper>
+      <div [ngBusy]="busy"></div>
+    </div>
+  </div>
+
+  <!-- Modal pour afficher le rapport Gatling -->
+  <div id="reportModal" class="modal">
+    <div class="modal-content report-modal-content">
+      <div class="modal-header">
+        <h2>Rapport Gatling</h2>
+        <span class="close" (click)="closeReportModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="latestReportContent" [innerHTML]="latestReportContent"></div>
+        <p *ngIf="!latestReportContent">Chargement du rapport...</p>
+      </div>
+      <div class="modal-footer">
+        <button mat-raised-button color="primary" (click)="closeReportModal()">Fermer</button>
+      </div>
     </div>
   </div>
 </div>

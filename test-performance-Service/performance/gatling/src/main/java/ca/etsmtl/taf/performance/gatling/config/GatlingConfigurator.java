@@ -8,7 +8,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.resource.EncodedResourceResolver;
+import org.springframework.web.servlet.resource.PathResourceResolver;
 
 import java.io.File;
 import java.util.Arrays;
@@ -35,14 +35,19 @@ public class GatlingConfigurator implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
-        String resourceLocation = GATLING_RESULTS_FOLDER.toPath().toUri().toString(); // ToUri() puts trailing slash  
-        logger.info("Configuration du gestionnaire de ressources pour: {}", resourceLocation); //Pour les logs
-        
-        registry.addResourceHandler("/reports/performance/gatling/dashboard/**")
-               .addResourceLocations(resourceLocation)
-               .setCachePeriod(3600)  // Cache les ressources pendant 1 heure
-               .resourceChain(true)  // Active la chaîne de ressources
-               .addResolver(new EncodedResourceResolver());
+        String location = "file:" + GATLING_RESULTS_FOLDER.getAbsolutePath() + "/";
+        registry.addResourceHandler(
+                "/api/performance/reports-gatling/**", 
+                "/team3/api/performance/reports-gatling/**",
+                "/api/reports-gatling/**",
+                "/team3/api/reports-gatling/**",
+                "/reports-gatling/**"
+            )
+               .addResourceLocations(location)
+               .setCachePeriod(3600)
+               .resourceChain(true)
+               .addResolver(new PathResourceResolver());
+        logger.info("Gatling resource handler configured for location: {}", location);
     }
 
     private void createGatlingResultsFolder() {

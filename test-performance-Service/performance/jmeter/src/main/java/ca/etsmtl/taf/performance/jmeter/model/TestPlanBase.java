@@ -31,9 +31,20 @@ public abstract class TestPlanBase {
             xmlContent = replaceVariables(xmlContent, templateKey);
             Files.writeString(Paths.get(target), xmlContent);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to replace and save variables in test plan: " + e.getMessage(), e);
         }
     }
 
     protected abstract String replaceVariables(String xmlContent, String templateKey);
+
+    protected String escapeXml(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;");
+    }
 }
