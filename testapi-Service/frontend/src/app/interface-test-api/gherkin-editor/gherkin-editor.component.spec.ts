@@ -102,9 +102,9 @@ describe('GherkinEditorComponent', () => {
 
   // ── getHighlightedHtml() ──────────────────────────────
 
-  it('should return empty string for empty text', () => {
+  it('should return single newline for empty text', () => {
     component.gherkinText = '';
-    expect(component.getHighlightedHtml()).toBe('');
+    expect(component.getHighlightedHtml()).toBe('\n');
   });
 
   it('should highlight Feature keyword', () => {

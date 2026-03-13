@@ -29,7 +29,10 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
         // Only attempt refresh on 401 errors and if the request is not itself a refresh/auth request
-        if (error.status === 401 && !req.url.includes('/api/auth/') && !req.url.includes('/auth/api/')) {
+        if (error.status === 401
+            && !req.url.includes('/api/auth/')
+            && !req.url.includes('/auth/api/')
+            && !req.url.includes('/oauth2/')) {
           return this.handle401Error(authReq, next);
         }
         return throwError(() => error);
@@ -53,15 +56,6 @@ export class AuthInterceptor implements HttpInterceptor {
             const newAccessToken = response.token || response.accessToken;
             const newRefreshToken = response.refreshToken || response.refresh;
 
-            if (!newAccessToken) {
-              this.isRefreshing = false;
-              this.refreshTokenSubject.error(new Error('No access token in refresh response'));
-              this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
-              this.tokenService.signOut();
-              window.location.href = '/login';
-              return throwError(() => new Error('No access token in refresh response'));
-            }
-
             this.tokenService.saveToken(newAccessToken);
             if (newRefreshToken) {
               this.tokenService.saveRefreshToken(newRefreshToken);
@@ -76,8 +70,6 @@ export class AuthInterceptor implements HttpInterceptor {
           catchError((err) => {
             // Refresh token is also invalid — force logout
             this.isRefreshing = false;
-            this.refreshTokenSubject.error(err);
-            this.refreshTokenSubject = new BehaviorSubject<string | null>(null);
             this.tokenService.signOut();
             window.location.href = '/login';
             return throwError(() => err);

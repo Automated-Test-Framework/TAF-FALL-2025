@@ -172,4 +172,120 @@ describe('Service: TestApi', () => {
     expect(tests[0].apiUrl).toBe('https://loaded.com');
     expect(tests[1].mongoId).toBe('def');
   });
+
+  it('should update actualResponseTime from execution results', () => {
+    service.addTestOnList({
+      id: 0, method: 'GET', apiUrl: 'https://a.com',
+      headers: {}, expectedHeaders: {}, statusCode: 200,
+    });
+    httpMock.expectOne(r => r.method === 'POST').flush({ id: 'm1' });
+
+    service.updateTestsStatusExecution([
+      { id: 1, stutsCode: 200, output: '{}', fieldAnswer: null, answer: true, messages: [], actualResponseTime: 123 }
+    ]);
+
+    let tests: testModel2[] = [];
+    service.tests$.subscribe(t => tests = t);
+
+    expect(tests[0].actualResponseTime).toBe(123);
+    expect(tests[0].responseStatus).toBe(true);
+  });
+
+  it('should show timeout message in messages when test times out', () => {
+    service.addTestOnList({
+      id: 0, method: 'GET', apiUrl: 'https://slow.com',
+      headers: {}, expectedHeaders: {}, statusCode: 200, responseTime: 5000,
+    });
+    httpMock.expectOne(r => r.method === 'POST').flush({ id: 'm1' });
+
+    service.updateTestsStatusExecution([
+      { id: 1, stutsCode: -1, output: '', fieldAnswer: null, answer: false,
+        messages: ['⏱ Timeout : La requête vers https://slow.com a dépassé le délai d\'attente (10050 ms)'],
+        actualResponseTime: 10050 }
+    ]);
+
+    let tests: testModel2[] = [];
+    service.tests$.subscribe(t => tests = t);
+
+    expect(tests[0].responseStatus).toBe(false);
+    expect(tests[0].actualResponseTime).toBe(10050);
+    expect(tests[0].messages!.length).toBe(1);
+    expect(tests[0].messages![0]).toContain('Timeout');
+  });
+
+  it('should preserve responseTime (max) distinct from actualResponseTime', () => {
+    service.addTestOnList({
+      id: 0, method: 'GET', apiUrl: 'https://a.com',
+      headers: {}, expectedHeaders: {}, statusCode: 200, responseTime: 5000,
+    });
+    httpMock.expectOne(r => r.method === 'POST').flush({ id: 'm1' });
+
+    service.updateTestsStatusExecution([
+      { id: 1, stutsCode: 200, output: '{}', fieldAnswer: null, answer: true, messages: [], actualResponseTime: 250 }
+    ]);
+
+    let tests: testModel2[] = [];
+    service.tests$.subscribe(t => tests = t);
+
+    expect(tests[0].responseTime).toBe(5000);
+    expect(tests[0].actualResponseTime).toBe(250);
+  });
+
+  it('should update a single test result progressively', () => {
+    service.addTestOnList({ id: 0, method: 'GET', apiUrl: 'https://a.com', headers: {}, expectedHeaders: {}, statusCode: 200 });
+    httpMock.expectOne(r => r.method === 'POST').flush({ id: 'm1' });
+    service.addTestOnList({ id: 0, method: 'GET', apiUrl: 'https://b.com', headers: {}, expectedHeaders: {}, statusCode: 200 });
+    httpMock.expectOne(r => r.method === 'POST').flush({ id: 'm2' });
+
+    // Update only the second test
+    service.updateSingleTestResult(1, { id: 2, stutsCode: 200, output: '{}', fieldAnswer: null, answer: true, messages: [], actualResponseTime: 500 });
+
+    let tests: testModel2[] = [];
+    service.tests$.subscribe(t => tests = t);
+
+    expect(tests[0].responseStatus).toBeUndefined(); // first test not updated yet
+    expect(tests[1].responseStatus).toBe(true);
+    expect(tests[1].actualResponseTime).toBe(500);
+  });
+
+  it('should clear test results without removing tests', () => {
+    service.addTestOnList({ id: 0, method: 'GET', apiUrl: 'https://a.com', headers: {}, expectedHeaders: {}, statusCode: 200 });
+    httpMock.expectOne(r => r.method === 'POST').flush({ id: 'm1' });
+
+    // Set a result first
+    service.updateSingleTestResult(0, { id: 1, stutsCode: 200, output: '{}', fieldAnswer: null, answer: true, messages: [], actualResponseTime: 100 });
+
+    // Now clear results
+    service.clearTestResults();
+
+    let tests: testModel2[] = [];
+    service.tests$.subscribe(t => tests = t);
+
+    expect(tests.length).toBe(1); // test still exists
+    expect(tests[0].responseStatus).toBeUndefined(); // result cleared
+    expect(tests[0].actualResponseTime).toBeUndefined();
+  });
+
+  it('should execute tests progressively and emit results individually', (done) => {
+    service.addTestOnList({ id: 0, method: 'GET', apiUrl: 'https://a.com', headers: {}, expectedHeaders: {}, statusCode: 200 });
+    httpMock.expectOne(r => r.method === 'POST' && r.url.includes('/definitions')).flush({ id: 'm1' });
+    service.addTestOnList({ id: 0, method: 'POST', apiUrl: 'https://b.com', headers: {}, expectedHeaders: {}, statusCode: 201 });
+    httpMock.expectOne(r => r.method === 'POST' && r.url.includes('/definitions')).flush({ id: 'm2' });
+
+    const results: {index: number}[] = [];
+    service.executeTestsProgressive(service.listTests).subscribe({
+      next: (item) => { results.push(item); },
+      complete: () => {
+        expect(results.length).toBe(2);
+        expect(results.map(r => r.index).sort()).toEqual([0, 1]);
+        done();
+      }
+    });
+
+    // Flush checkApi requests
+    const reqs = httpMock.match(r => r.url.includes('/checkApi'));
+    expect(reqs.length).toBe(2);
+    reqs[1].flush({ answer: true, stutsCode: 200, output: '{}', messages: [], actualResponseTime: 100 });
+    reqs[0].flush({ answer: false, stutsCode: 500, output: 'err', messages: ['error'], actualResponseTime: 200 });
+  });
 });

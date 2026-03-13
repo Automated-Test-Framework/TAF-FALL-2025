@@ -30,6 +30,7 @@ import {MatCardModule} from "@angular/material/card";
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { TestSeleniumComponent } from './selenium/test-selenium.component';
 
@@ -81,7 +82,8 @@ import { GherkinEditorComponent } from './interface-test-api/gherkin-editor/gher
         ReactiveFormsModule,
         MatInputModule,
         MatSelectModule,
-        MatTooltipModule
+        MatTooltipModule,
+        MatProgressSpinnerModule
     ],
   providers: [authInterceptorProviders],
   bootstrap: [AppComponent]

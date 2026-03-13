@@ -107,7 +107,7 @@
   background: white;
   color: #333;
   pointer-events: none;
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* ── Syntax highlighting colors ── */

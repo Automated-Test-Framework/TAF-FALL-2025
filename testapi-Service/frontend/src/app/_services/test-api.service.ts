@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
-import {BehaviorSubject,  Observable, Subject, forkJoin, throwError} from 'rxjs';
+import {BehaviorSubject,  Observable, Subject, forkJoin, merge, of, throwError} from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {testModel} from "../models/test-model";
@@ -24,7 +24,7 @@ export class TestApiService {
           headers: typeof test.headers === 'object' ? test.headers : JSON.parse(test.headers || '{}')
         };
 
-        console.log('Payload envoyé:', sanitizedTest); // Vérifie ce qui est envoyé
+        console.log('Payload envoyé:', sanitizedTest);
 
         return this.http.post<TestResponseModel>(
           `${this.REST_API}/testapi/checkApi`,
@@ -35,6 +35,28 @@ export class TestApiService {
         );
       })
     );
+  }
+
+  /**
+   * Execute tests progressively — emits each result as it arrives.
+   * Returns Observable of {index, result} so the UI can update one row at a time.
+   */
+  executeTestsProgressive(dataTests: testModel2[]): Observable<{index: number, result: TestResponseModel}> {
+    const requests = dataTests.map((test, index) => {
+      const sanitizedTest = {
+        ...test,
+        headers: typeof test.headers === 'object' ? test.headers : JSON.parse(test.headers || '{}')
+      };
+      return this.http.post<TestResponseModel>(
+        `${this.REST_API}/testapi/checkApi`,
+        sanitizedTest,
+        { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
+      ).pipe(
+        map(result => ({ index, result })),
+        catchError(() => of({ index, result: { id: 0, stutsCode: -1, fieldAnswer: null, answer: false, statusCode: -1, output: '', messages: ['❌ Erreur réseau'], actualResponseTime: -1 } as TestResponseModel }))
+      );
+    });
+    return merge(...requests);
   }
 
 
@@ -105,8 +127,14 @@ export class TestApiService {
     this.testsSubject.next([...this.listTests]);
 
     // Persist to backend
+    const index = this.listTests.length - 1;
     this.http.post<any>(this.DEFINITIONS_API, this.toBackend(newTest)).subscribe({
-      next: saved => { newTest.mongoId = saved.id; },
+      next: saved => {
+        // Update by index in case the reference was replaced by updateTest
+        if (this.listTests[index]) {
+          this.listTests[index].mongoId = saved.id;
+        }
+      },
       error: err => console.error('Failed to save definition:', err)
     });
   }
@@ -170,12 +198,35 @@ export class TestApiService {
       if (this.listTests[index]) { // Vérifie si le test existe à cet index
         this.listTests[index].responseStatus = response.answer;
         this.listTests[index].messages = response.messages || []; // Mise à jour des erreurs
+        this.listTests[index].actualResponseTime = response.actualResponseTime;
       } else {
         console.error(`Aucun test trouvé à l'index ${index}`);
       }
     });
 
     // Met à jour la liste des tests pour rafraîchir l'affichage
+    this.testsSubject.next([...this.listTests]);
+  }
+
+  /** Update a single test result by index (for progressive display) */
+  updateSingleTestResult(index: number, response: TestResponseModel): void {
+    if (this.listTests[index]) {
+      this.listTests[index].responseStatus = response.answer;
+      this.listTests[index].messages = response.messages || [];
+      this.listTests[index].actualResponseTime = response.actualResponseTime;
+      this.listTests[index].pending = false;
+      this.testsSubject.next([...this.listTests]);
+    }
+  }
+
+  /** Clear result fields for all tests (set to pending) */
+  clearTestResults(): void {
+    this.listTests.forEach(t => {
+      t.responseStatus = undefined;
+      t.messages = [];
+      t.actualResponseTime = undefined;
+      t.pending = true;
+    });
     this.testsSubject.next([...this.listTests]);
   }
 

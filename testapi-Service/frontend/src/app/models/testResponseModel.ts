@@ -5,4 +5,5 @@ export interface TestResponseModel {
   fieldAnswer: string | null;
   answer: boolean;
   messages: any[];
+  actualResponseTime?: number;
 }

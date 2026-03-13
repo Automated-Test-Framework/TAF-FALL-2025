@@ -18,6 +18,7 @@ export class GherkinEditorComponent implements OnInit, AfterViewChecked {
   @ViewChild('highlightPre') highlightPre!: ElementRef<HTMLPreElement>;
 
   gherkinText: string = '';
+  highlightedHtml: string = '\n';
   parsedTests: testModel2[] = [];
   parseErrors: string[] = [];
   showPreview: boolean = false;
@@ -60,7 +61,7 @@ export class GherkinEditorComponent implements OnInit, AfterViewChecked {
 
   /** Return highlighted HTML from raw Gherkin text */
   getHighlightedHtml(): string {
-    if (!this.gherkinText) return '';
+    if (!this.gherkinText) return '\n';
     return this.gherkinText
       // 1. HTML escape
       .replace(/&/g, '&amp;')
@@ -81,7 +82,10 @@ export class GherkinEditorComponent implements OnInit, AfterViewChecked {
       .replace(/^(\s*)(Scenario Outline:)/gm, '$1<span class="gh-keyword">$2</span>')
       .replace(/^(\s*)(Background:)/gm, '$1<span class="gh-keyword">$2</span>')
       // 7. Step keywords (last)
-      .replace(/^(\s*)(Given|When|Then|And|But)\b/gm, '$1<span class="gh-step">$2</span>');
+      .replace(/^(\s*)(Given|When|Then|And|But)\b/gm, '$1<span class="gh-step">$2</span>')
+      // 8. Prevent <pre> from collapsing trailing newline — keeps highlight layer
+      //    aligned with textarea when cursor is on the last (empty) line.
+      + '\n';
   }
 
   /** Load template example */

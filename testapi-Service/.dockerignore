@@ -4,4 +4,14 @@
 /pulumi
 /testapi
 /tests-ui
+/gatling
+/selenium
+
+# Frontend build artifacts & dependencies (saves ~1.1GB)
 /frontend/node_modules
+/frontend/.angular
+/frontend/node
+/frontend/dist
+
+# Backend build artifacts
+/backend/target

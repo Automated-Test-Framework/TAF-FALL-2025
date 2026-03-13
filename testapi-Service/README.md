@@ -102,9 +102,10 @@ C'est la **fonctionnalité principale** du module TestAPI. Elle permet de tester
    - **Corps de la requête (input)** — le corps JSON à envoyer (pour POST/PUT, optionnel)
    - **Sortie attendue** — le corps JSON attendu dans la réponse (optionnel)
    - **En-têtes attendus** — les en-têtes attendus dans la réponse (optionnel)
-   - **Temps de réponse** — temps maximum acceptable en ms (optionnel)
+   - **Temps de réponse attendu (ms)** — temps maximum acceptable en ms (optionnel)
 5. Cliquer **« Lancer les tests »** — tous les tests du tableau s'exécutent en parallèle
-6. La colonne **Résultat** affiche **vert** (pass) ou **rouge** (fail) avec un tooltip détaillant les erreurs
+6. La colonne **TDR attendu (ms)** affiche la valeur seuil définie par l'utilisateur ; la colonne **TDR (ms)** affiche le temps réel mesuré (vert si ≤ seuil, rouge si dépassé)
+7. La colonne **Résultat** affiche **vert** (pass) ou **rouge** (fail) avec un tooltip détaillant les erreurs
 
 **Fonctions supplémentaires :**
 
@@ -197,7 +198,10 @@ Endpoint : `POST /api/testapi/checkApi` (backend, port 8084)
 | `expectedOutput` | `String` | Non | Corps JSON attendu dans la réponse |
 | `headers` | `Map<String, String>` | Non | En-têtes HTTP à inclure dans la requête |
 
-> Le microservice testapi accepte aussi `expectedHeaders` (en-têtes de réponse attendus) et `responseTime` (temps max en ms), mais ces champs ne sont pas exposés par le backend proxy actuellement.
+| `responseTime` | `int` | Non | Temps de réponse maximum acceptable (ms). Si l'API répond plus lentement, le test échoue |
+| `expectedHeaders` | `Map<String, String>` | Non | En-têtes HTTP attendus dans la réponse de l'API cible |
+
+> Le backend proxy transmet tous les champs au microservice testapi, y compris `responseTime` et `expectedHeaders`.
 
 ### Validations exécutées (assertions)
 
@@ -208,8 +212,20 @@ Le microservice testapi exécute **3 assertions actives** via Rest-Assured sur c
 | **Code de statut** | `code attendu == code reçu` | `❌ Code de statut attendu: 200, reçu: 404` |
 | **Corps de la réponse** | Comparaison JSON récursive champ par champ via `JsonComparator` | Retourne `fieldAnswer` avec `true`/`false` par champ |
 | **En-têtes de réponse** | Chaque paire clé/valeur de `expectedHeaders` doit exister dans la réponse | `❌ En-tête attendu manquant: Content-Type` |
+| **Temps de réponse** | `temps réel ≤ responseTime` (si `responseTime > 0`) | `❌ Temps de réponse trop long : 3026 ms (max: 1000 ms)` |
 
-La validation du **temps de réponse** est implémentée dans le code mais actuellement désactivée (commentée).
+### Gestion du timeout
+
+Le système gère les timeouts à deux niveaux :
+
+| Niveau | Configuration | Défaut | Description |
+|--------|---------------|--------|-------------|
+| **Backend → Testapi** | `taf.app.testAPI_timeout` | 30 000 ms | Timeout HttpClient du proxy backend vers le microservice testapi |
+| **Testapi → API cible** | `timeout.connection`, `timeout.socket` | 10 000 ms | Timeout RestAssured vers l'API cible testée |
+
+Si l'API cible ne répond pas dans le délai (`SocketTimeoutException`), le test retourne un message d'erreur explicite au lieu de crasher.
+
+Un endpoint `/slow?delay=N` est disponible sur le testapi (port 8086) pour tester le comportement de timeout. Le paramètre `delay` accepte une valeur entre 0 et 120 000 ms ; toute valeur hors de cette plage retourne `400 Bad Request`.
 
 **Comparaison JSON (JsonComparator) :** La comparaison du corps de réponse est récursive — elle parcourt l'arbre JSON attendu vs reçu et retourne un objet indiquant `true`/`false` pour chaque champ, y compris les objets et tableaux imbriqués.
 
@@ -391,7 +407,7 @@ Accessible à : [http://localhost:8084/swagger-ui.html](http://localhost:8084/sw
 
 ## Tests unitaires
 
-Le backend dispose d'une suite de **84 tests unitaires** avec couverture JaCoCo.
+Le backend dispose d'une suite de **87 tests unitaires** avec couverture JaCoCo.
 
 ```powershell
 # One-click : depuis la racine du projet
@@ -399,17 +415,17 @@ Le backend dispose d'une suite de **84 tests unitaires** avec couverture JaCoCo.
 
 # Ou manuellement
 cd testapi-Service
-mvn test -pl backend -am
+mvn test -pl backend "-P !with-frontend"
 ```
 
 | Métrique | Valeur |
 |---|---|
-| Tests totaux | 84 |
-| Réussis | 84 |
+| Tests totaux | 87 |
+| Réussis | 87 |
 | Échoués | 0 |
-| Couverture instructions (classes équipe) | **100%** |
-| Couverture branches (classes équipe) | **100%** |
-| Modules couverts | Sécurité (JWT, OAuth2, filtres), contrôleurs, entités, DTOs, persistance MongoDB |
+| Ignorés | 1 |
+| Couverture lignes (classes équipe) | **98%** (433/438) |
+| Modules couverts | Sécurité (JWT, OAuth2, filtres), contrôleurs, entités, DTOs, persistance MongoDB, **timeout** |
 
 Le rapport de couverture est dans `backend/target/site/jacoco/index.html`.  
 Le détail complet des tests est dans [TEST-REPORT.md](./TEST-REPORT.md).

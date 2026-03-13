@@ -18,7 +18,7 @@ import { GherkinParserService } from '../../_services/gherkin-parser.service';
 export class TestApiComponent implements OnInit {
   isPopupOpened = true;
   // Colonnes à afficher
-  displayedColumns: string[] = ['id', 'method', 'apiUrl', 'responseTime', 'statusCode', 'responseStatus', 'action'];
+  displayedColumns: string[] = ['id', 'method', 'apiUrl', 'responseTime', 'actualResponseTime', 'statusCode', 'responseStatus', 'action'];
   dataTests: testModel2[] = [];
 
   // Gherkin mode
@@ -69,7 +69,7 @@ export class TestApiComponent implements OnInit {
   }
 
   // Ouvre le dialogue de suppression de test
-  deleteTest(id: string) {
+  deleteTest(id: number) {
     this.isPopupOpened = true;
     const dialogRef = this.dialog.open(DeleteTestDialogComponent, { data: id });
     dialogRef.afterClosed().subscribe(() => {
@@ -167,11 +167,16 @@ export class TestApiComponent implements OnInit {
   }
   
 
-  // Exécution des tests
+  // Exécution des tests (progressive: chaque résultat s'affiche dès qu'il arrive)
   lunchTests() {
-    this.testApiService.executeTests(this.dataTests).subscribe({
-      next: (listTestsReponses: TestResponseModel[]) => {
-        this.updateTestsStatusExecution(listTestsReponses);
+    // Clear previous results — show "pending" state
+    this.testApiService.clearTestResults();
+    this.getTestList();
+
+    this.testApiService.executeTestsProgressive(this.dataTests).subscribe({
+      next: ({index, result}) => {
+        this.testApiService.updateSingleTestResult(index, result);
+        this.getTestList();
       },
       error: (error) => {
         this.showErrorPopup("Erreur lors de l'exécution des tests : " + error.message);

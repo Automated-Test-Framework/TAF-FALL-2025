@@ -25,6 +25,11 @@ public class TestApiRequest {
     @Schema(example = "{}")
     private Map<String, String> headers;
 
+    private int responseTime;
+
+    @Schema(example = "{}")
+    private Map<String, String> expectedHeaders;
+
     // Getters et setters
     public String getMethod() { return this.method; }
     public void setMethod(String method) { this.method = method; }
@@ -43,4 +48,10 @@ public class TestApiRequest {
 
     public Map<String, String> getHeaders() { return headers; }
     public void setHeaders(Map<String, String> headers) { this.headers = headers; }
+
+    public int getResponseTime() { return responseTime; }
+    public void setResponseTime(int responseTime) { this.responseTime = responseTime; }
+
+    public Map<String, String> getExpectedHeaders() { return expectedHeaders; }
+    public void setExpectedHeaders(Map<String, String> expectedHeaders) { this.expectedHeaders = expectedHeaders; }
 }

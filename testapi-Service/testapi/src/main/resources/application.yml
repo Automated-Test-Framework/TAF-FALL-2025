@@ -1,3 +1,7 @@
-  server:
-    port:
-     8082
+server:
+  port: 8082
+
+timeout:
+  connection: 10000
+  socket: 10000
+  connectionManager: 10000

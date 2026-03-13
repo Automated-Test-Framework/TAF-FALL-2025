@@ -9,6 +9,7 @@ import org.requests.payload.request.Answer;
 import org.requests.payload.request.TestApiRequest;
 import org.utils.JsonComparator;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,9 @@ public class RequestController {
 
     private JsonNode fieldAnswer;
     private final List<String> messages = new ArrayList<>();
+
+    private boolean timedOut = false;
+    private long actualResponseTime = -1;
 
     public RequestController(TestApiRequest request) {
         System.out.println("############### DEBUG : RequestController INITIALISÉ ###############");
@@ -53,11 +57,18 @@ public class RequestController {
         answer.answer = false;
         answer.statusCode = -1;
         answer.output = "";
-        answer.messages.add("❌ Erreur: Impossible de joindre l'API cible à " + this.request.getApiUrl());
+        answer.actualResponseTime = this.actualResponseTime;
+        if (this.timedOut) {
+            answer.messages.add("⏱ Timeout : La requête vers " + this.request.getApiUrl()
+                    + " a dépassé le délai d'attente (" + this.actualResponseTime + " ms)");
+        } else {
+            answer.messages.add("❌ Erreur: Impossible de joindre l'API cible à " + this.request.getApiUrl());
+        }
         return answer;
     }
         answer.statusCode = this.response.getStatusCode();
         answer.output = this.response.getBody().asPrettyString();
+        answer.actualResponseTime = this.response.getTime();
 
         boolean statusOK = this.checkStatusCode();
         boolean outputOK = this.checkOutput();
@@ -81,10 +92,11 @@ public class RequestController {
             answer.messages.add("❌ Erreur : Le contenu de la réponse ne correspond pas à l'attendu !");
             answer.answer = false;
         }
-        /*if (!timeOK) {
-            answer.messages.add("❌ Erreur : Temps de réponse trop long !");
+        if (!timeOK) {
+            answer.messages.add("⏱ Temps de réponse trop long : " + this.response.getTime()
+                    + " ms (max: " + this.request.getResponseTime() + " ms)");
             answer.answer = false;
-        }*/
+        }
         if (!headersOK) {
             answer.messages.add("❌ Erreur : Les headers ne correspondent pas à ceux attendus !");
             answer.answer = false;
@@ -101,10 +113,23 @@ public class RequestController {
 
 
 private void execute() {
+    long start = System.currentTimeMillis();
     try {
         this.response = this.request.getMethod().execute(this.httpRequest, this.request.getApiUrl());
+        this.actualResponseTime = this.response.getTime();
     } catch (Exception e) {
-        System.out.println("ERROR: Failed to execute request to " + this.request.getApiUrl() + " : " + e.getMessage());
+        this.actualResponseTime = System.currentTimeMillis() - start;
+        Throwable cause = e.getCause();
+        if (cause instanceof SocketTimeoutException
+                || e instanceof SocketTimeoutException
+                || (e.getMessage() != null && e.getMessage().contains("timed out"))) {
+            this.timedOut = true;
+            System.out.println("TIMEOUT: Request to " + this.request.getApiUrl()
+                    + " timed out after " + this.actualResponseTime + " ms");
+        } else {
+            System.out.println("ERROR: Failed to execute request to "
+                    + this.request.getApiUrl() + " : " + e.getMessage());
+        }
         this.response = null;
     }
 }

@@ -12,6 +12,7 @@ public class Answer implements Serializable {
 
     public JsonNode fieldAnswer;
     public boolean answer;
+    public long actualResponseTime = -1;
 
     // Human-readable messages that explain why "answer" is false
     public List<String> messages = new ArrayList<>();

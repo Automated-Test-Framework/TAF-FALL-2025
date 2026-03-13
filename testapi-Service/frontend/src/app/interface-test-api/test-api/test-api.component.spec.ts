@@ -140,4 +140,39 @@ describe('TestApiComponent', () => {
     const callArgs = dialogSpy.calls.mostRecent().args;
     expect(callArgs[1]?.data).toEqual(testData);
   });
+
+  // ── Timeout display ──────────────────────────────
+
+  it('should display actualResponseTime in dataTests after execution update', () => {
+    testApiService.addTestOnList({
+      id: 0, method: 'GET', apiUrl: 'https://fast.com',
+      headers: {}, expectedHeaders: {}, statusCode: 200, responseTime: 5000,
+    });
+    httpMock.expectOne(r => r.method === 'POST' && r.url.includes('/definitions')).flush({ id: 'm1' });
+
+    component.updateTestsStatusExecution([
+      { id: 1, stutsCode: 200, output: '{}', fieldAnswer: null, answer: true, messages: [], actualResponseTime: 350 }
+    ]);
+
+    expect(component.dataTests[0].actualResponseTime).toBe(350);
+    expect(component.dataTests[0].responseStatus).toBe(true);
+  });
+
+  it('should display timeout failure in dataTests', () => {
+    testApiService.addTestOnList({
+      id: 0, method: 'GET', apiUrl: 'https://slow.com',
+      headers: {}, expectedHeaders: {}, statusCode: 200, responseTime: 5000,
+    });
+    httpMock.expectOne(r => r.method === 'POST' && r.url.includes('/definitions')).flush({ id: 'm1' });
+
+    component.updateTestsStatusExecution([
+      { id: 1, stutsCode: -1, output: '', fieldAnswer: null, answer: false,
+        messages: ['⏱ Timeout : La requête a dépassé le délai d\'attente (10050 ms)'],
+        actualResponseTime: 10050 }
+    ]);
+
+    expect(component.dataTests[0].responseStatus).toBe(false);
+    expect(component.dataTests[0].actualResponseTime).toBe(10050);
+    expect(component.dataTests[0].messages![0]).toContain('Timeout');
+  });
 });

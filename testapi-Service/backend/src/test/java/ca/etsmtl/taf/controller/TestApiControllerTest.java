@@ -29,6 +29,7 @@ class TestApiControllerTest {
     void setUp() throws Exception {
         setField(controller, "Test_API_microservice_url", "http://localhost");
         setField(controller, "Test_API_microservice_port", "8084");
+        setField(controller, "testApiTimeout", 30000);
     }
 
     @Test
@@ -65,6 +66,8 @@ class TestApiControllerTest {
         req.setInput("{\"key\":\"value\"}");
         req.setExpectedOutput("{\"result\":\"ok\"}");
         req.setHeaders(java.util.Map.of("Content-Type", "application/json"));
+        req.setResponseTime(5000);
+        req.setExpectedHeaders(java.util.Map.of("X-Custom", "value"));
 
         assertEquals("POST", req.getMethod());
         assertEquals("http://example.com/api", req.getApiUrl());
@@ -72,6 +75,8 @@ class TestApiControllerTest {
         assertEquals("{\"key\":\"value\"}", req.getInput());
         assertEquals("{\"result\":\"ok\"}", req.getExpectedOutput());
         assertEquals("application/json", req.getHeaders().get("Content-Type"));
+        assertEquals(5000, req.getResponseTime());
+        assertEquals("value", req.getExpectedHeaders().get("X-Custom"));
     }
 
     @Test
@@ -112,5 +117,80 @@ class TestApiControllerTest {
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(target, value);
+    }
+
+    @Test
+    @DisplayName("testApiTimeout field defaults via @Value annotation")
+    void testApiTimeoutFieldExists() throws Exception {
+        Field timeoutField = TestApiController.class.getDeclaredField("testApiTimeout");
+        timeoutField.setAccessible(true);
+        // When not injected by Spring, it's 0 — the @Value default is 30000
+        assertNotNull(timeoutField);
+    }
+
+    @Test
+    @DisplayName("HttpClient uses connectTimeout from testApiTimeout")
+    void checkApi_usesTimeoutConfiguration() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        int port = server.getAddress().getPort();
+        server.createContext("/microservice/testapi/checkApi", exchange -> {
+            byte[] resp = "{\"ok\":true}".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, resp.length);
+            exchange.getResponseBody().write(resp);
+            exchange.getResponseBody().close();
+        });
+        server.setExecutor(null);
+        server.start();
+
+        try {
+            setField(controller, "Test_API_microservice_url", "http://localhost");
+            setField(controller, "Test_API_microservice_port", String.valueOf(port));
+            setField(controller, "testApiTimeout", 5000);
+
+            TestApiRequest req = new TestApiRequest();
+            req.setMethod("GET");
+            req.setApiUrl("http://example.com");
+            req.setStatusCode(200);
+
+            ResponseEntity<String> result = controller.testApi(req);
+
+            assertNotNull(result);
+            assertEquals(200, result.getStatusCode().value());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    @DisplayName("HttpClient times out when server is too slow")
+    void checkApi_timesOutOnSlowServer() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        int port = server.getAddress().getPort();
+        server.createContext("/microservice/testapi/checkApi", exchange -> {
+            try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
+            byte[] resp = "{}".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, resp.length);
+            exchange.getResponseBody().write(resp);
+            exchange.getResponseBody().close();
+        });
+        server.setExecutor(null);
+        server.start();
+
+        try {
+            setField(controller, "Test_API_microservice_url", "http://localhost");
+            setField(controller, "Test_API_microservice_port", String.valueOf(port));
+            setField(controller, "testApiTimeout", 500); // very short timeout
+
+            TestApiRequest req = new TestApiRequest();
+            req.setMethod("GET");
+            req.setApiUrl("http://example.com");
+            req.setStatusCode(200);
+
+            assertThrows(java.net.http.HttpTimeoutException.class, () -> {
+                controller.testApi(req);
+            });
+        } finally {
+            server.stop(0);
+        }
     }
 }

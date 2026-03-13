@@ -134,11 +134,11 @@ export class GherkinParserService {
         }
       }
 
-      if (test.input) {
+      if (test.input != null) {
         lines.push(`    And the input is '${test.input}'`);
       }
 
-      if (test.expectedOutput) {
+      if (test.expectedOutput != null) {
         lines.push(`    And the expected output is '${test.expectedOutput}'`);
       }
 

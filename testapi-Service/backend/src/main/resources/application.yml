@@ -44,6 +44,7 @@ taf:
     jwtRefreshExpirationMs: ${JWT_REFRESH_EXPIRES:604800000}
     testAPI_url: ${TEST_API_SERVICE_URL}
     testAPI_port: ${TEST_API_SERVICE_PORT}
+    testAPI_timeout: ${TEST_API_TIMEOUT:30000}
     selenium_container_url: ${SELENIUM_URL}
     selenium_container_port: ${SELENIUM_PORT}
     oauth2FrontendRedirectUrl: ${OAUTH2_FRONTEND_REDIRECT_URL:http://localhost:4200}
