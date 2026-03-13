@@ -9,7 +9,6 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 import java.util.List;
-import java.util.Map;
 
 @EnableDiscoveryClient
 @SpringBootApplication

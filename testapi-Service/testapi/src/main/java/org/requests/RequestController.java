@@ -122,7 +122,7 @@ private void execute() {
         System.out.println("DEBUG : expectedOutput brut = " + expectedOutput);
 
         // Si aucun expectedOutput ou texte vide, ignorer la comparaison
-        if (expectedOutput == null ||
+        if (expectedOutput == null || expectedOutput.isNull() ||
             (expectedOutput.isTextual() && expectedOutput.asText().trim().isEmpty())) {
             System.out.println("DEBUG : Aucun expectedOutput défini.");
             return true;
@@ -179,6 +179,9 @@ private void execute() {
 
 
     private boolean checkResponseTime() {
+        if (request.getResponseTime() <= 0) {
+            return true;
+        }
         return response.getTime() < request.getResponseTime();
     }
 

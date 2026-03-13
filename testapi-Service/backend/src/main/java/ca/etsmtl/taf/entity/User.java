@@ -12,6 +12,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 
+import java.util.UUID;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,7 +31,7 @@ public class User {
 
   @Indexed(unique = true)
   @NotBlank
-  @Size(max = 20)
+  @Size(max = 50)
   private String username;
 
   @Indexed(unique = true)
@@ -38,12 +40,15 @@ public class User {
   @Email
   private String email;
 
-  @NotBlank
   @Size(max = 120)
   private String password;
 
   @DBRef
   private Set<Role> roles = new HashSet<>();
+
+  private String provider; // "local" or "google"
+
+  private String googleId;
 
   public User() {}
 
@@ -52,6 +57,16 @@ public class User {
     this.username = username;
     this.email = email;
     this.password = password;
+    this.provider = "local";
+  }
+
+  public User(String fullName, String username, String email, String provider, String googleId) {
+    this.fullName = fullName;
+    this.username = username;
+    this.email = email;
+    this.provider = provider;
+    this.googleId = googleId;
+    this.password = UUID.randomUUID().toString(); // OAuth2 users get a random unusable password
   }
 
   public String getId() {

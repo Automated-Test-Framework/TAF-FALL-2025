@@ -3,7 +3,7 @@ package org.requests;
 import org.requests.payload.request.TestApiRequest;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.io.Serializable;
 
 @CrossOrigin(origins = "*", maxAge = 3600)

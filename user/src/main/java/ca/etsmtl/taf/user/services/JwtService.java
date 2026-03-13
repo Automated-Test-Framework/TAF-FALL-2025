@@ -3,14 +3,12 @@ package ca.etsmtl.taf.user.services;
 import ca.etsmtl.taf.user.jwt.JwtUtil;
 import ca.etsmtl.taf.user.model.CustomUserDetails;
 import ca.etsmtl.taf.user.payload.request.LoginRequest;
-import ca.etsmtl.taf.user.payload.request.RefreshTokenRequest;
 import ca.etsmtl.taf.user.payload.response.JwtResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import java.util.stream.Collectors;
 
@@ -21,9 +19,6 @@ public class JwtService {
 
     @Autowired
     private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
 
     @Autowired
     private JwtUtil jwtUtil;

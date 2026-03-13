@@ -13,8 +13,9 @@ import org.springframework.context.annotation.Configuration;
         title = "TAF - Test Automation Framework API",
         version = "1.0",
         description = "API pour le framework d'automatisation de tests (TAF). "
-            + "Utilisez /api/auth/signin pour obtenir un token JWT, "
-            + "puis cliquez sur 'Authorize' et entrez: Bearer <votre_token>"
+            + "**Authentification JWT** : POST /api/auth/signin -> token JWT, puis Authorize -> Bearer <token>. "
+            + "**Connexion Google OAuth2** : Ouvrez /oauth2/authorization/google dans le navigateur -> "
+            + "connexion Google -> redirection avec token JWT."
     ),
     servers = {
         @Server(url = "http://localhost:8084", description = "Local Docker (team2)"),
@@ -27,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
     type = SecuritySchemeType.HTTP,
     scheme = "bearer",
     bearerFormat = "JWT",
-    description = "Entrez le token JWT obtenu via /api/auth/signin"
+    description = "Entrez le token JWT obtenu via /api/auth/signin ou via Google OAuth2"
 )
 public class OpenApiConfig {
 }

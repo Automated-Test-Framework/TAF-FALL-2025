@@ -1,6 +1,5 @@
 package ca.etsmtl.taf.user.payload.request;
 
-import java.util.Set;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;

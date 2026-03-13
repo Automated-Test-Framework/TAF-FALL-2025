@@ -9,7 +9,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ca.etsmtl.taf.auth.model.CustomUserDetails;
 
-import java.util.ArrayList;
 import java.util.Optional;
 import lombok.extern.log4j.Log4j2;
 

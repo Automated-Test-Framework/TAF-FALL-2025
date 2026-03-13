@@ -1,0 +1,19 @@
+<div class="col-md-12">
+  <div class="card card-container text-center">
+    <div *ngIf="isLoading">
+      <img
+        src="//ssl.gstatic.com/accounts/ui/avatar_2x.png"
+        class="profile-img-card"
+      />
+      <h4>Connexion avec Google...</h4>
+      <p>Veuillez patienter pendant que nous vous connectons.</p>
+    </div>
+
+    <div *ngIf="isError">
+      <div class="alert alert-danger" role="alert">
+        {{ errorMessage }}
+      </div>
+      <a routerLink="/login" class="btn btn-primary">Retour à la connexion</a>
+    </div>
+  </div>
+</div>

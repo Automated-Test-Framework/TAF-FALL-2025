@@ -2,6 +2,7 @@ package ca.etsmtl.taf.user.repository;
 
 import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.lang.NonNull;
 
 import ca.etsmtl.taf.user.entity.User;
 
@@ -10,7 +11,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 
   boolean existsByUsername(String username);
 
-  boolean existsById(String id);
+  boolean existsById(@NonNull String id);
 
   boolean existsByEmail(String email);
 

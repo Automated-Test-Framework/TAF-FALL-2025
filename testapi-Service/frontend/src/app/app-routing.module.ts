@@ -12,6 +12,7 @@ import { GatlingComponent } from './gatling/gatling.component';
 import { TestApiComponent } from './interface-test-api/test-api/test-api.component';
 import { TestSeleniumComponent } from './selenium/test-selenium.component';
 import { PerformanceTestApiComponent } from './performance-test-api/performance-test-api.component';
+import { OAuth2CallbackComponent } from './oauth2-callback/oauth2-callback.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent },
@@ -26,6 +27,7 @@ const routes: Routes = [
   { path: 'test-api', component: TestApiComponent },
   { path: 'test-selenium', component: TestSeleniumComponent },
   { path: 'performance-test-api', component: PerformanceTestApiComponent },
+  { path: 'oauth2/callback', component: OAuth2CallbackComponent },
   { path: '', redirectTo: 'home', pathMatch: 'full' }
 ];
 

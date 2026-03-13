@@ -1,6 +1,5 @@
 package ca.etsmtl.taf.user.jwt;
 
-import ca.etsmtl.taf.user.model.enums.TokenClaims;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -55,23 +54,6 @@ public class JwtUtil {
 
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, secret).compact();
-    }
-
-    private String createToken(Map<String, Object> claims, String subject, String userId) {
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, secret).claim(TokenClaims.USER_ID.getValue(), userId).compact();
-    }
-
-    private String refreshToken(Map<String, Object> claims, final String token) {
-        String jwt = token;
-        if (token.startsWith("Bearer ")) {
-            jwt = jwt.substring(7);
-        }
-        String username = this.extractUsername(jwt);
-        return Jwts.builder().setClaims(claims).setSubject(username).setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(SignatureAlgorithm.HS512, secret).compact();
     }

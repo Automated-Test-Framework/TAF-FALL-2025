@@ -2,8 +2,6 @@ package ca.etsmtl.taf.user.controller;
 
 import ca.etsmtl.taf.user.entity.User;
 import ca.etsmtl.taf.user.payload.request.*;
-import org.springframework.security.authentication.AuthenticationManager;
-import ca.etsmtl.taf.user.services.JwtService;
 import ca.etsmtl.taf.user.services.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,16 +18,10 @@ import ca.etsmtl.taf.user.payload.response.MessageResponse;
 @RequestMapping("/api")
 public class UserController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-  @GetMapping("/home")
+    @GetMapping("/home")
   public String greeting() {
     return "Hello from User Microservice!";
   }
-
-  @Autowired
-  private JwtService jwtService;
 
   @Autowired
   private UserService userService;

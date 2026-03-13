@@ -1,6 +1,5 @@
 package ca.etsmtl.taf.auth.services;
 
-import ca.etsmtl.taf.auth.entity.User;
 import ca.etsmtl.taf.auth.jwt.JwtUtil;
 import ca.etsmtl.taf.auth.model.CustomUserDetails;
 import ca.etsmtl.taf.auth.payload.request.LoginRequest;
@@ -10,12 +9,10 @@ import ca.etsmtl.taf.auth.payload.response.JwtResponse;
 import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.security.crypto.password.PasswordEncoder;

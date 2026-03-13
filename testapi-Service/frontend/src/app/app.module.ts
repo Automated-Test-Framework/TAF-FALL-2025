@@ -12,6 +12,7 @@ import { HomeComponent } from './home/home.component';
 import { ProfileComponent } from './profile/profile.component';
 import { BoardAdminComponent } from './board-admin/board-admin.component';
 import { BoardUserComponent } from './board-user/board-user.component';
+import { OAuth2CallbackComponent } from './oauth2-callback/oauth2-callback.component';
 
 import { authInterceptorProviders } from './_helpers/auth.interceptor';
 import { ProjectComponent } from './project/project.component';
@@ -49,6 +50,7 @@ import { ErrorDialogComponent } from './interface-test-api/test-api/error-dialog
     ProfileComponent,
     BoardAdminComponent,
     BoardUserComponent,
+    OAuth2CallbackComponent,
     ProjectComponent,
     TestApiComponent,
     AddTestDialogComponent,

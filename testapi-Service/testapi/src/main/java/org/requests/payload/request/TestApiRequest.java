@@ -3,7 +3,7 @@ package org.requests.payload.request;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.requests.Method;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
 
 public class TestApiRequest {

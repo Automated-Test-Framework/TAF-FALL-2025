@@ -5,6 +5,7 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:8762',
+  oauth2BackendUrl: 'http://localhost:8084',
   //apiUrl: 'http://localhost:4200/api'
 };
 

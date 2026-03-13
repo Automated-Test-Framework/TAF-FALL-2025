@@ -66,6 +66,23 @@
           Échec de connexion: {{ errorMessage }}
         </div>
       </div>
+
+      <hr style="margin: 20px 0;" />
+      <div class="form-group text-center">
+        <p style="color: #666; margin-bottom: 10px;">Ou connectez-vous avec</p>
+        <button
+          type="button"
+          class="btn btn-block btn-google"
+          (click)="loginWithGoogle()"
+        >
+          <img
+            src="https://developers.google.com/identity/images/g-logo.png"
+            alt="Google"
+            style="width: 20px; height: 20px; margin-right: 10px; vertical-align: middle;"
+          />
+          Se connecter avec Google
+        </button>
+      </div>
     </form>
 
     <div class="alert alert-success" *ngIf="isLoggedIn">

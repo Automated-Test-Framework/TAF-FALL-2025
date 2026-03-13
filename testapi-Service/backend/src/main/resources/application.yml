@@ -13,6 +13,21 @@ spring:
       database: ${DB_NAME}
       auto-index-creation: false
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:placeholder}
+            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder}
+            scope: openid, profile, email
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+            user-name-attribute: sub
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -30,6 +45,7 @@ taf:
     testAPI_port: ${TEST_API_SERVICE_PORT}
     selenium_container_url: ${SELENIUM_URL}
     selenium_container_port: ${SELENIUM_PORT}
+    oauth2FrontendRedirectUrl: ${OAUTH2_FRONTEND_REDIRECT_URL:http://localhost:4200}
 
 server:
   port: 8080

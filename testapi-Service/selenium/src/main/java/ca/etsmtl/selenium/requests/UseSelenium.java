@@ -13,8 +13,6 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
-import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.io.File;
@@ -68,7 +66,7 @@ public class UseSelenium {
                             System.out.println("go to : " + seleniumAction.getInput());
                             driver.get(seleniumAction.getInput());
                             // Utilisez Duration.ofSeconds si vous êtes en Selenium 4+
-                            driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+                            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(1));
                             break;
                         case 2: // FillField
                             System.out.println("fill : " + seleniumAction.getObject() + " with " + seleniumAction.getInput());
@@ -77,7 +75,7 @@ public class UseSelenium {
                             break;
                         case 3: // GetAttribute
                             WebElement webElement = driver.findElement(By.name(seleniumAction.getTarget()));
-                            String pageAttribute = webElement.getAttribute(seleniumAction.getObject());
+                            String pageAttribute = webElement.getDomAttribute(seleniumAction.getObject());
                             if (!pageAttribute.equals(seleniumAction.getInput())) {
                                 String outputMessage = "Attribute " + seleniumAction.getObject()
                                         + " of " + seleniumAction.getTarget()

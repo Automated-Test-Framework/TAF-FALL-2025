@@ -12,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Service
@@ -36,12 +35,15 @@ public class UserService {
     public User update(String username, UpdateRequest signUpRequest) {
         // Update user's account
         User user = userRepository.findByUsername(username).orElseThrow();
-        if(signUpRequest.getFullName().isEmpty())
+        if(!signUpRequest.getFullName().isEmpty())
             user.setFullName(signUpRequest.getFullName());
-        if(signUpRequest.getEmail().isEmpty())
+        if(!signUpRequest.getEmail().isEmpty())
             user.setEmail(signUpRequest.getEmail());
 
-        return userRepository.save(user);
+        if (user != null) {
+            return userRepository.save(user);
+        }
+        return user;
     }
 
 
@@ -110,6 +112,9 @@ public class UserService {
      * @return
      */
     public User findById(String id) {
+        if (id == null) {
+            throw new IllegalArgumentException("id cannot be null");
+        }
         return userRepository.findById(id).orElseThrow();
     }
 
