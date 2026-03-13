@@ -21,6 +21,9 @@ public class JwtUtils {
   @Value("${taf.app.jwtExpirationMs}")
   private int jwtExpirationMs;
 
+  @Value("${taf.app.jwtRefreshExpirationMs}")
+  private long jwtRefreshExpirationMs;
+
   public String generateJwtToken(Authentication authentication) {
 
     UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
@@ -42,8 +45,34 @@ public class JwtUtils {
         .compact();
   }
 
+  /**
+   * Generates a refresh token with a longer expiration time.
+   * The refresh token is used to obtain a new access token without re-authentication.
+   */
+  public String generateRefreshToken(String username) {
+    return Jwts.builder()
+        .setSubject(username)
+        .setIssuedAt(new Date())
+        .setExpiration(new Date((new Date()).getTime() + jwtRefreshExpirationMs))
+        .signWith(SignatureAlgorithm.HS512, jwtSecret)
+        .compact();
+  }
+
   public String getUserNameFromJwtToken(String token) {
     return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody().getSubject();
+  }
+
+  /**
+   * Extracts the username from an expired JWT token.
+   * Used during token refresh to identify the user even after the access token has expired.
+   */
+  public String getUserNameFromExpiredJwtToken(String token) {
+    try {
+      Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
+    } catch (ExpiredJwtException e) {
+      return e.getClaims().getSubject();
+    }
+    return getUserNameFromJwtToken(token);
   }
 
   public boolean validateJwtToken(String authToken) {

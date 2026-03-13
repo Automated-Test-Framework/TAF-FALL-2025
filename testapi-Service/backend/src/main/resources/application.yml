@@ -11,7 +11,7 @@ spring:
       uri: ${DB_URI}
       authentication-database: ${DB_AUTH}
       database: ${DB_NAME}
-      auto-index-creation: false
+      auto-index-creation: true
 
   security:
     oauth2:
@@ -41,6 +41,7 @@ taf:
   app:
     jwtSecret: ${JWT_SECRET}
     jwtExpirationMs: ${JWT_EXPIRES}
+    jwtRefreshExpirationMs: ${JWT_REFRESH_EXPIRES:604800000}
     testAPI_url: ${TEST_API_SERVICE_URL}
     testAPI_port: ${TEST_API_SERVICE_PORT}
     selenium_container_url: ${SELENIUM_URL}

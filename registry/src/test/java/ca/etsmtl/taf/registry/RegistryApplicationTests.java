@@ -1,4 +1,4 @@
-package ca.estmtl.taf.registry;
+package ca.etsmtl.taf.registry;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

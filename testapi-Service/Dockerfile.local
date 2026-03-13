@@ -15,7 +15,7 @@ RUN mvn dependency:go-offline -B || true
 COPY backend/src ./backend/src
 
 # Build the application (backend module only)
-RUN mvn clean package -pl backend -DskipTests -B
+RUN mvn clean package -pl backend -Dmaven.test.skip=true -B
 
 # Runtime stage
 FROM eclipse-temurin:17-jre

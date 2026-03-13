@@ -229,13 +229,27 @@ curl -X POST http://localhost:8084/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"fullName":"user1","username":"user1","email":"user1@example.com","role":["user"],"password":"password123"}'
 
-# Connexion → retourne un accessToken
+# Connexion → retourne un accessToken + refreshToken
 curl -X POST http://localhost:8084/api/auth/signin \
   -H "Content-Type: application/json" \
   -d '{"username":"user1","password":"password123"}'
 ```
 
+La réponse contient un `accessToken` (durée : 30 min) et un `refreshToken` (durée : 7 jours).
+
 Utilisez le token dans l'en-tête : `Authorization: Bearer <accessToken>`
+
+### Renouvellement de token (Refresh Token)
+
+Lorsque l'`accessToken` expire, utilisez le `refreshToken` pour obtenir une nouvelle paire de tokens sans ressaisir les identifiants :
+
+```bash
+curl -X POST http://localhost:8084/api/auth/refresh-token \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"<votre-refresh-token>"}'
+```
+
+La réponse retourne un nouveau `accessToken` et un nouveau `refreshToken` (rotation). Le frontend effectue ce renouvellement automatiquement via l'intercepteur HTTP lorsqu'une réponse 401 est reçue.
 
 ### Google OAuth2
 
@@ -251,7 +265,7 @@ docker compose -f docker-compose-local-test.yml up -d --build backend-team2
 
 ### Endpoints publics
 
-`POST /api/auth/signup`, `POST /api/auth/signin`, `GET /api/oauth2/login-url`, `/swagger-ui/**`, `/api-docs/**`, `/actuator/**`
+`POST /api/auth/signup`, `POST /api/auth/signin`, `POST /api/auth/refresh-token`, `GET /api/oauth2/login-url`, `/swagger-ui/**`, `/api-docs/**`, `/actuator/**`
 
 ---
 
@@ -262,6 +276,7 @@ Accessible à : [http://localhost:8084/swagger-ui.html](http://localhost:8084/sw
 1. Connectez-vous via `POST /api/auth/signin` — copiez le `accessToken`
 2. Cliquez sur **Authorize** (🔒) → entrez `Bearer <token>` → validez
 3. Tous les endpoints sont accessibles avec des exemples pré-remplis
+4. Si le token expire (30 min), utilisez `POST /api/auth/refresh-token` pour en obtenir un nouveau
 
 ---
 
@@ -273,7 +288,8 @@ Accessible à : [http://localhost:8084/swagger-ui.html](http://localhost:8084/sw
 | `DB_NAME` | Nom de la base de données | — |
 | `DB_AUTH` | Base d'authentification MongoDB | `admin` |
 | `JWT_SECRET` | Clé secrète pour la signature JWT (HS512) | — |
-| `JWT_EXPIRES` | Durée de validité du token JWT (ms) | `86400000` (24h) |
+| `JWT_EXPIRES` | Durée de validité de l'access token JWT (ms) | `1800000` (30 min) |
+| `JWT_REFRESH_EXPIRES` | Durée de validité du refresh token JWT (ms) | `604800000` (7 jours) |
 | `GOOGLE_CLIENT_ID` | ID client Google OAuth2 | `placeholder` |
 | `GOOGLE_CLIENT_SECRET` | Secret client Google OAuth2 | `placeholder` |
 | `OAUTH2_FRONTEND_REDIRECT_URL` | URL de redirection frontend après OAuth2 | `http://localhost:4200` |
@@ -314,8 +330,8 @@ mvn test -pl backend -am
 
 | Métrique | Valeur |
 |---|---|
-| Tests totaux | 61 |
-| Réussis | 60 |
+| Tests totaux | 68 |
+| Réussis | 67 |
 | Ignorés | 1 (contextLoads — nécessite MongoDB) |
 | Couverture instructions | 61% |
 | Modules couverts | Sécurité (JWT, OAuth2, filtres), contrôleurs, entités, DTOs |

@@ -13,8 +13,8 @@
 
 | Métrique | Valeur |
 |---|---|
-| Tests totaux | 61 |
-| Réussis | 60 |
+| Tests totaux | 68 |
+| Réussis | 67 |
 | Échoués | 0 |
 | Ignorés | 1 (`contextLoads` — nécessite MongoDB) |
 | Couverture instructions (global) | **61%** |
@@ -44,13 +44,16 @@ Le rapport de couverture JaCoCo est généré dans :
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|
-| `JwtUtils` | `JwtUtilsTest.java` | 8 | Instr: 97%, Branch: 100% |
+| `JwtUtils` | `JwtUtilsTest.java` | 12 | Instr: 97%, Branch: 100% |
 | `AuthTokenFilter` | `AuthTokenFilterTest.java` | 5 | ↑ inclus |
 | `AuthEntryPointJwt` | `AuthEntryPointJwtTest.java` | 2 | ↑ inclus |
 
 **Scénarios couverts :**
 - Génération de token JWT et extraction du username
 - Validation : token valide, null, vide, malformé, clé incorrecte, expiré
+- **Génération de refresh token et validation de sa durée d'expiration**
+- **Extraction du username depuis un token expiré (`getUserNameFromExpiredJwtToken`)**
+- **Extraction du username depuis un token encore valide via la méthode expired**
 - Filtre : Bearer token valide → SecurityContext, pas de header / token invalide / non-Bearer → continue sans auth
 - Exception dans le filtre → continue chain sans auth
 - Point d'entrée non autorisé → réponse JSON 401 avec status/error/message/path
@@ -96,13 +99,13 @@ Le rapport de couverture JaCoCo est généré dans :
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|
-| `AuthController` | `AuthControllerTest.java` | 7 | Instr: 90%, Branch: 80% |
+| `AuthController` | `AuthControllerTest.java` | 10 | Instr: 90%, Branch: 80% |
 | `OAuth2Controller` | `OAuth2ControllerTest.java` | 1 | ↑ inclus |
 | `TestController` | `TestControllerTest.java` | 3 | ↑ inclus |
 | `TestApiController` | `TestApiControllerTest.java` | 3 | ↑ inclus |
 
 **Scénarios couverts :**
-- `AuthController` : connexion (JWT valide, mauvais credentials, body vide/400), inscription (succès, username dupliqué, email dupliqué, rôle admin)
+- `AuthController` : connexion (JWT + refresh token valide, mauvais credentials, body vide/400), inscription (succès, username dupliqué, email dupliqué, rôle admin), **renouvellement de token (refresh valide → nouvelle paire, refresh expiré → 401, utilisateur inexistant → 401)**
 - `OAuth2Controller` : GET `/api/oauth2/login-url` retourne les infos du provider
 - `TestController` : GET `/all`, `/user`, `/admin` retournent le bon contenu
 - `TestApiController` : construction URI, accessibilité des champs, DTO `TestApiRequest`

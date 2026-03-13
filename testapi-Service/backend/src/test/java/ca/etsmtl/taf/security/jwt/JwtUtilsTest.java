@@ -21,12 +21,14 @@ class JwtUtilsTest {
 
     private static final String SECRET = "testSecretKeyThatIsLongEnoughForHS512AlgorithmToWork1234567890";
     private static final int EXPIRATION_MS = 86400000; // 24h
+    private static final long REFRESH_EXPIRATION_MS = 604800000L; // 7 days
 
     @BeforeEach
     void setUp() throws Exception {
         jwtUtils = new JwtUtils();
         setField(jwtUtils, "jwtSecret", SECRET);
         setField(jwtUtils, "jwtExpirationMs", EXPIRATION_MS);
+        setField(jwtUtils, "jwtRefreshExpirationMs", REFRESH_EXPIRATION_MS);
     }
 
     @Test
@@ -95,9 +97,44 @@ class JwtUtilsTest {
         JwtUtils expiredJwtUtils = new JwtUtils();
         setField(expiredJwtUtils, "jwtSecret", SECRET);
         setField(expiredJwtUtils, "jwtExpirationMs", -1000); // already expired
+        setField(expiredJwtUtils, "jwtRefreshExpirationMs", REFRESH_EXPIRATION_MS);
 
         String token = expiredJwtUtils.generateJwtTokenForUsername("expireduser");
         assertFalse(jwtUtils.validateJwtToken(token));
+    }
+
+    @Test
+    @DisplayName("generateRefreshToken creates a valid token with longer expiry")
+    void generateRefreshToken_shouldReturnValidToken() {
+        String token = jwtUtils.generateRefreshToken("testuser");
+
+        assertNotNull(token);
+        assertFalse(token.isEmpty());
+        assertTrue(jwtUtils.validateJwtToken(token));
+        assertEquals("testuser", jwtUtils.getUserNameFromJwtToken(token));
+    }
+
+    @Test
+    @DisplayName("getUserNameFromExpiredJwtToken extracts username from expired token")
+    void getUserNameFromExpiredJwtToken_shouldExtractUsername() throws Exception {
+        JwtUtils expiredJwtUtils = new JwtUtils();
+        setField(expiredJwtUtils, "jwtSecret", SECRET);
+        setField(expiredJwtUtils, "jwtExpirationMs", -1000); // already expired
+        setField(expiredJwtUtils, "jwtRefreshExpirationMs", REFRESH_EXPIRATION_MS);
+
+        String expiredToken = expiredJwtUtils.generateJwtTokenForUsername("expireduser");
+
+        // The token is expired, but we should still extract the username
+        String username = jwtUtils.getUserNameFromExpiredJwtToken(expiredToken);
+        assertEquals("expireduser", username);
+    }
+
+    @Test
+    @DisplayName("getUserNameFromExpiredJwtToken works with valid (non-expired) token too")
+    void getUserNameFromExpiredJwtToken_validToken_shouldExtractUsername() {
+        String token = jwtUtils.generateJwtTokenForUsername("activeuser");
+        String username = jwtUtils.getUserNameFromExpiredJwtToken(token);
+        assertEquals("activeuser", username);
     }
 
     // --- helpers ---

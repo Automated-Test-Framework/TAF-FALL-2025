@@ -22,7 +22,7 @@ import ca.etsmtl.taf.entity.User;
 import ca.etsmtl.taf.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("UserDetailsServiceImpl — loadUserByUsername")
+@DisplayName("UserDetailsServiceImpl - loadUserByUsername")
 class UserDetailsServiceImplTest {
 
     @InjectMocks
@@ -32,7 +32,7 @@ class UserDetailsServiceImplTest {
     private UserRepository userRepository;
 
     @Test
-    @DisplayName("loadUserByUsername — user found → returns UserDetailsImpl")
+    @DisplayName("loadUserByUsername - user found -> returns UserDetailsImpl")
     void loadUserByUsername_found() {
         User user = new User("Equipe 3", "equipe3", "equipe3@etsmtl.ca", "encodedPass");
         user.setId("id1");
@@ -53,7 +53,7 @@ class UserDetailsServiceImplTest {
     }
 
     @Test
-    @DisplayName("loadUserByUsername — user not found → throws UsernameNotFound")
+    @DisplayName("loadUserByUsername - user not found -> throws UsernameNotFound")
     void loadUserByUsername_notFound() {
         when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 

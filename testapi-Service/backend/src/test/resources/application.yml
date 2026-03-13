@@ -42,6 +42,7 @@ taf:
   app:
     jwtSecret: testSecretKeyForUnitTestsOnly1234567890abcdefghijklmnop
     jwtExpirationMs: 3600000
+    jwtRefreshExpirationMs: 604800000
     testAPI_url: http://localhost
     testAPI_port: 8084
     selenium_container_url: http://localhost

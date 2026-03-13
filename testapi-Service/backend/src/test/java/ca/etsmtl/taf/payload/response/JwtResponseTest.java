@@ -17,9 +17,10 @@ class JwtResponseTest {
         List<String> roles = Arrays.asList("ROLE_USER", "ROLE_ADMIN");
 
         JwtResponse response = new JwtResponse(
-                "jwt.token.here", "id1", "Equipe 3", "equipe3", "equipe3@etsmtl.ca", roles);
+                "jwt.token.here", "refresh.token.here", "id1", "Equipe 3", "equipe3", "equipe3@etsmtl.ca", roles);
 
         assertEquals("jwt.token.here", response.getAccessToken());
+        assertEquals("refresh.token.here", response.getRefreshToken());
         assertEquals("Bearer", response.getTokenType());
         assertEquals("id1", response.getId());
         assertEquals("Equipe 3", response.getFullName());
@@ -32,7 +33,7 @@ class JwtResponseTest {
     @DisplayName("Setters update fields")
     void setters_updateFields() {
         JwtResponse response = new JwtResponse(
-                "old", "id1", "Old", "old", "old@e.ca", List.of("ROLE_USER"));
+                "old", "old.refresh", "id1", "Old", "old", "old@e.ca", List.of("ROLE_USER"));
 
         response.setAccessToken("new.token");
         response.setTokenType("Custom");
@@ -53,7 +54,7 @@ class JwtResponseTest {
     @DisplayName("Default tokenType is 'Bearer'")
     void defaultTokenType_isBearer() {
         JwtResponse response = new JwtResponse(
-                "t", "id", "F", "u", "e@e.ca", List.of());
+                "t", "rt", "id", "F", "u", "e@e.ca", List.of());
 
         assertEquals("Bearer", response.getTokenType());
     }

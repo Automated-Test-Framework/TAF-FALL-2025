@@ -83,7 +83,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                             String username = email.split("@")[0]; // Use email prefix as username
                             // Ensure username uniqueness
                             if (userRepository.existsByUsername(username)) {
-                                username = username + "_g" + googleId.substring(0, 6);
+                                username = username + "_g" + googleId.substring(0, Math.min(googleId.length(), 6));
                             }
                             User newUser = new User(name, username, email, "google", googleId);
 
@@ -96,8 +96,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                         })
                 );
 
-        // Generate JWT token for this user
+        // Generate JWT access token and refresh token for this user
         String jwtToken = jwtUtils.generateJwtTokenForUsername(user.getUsername());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getUsername());
 
         // Build user info for frontend
         List<String> roles = user.getRoles().stream()
@@ -106,6 +107,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
         Map<String, Object> userInfo = new LinkedHashMap<>();
         userInfo.put("accessToken", jwtToken);
+        userInfo.put("refreshToken", refreshToken);
         userInfo.put("id", user.getId());
         userInfo.put("fullName", user.getFullName());
         userInfo.put("username", user.getUsername());
@@ -121,8 +123,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             userInfoBase64 = "";
         }
 
-        // Redirect to frontend with JWT token and user info
-        String redirectUrl = frontendRedirectUrl + "/oauth2/callback?token=" + jwtToken + "&userInfo=" + userInfoBase64;
+        // Redirect to frontend with JWT token, refresh token, and user info
+        String redirectUrl = frontendRedirectUrl + "/oauth2/callback?token=" + jwtToken + "&refreshToken=" + refreshToken + "&userInfo=" + userInfoBase64;
         log.info("Redirecting OAuth2 user to: {}", frontendRedirectUrl + "/oauth2/callback?token=***");
 
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);

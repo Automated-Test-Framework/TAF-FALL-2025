@@ -20,6 +20,7 @@ export class OAuth2CallbackComponent implements OnInit {
   ngOnInit(): void {
     this.route.queryParams.subscribe((params: { [key: string]: string }) => {
       const token: string | undefined = params['token'];
+      const refreshToken: string | undefined = params['refreshToken'];
       const userInfoBase64: string | undefined = params['userInfo'];
 
       if (!token) {
@@ -30,12 +31,17 @@ export class OAuth2CallbackComponent implements OnInit {
       }
 
       try {
-        // Save JWT token
+        // Save JWT token and refresh token
         this.tokenStorage.saveToken(token);
+        if (refreshToken) {
+          this.tokenStorage.saveRefreshToken(refreshToken);
+        }
 
         if (userInfoBase64) {
           // Decode base64url user info
-          const json: string = atob(userInfoBase64.replace(/-/g, '+').replace(/_/g, '/'));
+          let base64: string = userInfoBase64.replace(/-/g, '+').replace(/_/g, '/');
+          while (base64.length % 4) { base64 += '='; }
+          const json: string = atob(base64);
           const userInfo: Record<string, unknown> = JSON.parse(json);
           this.tokenStorage.saveUser(userInfo);
         } else {

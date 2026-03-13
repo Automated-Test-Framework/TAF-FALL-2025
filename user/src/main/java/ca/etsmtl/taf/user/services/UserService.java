@@ -40,10 +40,7 @@ public class UserService {
         if(!signUpRequest.getEmail().isEmpty())
             user.setEmail(signUpRequest.getEmail());
 
-        if (user != null) {
-            return userRepository.save(user);
-        }
-        return user;
+        return userRepository.save(user);
     }
 
 

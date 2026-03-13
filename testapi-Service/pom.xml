@@ -44,6 +44,8 @@
 		<lombok.version>1.18.24</lombok.version>
         <!-- spring-boot.version>2.6.6</spring-boot.version -->
         <spring-boot.version>3.5.10</spring-boot.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
     <packaging>pom</packaging>
     <modules>

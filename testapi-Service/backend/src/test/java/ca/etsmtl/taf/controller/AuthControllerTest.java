@@ -33,11 +33,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ca.etsmtl.taf.entity.ERole;
 import ca.etsmtl.taf.entity.Role;
 import ca.etsmtl.taf.payload.request.LoginRequest;
+import ca.etsmtl.taf.payload.request.RefreshTokenRequest;
 import ca.etsmtl.taf.payload.request.SignupRequest;
 import ca.etsmtl.taf.repository.RoleRepository;
 import ca.etsmtl.taf.repository.UserRepository;
 import ca.etsmtl.taf.security.jwt.JwtUtils;
 import ca.etsmtl.taf.security.services.UserDetailsImpl;
+import ca.etsmtl.taf.security.services.UserDetailsServiceImpl;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -65,6 +67,9 @@ class AuthControllerTest {
     @MockitoBean
     private JwtUtils jwtUtils;
 
+    @MockitoBean
+    private UserDetailsServiceImpl userDetailsService;
+
     // ==================== /signin ====================
 
     @Test
@@ -81,12 +86,14 @@ class AuthControllerTest {
         Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         when(authenticationManager.authenticate(any())).thenReturn(auth);
         when(jwtUtils.generateJwtToken(auth)).thenReturn("mock.jwt.token");
+        when(jwtUtils.generateRefreshToken("equipe3")).thenReturn("mock.refresh.token");
 
         mockMvc.perform(post("/api/auth/signin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginReq)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("mock.jwt.token"))
+                .andExpect(jsonPath("$.refreshToken").value("mock.refresh.token"))
                 .andExpect(jsonPath("$.username").value("equipe3"))
                 .andExpect(jsonPath("$.email").value("equipe3@etsmtl.ca"))
                 .andExpect(jsonPath("$.roles[0]").value("ROLE_USER"));
@@ -208,5 +215,66 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.message").value("Inscription Réussie.!"));
 
         verify(userRepository).save(argThat(user -> user.getRoles().contains(adminRole)));
+    }
+
+    // ==================== /refresh-token ====================
+
+    @Test
+    @DisplayName("POST /api/auth/refresh-token — valid refresh token returns new token pair")
+    void refreshToken_validToken_returnsNewTokenPair() throws Exception {
+        RefreshTokenRequest refreshReq = new RefreshTokenRequest();
+        refreshReq.setRefreshToken("valid.refresh.token");
+
+        UserDetailsImpl userDetails = new UserDetailsImpl(
+                "id1", "Equipe 3", "equipe3", "equipe3@etsmtl.ca", "encodedPass",
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+
+        when(jwtUtils.validateJwtToken("valid.refresh.token")).thenReturn(true);
+        when(jwtUtils.getUserNameFromJwtToken("valid.refresh.token")).thenReturn("equipe3");
+        when(userRepository.existsByUsername("equipe3")).thenReturn(true);
+        when(jwtUtils.generateJwtTokenForUsername("equipe3")).thenReturn("new.access.token");
+        when(jwtUtils.generateRefreshToken("equipe3")).thenReturn("new.refresh.token");
+        when(userDetailsService.loadUserByUsername("equipe3")).thenReturn(userDetails);
+
+        mockMvc.perform(post("/api/auth/refresh-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("new.access.token"))
+                .andExpect(jsonPath("$.refreshToken").value("new.refresh.token"))
+                .andExpect(jsonPath("$.username").value("equipe3"))
+                .andExpect(jsonPath("$.email").value("equipe3@etsmtl.ca"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh-token — expired refresh token returns 401")
+    void refreshToken_expiredToken_returns401() throws Exception {
+        RefreshTokenRequest refreshReq = new RefreshTokenRequest();
+        refreshReq.setRefreshToken("expired.refresh.token");
+
+        when(jwtUtils.validateJwtToken("expired.refresh.token")).thenReturn(false);
+
+        mockMvc.perform(post("/api/auth/refresh-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshReq)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/refresh-token — user not found returns 401")
+    void refreshToken_userNotFound_returns401() throws Exception {
+        RefreshTokenRequest refreshReq = new RefreshTokenRequest();
+        refreshReq.setRefreshToken("valid.refresh.token");
+
+        when(jwtUtils.validateJwtToken("valid.refresh.token")).thenReturn(true);
+        when(jwtUtils.getUserNameFromJwtToken("valid.refresh.token")).thenReturn("deleteduser");
+        when(userRepository.existsByUsername("deleteduser")).thenReturn(false);
+
+        mockMvc.perform(post("/api/auth/refresh-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshReq)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").exists());
     }
 }

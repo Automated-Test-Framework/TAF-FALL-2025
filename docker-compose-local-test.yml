@@ -265,7 +265,8 @@ services:
       DB_AUTH: admin
       DB_NAME: taf
       JWT_SECRET: tafSecretKeyForJWTTokenGeneration2024
-      JWT_EXPIRES: 86400000
+      JWT_EXPIRES: 1800000
+      JWT_REFRESH_EXPIRES: 604800000
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-placeholder}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-placeholder}
       OAUTH2_FRONTEND_REDIRECT_URL: http://localhost:4300
