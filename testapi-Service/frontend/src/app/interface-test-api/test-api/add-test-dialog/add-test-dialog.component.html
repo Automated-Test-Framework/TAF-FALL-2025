@@ -1,4 +1,4 @@
-<h3 mat-dialog-title>Ajouter un test</h3>
+<h3 mat-dialog-title>{{ isEditMode ? 'Modifier le test' : 'Ajouter un test' }}</h3>
 
 <mat-card>
   <mat-card-content class="scrollable-content">
@@ -55,6 +55,11 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="example-full-width">
+        <mat-label>Corps de la requête (input)</mat-label>
+        <textarea matInput [(ngModel)]="input"  name="input" ></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="example-full-width">
         <mat-label>Sortie attendue</mat-label>
         <textarea matInput [(ngModel)]="expectedOutput"  name="expectedOutput" ></textarea>
       </mat-form-field>
@@ -79,7 +84,7 @@
 
       <mat-icon mat-raised-button color="primary" (click)="addnewExpectedHeader()">add</mat-icon >
       <br />
-      <button mat-raised-button color="accent" (click)="saveForm()" type="submit">  Soumettre  </button>
+      <button mat-raised-button color="accent" (click)="saveForm()" type="submit">{{ isEditMode ? 'Modifier' : 'Soumettre' }}</button>
       <button mat-raised-button (click)="closeDialog()" >fermer</button>
     </form>
   </mat-card-content>

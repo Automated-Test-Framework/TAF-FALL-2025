@@ -77,6 +77,9 @@
 
     <th mat-header-cell *matHeaderCellDef> actions </th>
     <td mat-cell *matCellDef="let row">
+      <button mat-icon-button (click)="editTest(row)">
+        <mat-icon aria-label="Edit" color="primary">edit</mat-icon>
+      </button>
       <button mat-icon-button (click)="deleteTest(row.id)">
         <mat-icon aria-label="Delete" color="warn">delete</mat-icon>
       </button>

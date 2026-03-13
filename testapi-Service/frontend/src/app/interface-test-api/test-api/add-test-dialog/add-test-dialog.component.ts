@@ -19,17 +19,43 @@ export class AddTestDialogComponent implements OnInit {
   responseTime: any;
   statusCode: any;
   expectedOutput: any;
+  input: any;
+  isEditMode = false;
+  private editingId = 0;
 
   hide = true;
   errorMessage: string |undefined;
   constructor(public dialogRef: MatDialogRef<AddTestDialogComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: testModel,
+              @Inject(MAT_DIALOG_DATA) public data: any,
 
 
               private formBuilder : FormBuilder,
               private testApiService : TestApiService,) { }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    if (this.data && this.data.apiUrl) {
+      this.isEditMode = true;
+      this.editingId = this.data.id;
+      this.method = this.data.method;
+      this.apiUrl = this.data.apiUrl;
+      this.responseTime = this.data.responseTime;
+      this.statusCode = this.data.statusCode;
+      this.expectedOutput = this.data.expectedOutput;
+      this.input = this.data.input;
+
+      // Populate headers
+      if (this.data.headers && Object.keys(this.data.headers).length > 0) {
+        this.headerRequest = Object.entries(this.data.headers)
+          .map(([key, value]) => ({ key, value: value as string }));
+      }
+
+      // Populate expected headers
+      if (this.data.expectedHeaders && Object.keys(this.data.expectedHeaders).length > 0) {
+        this.expectedHeaderRequest = Object.entries(this.data.expectedHeaders)
+          .map(([key, value]) => ({ key, value: value as string }));
+      }
+    }
+  }
 
 
   addnewHeader() {
@@ -76,26 +102,34 @@ export class AddTestDialogComponent implements OnInit {
     }
 
     const jsonData: testModel2 = {
-      id: 0,
+      id: this.isEditMode ? this.editingId : 0,
       method: this.method,
       apiUrl: this.apiUrl,
       responseTime: this.responseTime,
       expectedOutput: this.expectedOutput,
-      input:"",
+      input: this.input || "",
       statusCode: this.statusCode,
       headers: {},
       expectedHeaders: {}
     };
 
     this.headerRequest.forEach((pair) => {
-      jsonData.headers[pair.key] = pair.value;
+      if (pair.key) {
+        jsonData.headers[pair.key] = pair.value;
+      }
     });
 
     this.expectedHeaderRequest.forEach((pair) => {
-      jsonData.expectedHeaders[pair.key] = pair.value;
+      if (pair.key) {
+        jsonData.expectedHeaders[pair.key] = pair.value;
+      }
     });
 
-    this.testApiService.addTestOnList(jsonData);
+    if (this.isEditMode) {
+      this.testApiService.updateTest(jsonData);
+    } else {
+      this.testApiService.addTestOnList(jsonData);
+    }
     console.log('Formatted JSON Data:', JSON.stringify(jsonData, null, 2));
 
     this.dialogRef.close();

@@ -81,6 +81,7 @@ cd frontend && npm install && ng serve --open
 | Swagger UI | http://localhost:8084/swagger-ui.html | Interface API |
 | Eureka | http://localhost:8761 | TEAM2 enregistré |
 | Health check | http://localhost:8084/actuator/health | `{"status":"UP"}` |
+| Mongo Express | http://localhost:8881 | Interface admin MongoDB |
 
 ---
 
@@ -98,6 +99,7 @@ C'est la **fonctionnalité principale** du module TestAPI. Elle permet de tester
    - **URL de l'API** — l'URL complète de l'API à tester
    - **Statut attendu** — le code HTTP attendu (ex: `200`, `404`)
    - **Headers** — paires clé/valeur à envoyer avec la requête (optionnel)
+   - **Corps de la requête (input)** — le corps JSON à envoyer (pour POST/PUT, optionnel)
    - **Sortie attendue** — le corps JSON attendu dans la réponse (optionnel)
    - **En-têtes attendus** — les en-têtes attendus dans la réponse (optionnel)
    - **Temps de réponse** — temps maximum acceptable en ms (optionnel)
@@ -106,12 +108,13 @@ C'est la **fonctionnalité principale** du module TestAPI. Elle permet de tester
 
 **Fonctions supplémentaires :**
 
+- **Modifier** — modifie un test existant en ouvrant le formulaire pré-rempli
 - **Export CSV** — télécharge les définitions de tests au format CSV
 - **Import CSV** — charge des tests depuis un fichier CSV
 - **Supprimer** — supprime un test individuel du tableau
 - **Mode Gherkin** — éditeur BDD permettant d'écrire les tests en syntaxe Gherkin (voir ci-dessous)
 
-> **Note :** Les résultats sont conservés en mémoire côté frontend uniquement. Un rafraîchissement de la page réinitialise les résultats (mais pas les définitions de tests).
+> **Note :** Les résultats d’exécution sont conservés en mémoire côté frontend uniquement. Un rafraîchissement de la page réinitialise les résultats, mais les **définitions de tests sont persistées dans MongoDB** et rechargées automatiquement au login.
 
 ### Mode Gherkin (BDD)
 
@@ -267,6 +270,21 @@ curl -X POST http://localhost:8084/api/testapi/checkApi \
 
 ---
 
+### Persistance des définitions de tests (MongoDB)
+
+Les définitions de tests sont **persistées automatiquement** dans MongoDB via l'API `ApiTestDefinitionController`. Chaque utilisateur ne voit que ses propres tests (isolation par JWT username).
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| `GET` | `/api/testapi/definitions` | Liste les définitions de l'utilisateur connecté |
+| `POST` | `/api/testapi/definitions` | Crée une nouvelle définition |
+| `PUT` | `/api/testapi/definitions/{id}` | Met à jour une définition (propriétaire uniquement) |
+| `DELETE` | `/api/testapi/definitions/{id}` | Supprime une définition (propriétaire uniquement) |
+
+Le frontend appelle ces endpoints automatiquement lors de l'ajout, la modification ou la suppression de tests. Au chargement de la page, les définitions sauvegardées sont rechargées depuis MongoDB.
+
+---
+
 ## Autres modules (Gatling, Selenium)
 
 Le backend intègre également des endpoints pour les **tests de performance** (Gatling, `POST /api/gatling/runSimulation`) et les **tests d'interface** (Selenium, `POST /api/testselenium`). Ces modules sont développés et maintenus par d'autres équipes (Projet #4 et Projet #2 respectivement). Consultez leur documentation pour plus de détails.
@@ -363,7 +381,7 @@ Accessible à : [http://localhost:8084/swagger-ui.html](http://localhost:8084/sw
 | Java | 17 | Langage backend |
 | Spring Boot | 3.5.10 | Framework backend |
 | **Rest-Assured** | **5.5.0** | **Exécution des tests d'API** |
-| Angular | 14 | Framework frontend |
+| Angular | 13.3 | Framework frontend |
 | MongoDB | latest | Stockage utilisateurs/rôles |
 | Gatling | — | Tests de performance |
 | Selenium Java | 4.27.0 | Tests d'interface |
@@ -373,7 +391,7 @@ Accessible à : [http://localhost:8084/swagger-ui.html](http://localhost:8084/sw
 
 ## Tests unitaires
 
-Le backend dispose d'une suite de **79 tests unitaires** avec couverture JaCoCo.
+Le backend dispose d'une suite de **84 tests unitaires** avec couverture JaCoCo.
 
 ```powershell
 # One-click : depuis la racine du projet
@@ -386,12 +404,12 @@ mvn test -pl backend -am
 
 | Métrique | Valeur |
 |---|---|
-| Tests totaux | 79 |
-| Réussis | 79 |
+| Tests totaux | 84 |
+| Réussis | 84 |
 | Échoués | 0 |
 | Couverture instructions (classes équipe) | **100%** |
 | Couverture branches (classes équipe) | **100%** |
-| Modules couverts | Sécurité (JWT, OAuth2, filtres), contrôleurs, entités, DTOs |
+| Modules couverts | Sécurité (JWT, OAuth2, filtres), contrôleurs, entités, DTOs, persistance MongoDB |
 
 Le rapport de couverture est dans `backend/target/site/jacoco/index.html`.  
 Le détail complet des tests est dans [TEST-REPORT.md](./TEST-REPORT.md).

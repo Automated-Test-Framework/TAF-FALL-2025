@@ -1,7 +1,6 @@
 package ca.etsmtl.taf;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 /**
  * Full context load test — requires MongoDB to be running.

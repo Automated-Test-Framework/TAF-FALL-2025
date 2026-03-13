@@ -2,8 +2,8 @@
 
 **Projet** : TAF (Test Automation Framework) — Équipe 3  
 **Cours** : MGL805, ÉTS, Hiver 2026  
-**Date** : 2026-03-10  
-**Branche** : `feature/ModeGherkin`  
+**Date** : 2026-03-11  
+**Branche** : `feature/MongoDB`  
 **Framework** : JUnit 5 (Jupiter) + Mockito + Spring Boot Test  
 **Couverture** : JaCoCo 0.8.12
 
@@ -13,8 +13,8 @@
 
 | Métrique | Valeur |
 |---|---|
-| Tests totaux | 79 |
-| Réussis | 79 |
+| Tests totaux | 84 |
+| Réussis | 84 |
 | Échoués | 0 |
 | Ignorés | 0 |
 | Couverture instructions (20 classes équipe) | **100%** |
@@ -91,11 +91,11 @@ Le rapport de couverture JaCoCo est généré dans :
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|
-| `WebSecurityConfig` | `WebSecurityConfigTest.java` | 7 | Instr: 100%, Branch: n/a |
+| `WebSecurityConfig` | `WebSecurityConfigTest.java` | 6 | Instr: 100%, Branch: n/a |
 
 **Scénarios couverts :**
-- Endpoints publics (`/api/auth/**`, `/api/test/all`, Swagger) retournent 200
-- Endpoints protégés (`/api/test/user`, `/api/test/admin`) retournent 401
+- Endpoints publics (`/api/auth/**`, `/api/oauth2/login-url`, Swagger) retournent 200
+- Endpoints protégés (`/api/testapi/checkApi`) retournent 401 sans JWT
 - **Bean `authenticationJwtTokenFilter()` retourne une instance valide**
 - **Bean `authenticationProvider()` retourne un `DaoAuthenticationProvider`**
 - **Bean `authenticationManager()` retourne un `AuthenticationManager`**
@@ -106,14 +106,14 @@ Le rapport de couverture JaCoCo est généré dans :
 |---|---|---|---|
 | `AuthController` | `AuthControllerTest.java` | 15 | Instr: 100%, Branch: 100% |
 | `OAuth2Controller` | `OAuth2ControllerTest.java` | 1 | ↑ inclus |
-| `TestController` | `TestControllerTest.java` | 3 | ↑ inclus |
 | `TestApiController` | `TestApiControllerTest.java` | 4 | Instr: 100%, Branch: 100% |
+| `ApiTestDefinitionController` | `ApiTestDefinitionControllerTest.java` | 9 | Instr: 100%, Branch: 100% |
 
 **Scénarios couverts :**
 - `AuthController` : connexion (JWT + refresh token valide, mauvais credentials, body vide/400), inscription (succès, username dupliqué, email dupliqué, rôle admin, **rôle non-admin ROLE_USER uniquement**), **renouvellement de token (refresh valide → nouvelle paire, refresh expiré → 401, utilisateur inexistant → 401)**, **RuntimeException sur signup et signin**
 - `OAuth2Controller` : GET `/api/oauth2/login-url` retourne les infos du provider
-- `TestController` : GET `/all`, `/user`, `/admin` retournent le bon contenu
 - `TestApiController` : construction URI, accessibilité des champs, DTO `TestApiRequest`, **appel HTTP réel vers un HttpServer embarqué** avec vérification status code
+- `ApiTestDefinitionController` : CRUD complet pour les définitions de tests API persistées dans MongoDB — création, lecture (par utilisateur), mise à jour (avec vérification propriétaire), suppression (avec vérification propriétaire), test 404 pour ID inexistant, test 403 pour accès non autorisé, test liste vide
 
 **Non testés** : `TestSeleniumController`, `GatlingApiController` — contrôleurs d'autres équipes nécessitant des services externes (Selenium, Gatling)
 
@@ -146,7 +146,7 @@ Le rapport de couverture JaCoCo est généré dans :
 | `security.jwt` | 100% | 100% | JwtUtils, AuthTokenFilter, AuthEntryPointJwt |
 | `payload.request` | 100% | n/a | LoginRequest, SignupRequest |
 | `payload.response` | 100% | n/a | JwtResponse, MessageResponse |
-| `controller` | 100% | 100% | AuthController, TestApiController, TestController, OAuth2Controller |
+| `controller` | 100% | 100% | AuthController, TestApiController, ApiTestDefinitionController, OAuth2Controller |
 | `entity` | 100% | 100% | User, Role, ERole |
 
 ### Autres packages (autres équipes / infrastructure)

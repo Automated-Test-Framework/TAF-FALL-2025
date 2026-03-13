@@ -22,7 +22,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import ca.etsmtl.taf.controller.AuthController;
 import ca.etsmtl.taf.controller.OAuth2Controller;
 import ca.etsmtl.taf.controller.TestApiController;
-import ca.etsmtl.taf.controller.TestController;
 import ca.etsmtl.taf.repository.RoleRepository;
 import ca.etsmtl.taf.repository.UserRepository;
 import ca.etsmtl.taf.security.jwt.AuthEntryPointJwt;
@@ -31,7 +30,7 @@ import ca.etsmtl.taf.security.jwt.JwtUtils;
 import ca.etsmtl.taf.security.oauth2.OAuth2LoginSuccessHandler;
 import ca.etsmtl.taf.security.services.UserDetailsServiceImpl;
 
-@WebMvcTest(controllers = {TestController.class, OAuth2Controller.class, AuthController.class, TestApiController.class})
+@WebMvcTest(controllers = {OAuth2Controller.class, AuthController.class, TestApiController.class})
 @Import({WebSecurityConfig.class, AuthEntryPointJwt.class})
 @DisplayName("WebSecurityConfig — security rules integration tests")
 class WebSecurityConfigTest {
@@ -63,13 +62,6 @@ class WebSecurityConfigTest {
     private PasswordEncoder encoder;
 
     // ==================== Public endpoints → 200 (no auth) ====================
-
-    @Test
-    @DisplayName("GET /api/test/all — public, returns 200")
-    void publicEndpoint_testAll_returns200() throws Exception {
-        mockMvc.perform(get("/api/test/all"))
-                .andExpect(status().isOk());
-    }
 
     @Test
     @DisplayName("GET /api/oauth2/login-url — public, returns 200")

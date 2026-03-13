@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
 import {BehaviorSubject,  Observable, Subject, forkJoin, throwError} from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {testModel} from "../models/test-model";
 import {testModel2} from "../models/testmodel2";
@@ -13,6 +13,7 @@ import {TestResponseModel} from "../models/testResponseModel";
 
 export class TestApiService {
   REST_API: string = `${environment.apiUrl}/team2/api`;
+  private DEFINITIONS_API: string = `${this.REST_API}/testapi/definitions`;
   constructor(private http: HttpClient) { }
 
   executeTests(dataTests: testModel2[]): Observable<TestResponseModel[]> {
@@ -51,20 +52,103 @@ export class TestApiService {
   tests$ : Observable<testModel2[]> = this.testsSubject.asObservable();
   listTests : testModel2 []=[];
 
+  // ── MongoDB persistence ─────────────────────────
+
+  /** Load all saved test definitions from backend */
+  loadDefinitions(): Observable<any[]> {
+    return this.http.get<any[]>(this.DEFINITIONS_API).pipe(
+      tap(defs => {
+        this.listTests = defs.map((d, index) => this.fromBackend(d, index + 1));
+        this.testsSubject.next([...this.listTests]);
+      }),
+      catchError(err => {
+        console.error('Failed to load definitions from backend:', err);
+        return throwError(() => err);
+      })
+    );
+  }
+
+  /** Convert backend ApiTestDefinition to frontend testModel2 */
+  private fromBackend(d: any, localId: number): testModel2 {
+    return {
+      id: localId,
+      mongoId: d.id,
+      method: d.method || 'GET',
+      apiUrl: d.apiUrl || '',
+      headers: d.headers || {},
+      expectedHeaders: d.expectedHeaders || {},
+      statusCode: d.statusCode,
+      responseTime: d.responseTime,
+      input: d.input,
+      expectedOutput: d.expectedOutput,
+    };
+  }
+
+  /** Convert frontend testModel2 to backend payload */
+  private toBackend(test: testModel2): any {
+    return {
+      method: test.method,
+      apiUrl: test.apiUrl,
+      headers: test.headers,
+      expectedHeaders: test.expectedHeaders,
+      input: test.input || '',
+      expectedOutput: test.expectedOutput || '',
+      statusCode: test.statusCode,
+      responseTime: test.responseTime,
+    };
+  }
+
   //ajouter un test a la liste
   addTestOnList(newTest: testModel2){
     newTest.id= this.listTests.length+1;
     this.listTests.push(newTest);
     this.testsSubject.next([...this.listTests]);
 
+    // Persist to backend
+    this.http.post<any>(this.DEFINITIONS_API, this.toBackend(newTest)).subscribe({
+      next: saved => { newTest.mongoId = saved.id; },
+      error: err => console.error('Failed to save definition:', err)
+    });
+  }
+
+  // Mettre a jour un test existant dans la liste
+  updateTest(updatedTest: testModel2): void {
+    const index = this.listTests.findIndex(t => t.id === updatedTest.id);
+    if (index !== -1) {
+      const mongoId = this.listTests[index].mongoId;
+      updatedTest.mongoId = mongoId;
+      // Reset result fields
+      updatedTest.responseStatus = undefined;
+      updatedTest.messages = [];
+      this.listTests[index] = updatedTest;
+      this.testsSubject.next([...this.listTests]);
+
+      // Persist to backend
+      if (mongoId) {
+        this.http.put<any>(`${this.DEFINITIONS_API}/${mongoId}`, this.toBackend(updatedTest)).subscribe({
+          error: err => console.error('Failed to update definition:', err)
+        });
+      }
+    }
   }
 
 // delete a test from the liste when user confirm the remove
   deleteTest(id: number){
-    let indiceASupprimer = id-1;
-    this.listTests.splice(indiceASupprimer, 1);
+    const index = this.listTests.findIndex(t => t.id === id);
+    if (index === -1) return;
+    const mongoId = this.listTests[index].mongoId;
+
+    this.listTests.splice(index, 1);
+    // Renumber IDs sequentially after deletion
+    this.listTests.forEach((t, i) => t.id = i + 1);
     this.testsSubject.next([...this.listTests]);
 
+    // Delete from backend
+    if (mongoId) {
+      this.http.delete(`${this.DEFINITIONS_API}/${mongoId}`).subscribe({
+        error: err => console.error('Failed to delete definition:', err)
+      });
+    }
   }
 
   // get test information to show it to the user, so he can conform that he wants delete the right test on the list

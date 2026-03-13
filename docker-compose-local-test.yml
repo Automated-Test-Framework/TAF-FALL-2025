@@ -31,6 +31,23 @@ services:
       timeout: 5s
       retries: 5
 
+  mongo-express:
+    image: mongo-express:latest
+    container_name: taf-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8881:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongodb:27017/
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - taf-local
+
   mysql:
     image: mysql:8.0
     container_name: taf-mysql
@@ -261,6 +278,7 @@ services:
     environment:
       SPRING_APPLICATION_NAME: team2
       SERVER_PORT: 8080
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
       DB_URI: mongodb://admin:admin123@mongodb:27017/taf?authSource=admin
       DB_AUTH: admin
       DB_NAME: taf
@@ -468,21 +486,6 @@ services:
       - "8090:8080"
     environment:
       ADMINER_DEFAULT_SERVER: mysql
-    networks:
-      - taf-local
-
-  mongo-express:
-    image: mongo-express:latest
-    container_name: taf-mongo-express
-    restart: unless-stopped
-    ports:
-      - "8091:8081"
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
-      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongodb:27017/
-    depends_on:
-      - mongodb
     networks:
       - taf-local
 

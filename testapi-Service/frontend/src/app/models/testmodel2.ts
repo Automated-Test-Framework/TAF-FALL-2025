@@ -1,5 +1,6 @@
 export interface testModel2 {
     id: number;
+    mongoId?: string;
     method: string;
     apiUrl: string;
     headers: { [key: string]: string };
@@ -10,6 +11,4 @@ export interface testModel2 {
     responseStatus?: boolean;
     messages?: string[];
     expectedHeaders:  { [key: string]: string };
-
-
 }

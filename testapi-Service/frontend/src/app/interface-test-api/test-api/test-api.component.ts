@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TestApiService } from 'src/app/_services/test-api.service';
+import { TokenStorageService } from 'src/app/_services/token-storage.service';
 import { testModel } from "../../models/test-model";
 import { MatDialog } from "@angular/material/dialog";
 import { AddTestDialogComponent } from "./add-test-dialog/add-test-dialog.component";
@@ -26,6 +27,7 @@ export class TestApiComponent implements OnInit {
 
   constructor(
     private testApiService: TestApiService,
+    private tokenStorage: TokenStorageService,
     public dialog: MatDialog,
     private gherkinParser: GherkinParserService,
   ) { }
@@ -33,6 +35,12 @@ export class TestApiComponent implements OnInit {
   ngOnInit() {
     // Chargement de la liste des tests
     this.getTestList();
+    // Load saved definitions from backend (only if user is logged in)
+    if (this.tokenStorage.getToken()) {
+      this.testApiService.loadDefinitions().subscribe({
+        error: () => {}
+      });
+    }
   }
 
   // Récupération de la liste des tests
@@ -44,9 +52,19 @@ export class TestApiComponent implements OnInit {
   addTest() {
     this.isPopupOpened = true;
     const dialogRef = this.dialog.open(AddTestDialogComponent, {});
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe(() => {
       this.isPopupOpened = false;
-      this.ngOnInit(); // rafraîchit la liste
+    });
+  }
+
+  // Ouvre le dialogue de modification de test
+  editTest(test: testModel2) {
+    this.isPopupOpened = true;
+    const dialogRef = this.dialog.open(AddTestDialogComponent, {
+      data: test
+    });
+    dialogRef.afterClosed().subscribe(() => {
+      this.isPopupOpened = false;
     });
   }
 
@@ -54,11 +72,9 @@ export class TestApiComponent implements OnInit {
   deleteTest(id: string) {
     this.isPopupOpened = true;
     const dialogRef = this.dialog.open(DeleteTestDialogComponent, { data: id });
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe(() => {
       this.isPopupOpened = false;
-      this.ngOnInit();
     });
-    this.getTestList();
   }
 
   exportCSV(): void {
@@ -191,11 +207,9 @@ export class TestApiComponent implements OnInit {
 
   /** Receive parsed tests from Gherkin editor and add to table */
   onGherkinTestsReady(tests: testModel2[]): void {
-    // Clear existing tests and add new ones from Gherkin
-    this.testApiService.clearTests();
+    // Append Gherkin tests to the existing list (each is POSTed to backend)
     tests.forEach(test => this.testApiService.addTestOnList(test));
     this.gherkinMode = false;
-    this.getTestList();
   }
 
   /** Close Gherkin editor without applying */

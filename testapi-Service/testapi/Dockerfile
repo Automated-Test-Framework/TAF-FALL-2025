@@ -5,5 +5,5 @@ COPY . .
 
 RUN mvn clean install -DskipTests -B
 
-EXPOSE 8090
+EXPOSE 8082
 ENTRYPOINT ["mvn", "spring-boot:run" ]
