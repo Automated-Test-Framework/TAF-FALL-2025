@@ -22,7 +22,6 @@ export class GherkinEditorComponent implements OnInit, AfterViewChecked {
   parsedTests: testModel2[] = [];
   parseErrors: string[] = [];
   showPreview: boolean = false;
-  highlightedHtml: string = '';
   private needsSync = false;
 
   constructor(private gherkinParser: GherkinParserService) {}
