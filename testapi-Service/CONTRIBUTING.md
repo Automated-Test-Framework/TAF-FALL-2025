@@ -20,3 +20,22 @@ Voici l'ensemble des règles à respecter lors de votre contribution à TAF. Si 
 - Le code réalisé doit être
   - Accompagné d'une documentation disponible sur le [Wiki.js](https://js.wiki/) du projet.
   - Testé. Bien que nous ne demandons pas un % de couverture fixe, un maximum des fonctions réalisées doivent être couverte par des tests unitaires.
+
+## Tests unitaires (backend)
+
+Avant de soumettre une merge request, **tous les tests unitaires doivent passer** :
+
+```powershell
+# Depuis la racine du projet
+.\run-tests-testapi.ps1
+
+# Ou manuellement
+cd testapi-Service
+mvn test -pl backend -am
+```
+
+- Résultat attendu : `BUILD SUCCESS`, 0 failures, 0 errors
+- Si vous ajoutez ou modifiez du code backend, **ajoutez ou mettez à jour les tests correspondants**
+- Les conventions de nommage des tests sont décrites dans [CONVENTIONS.md](./documentation/CONVENTIONS.md#tests-unitaires)
+- Le rapport de couverture JaCoCo est généré dans `backend/target/site/jacoco/index.html`
+- Le détail des tests existants est dans [TEST-REPORT.md](./TEST-REPORT.md)

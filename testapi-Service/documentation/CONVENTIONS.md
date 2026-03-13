@@ -30,3 +30,15 @@
   - Feature : branche créée pour ajouter une feature au programme. On la nomme : `feature/userstory_id-résumé_feature`
 - Fonctionnement : Pour créer une nouvelle feature il faut créer une branche depuis develop, une fois développée, il faut créer une pull request pour pouvoir merger la nouvelle feature sur develop
 
+## Tests unitaires
+- Framework : JUnit 5 (Jupiter) + Mockito + Spring Boot Test
+- Fichiers de test dans `backend/src/test/java/`, structure miroir du code source
+- Nommage des classes : `<ClasseTestée>Test.java` → `JwtUtilsTest.java`
+- Nommage des méthodes : `<méthode>_<condition>_<résultatAttendu>` → `signin_badCredentials_throwsException`
+- Chaque méthode de test doit avoir un `@DisplayName` en français ou anglais décrivant le scénario
+- Utiliser `@WebMvcTest` pour les contrôleurs (évite de charger MongoDB)
+- Utiliser `@ExtendWith(MockitoExtension.class)` pour les tests unitaires purs
+- Utiliser `@MockitoBean` (Spring 6.2+) au lieu de `@MockBean` (déprécié)
+- Lancer les tests : `mvn test -pl backend -am` ou `./run-tests-testapi.ps1`
+- Couverture : JaCoCo, rapport dans `backend/target/site/jacoco/index.html`
+

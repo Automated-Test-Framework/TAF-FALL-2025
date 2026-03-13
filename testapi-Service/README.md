@@ -299,6 +299,30 @@ Accessible à : [http://localhost:8084/swagger-ui.html](http://localhost:8084/sw
 | jjwt | 0.9.1 | Tokens JWT |
 | springdoc-openapi | 2.6.0 | Swagger UI |
 
+## Tests unitaires
+
+Le backend dispose d'une suite de **61 tests unitaires** avec couverture JaCoCo.
+
+```powershell
+# One-click : depuis la racine du projet
+.\run-tests-testapi.ps1
+
+# Ou manuellement
+cd testapi-Service
+mvn test -pl backend -am
+```
+
+| Métrique | Valeur |
+|---|---|
+| Tests totaux | 61 |
+| Réussis | 60 |
+| Ignorés | 1 (contextLoads — nécessite MongoDB) |
+| Couverture instructions | 61% |
+| Modules couverts | Sécurité (JWT, OAuth2, filtres), contrôleurs, entités, DTOs |
+
+Le rapport de couverture est dans `backend/target/site/jacoco/index.html`.  
+Le détail complet des tests est dans [TEST-REPORT.md](./TEST-REPORT.md).
+
 ## Contribuer
 
 La démarche pour contribuer est disponible dans [CONTRIBUTING.md](./CONTRIBUTING.md).

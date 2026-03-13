@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: team2-test
+
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/taf-test
+      database: taf-test
+      auto-index-creation: false
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.EurekaDiscoveryClientConfiguration
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-client-id
+            client-secret: test-client-secret
+            scope: openid, profile, email
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+            user-name-attribute: sub
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+taf:
+  app:
+    jwtSecret: testSecretKeyForUnitTestsOnly1234567890abcdefghijklmnop
+    jwtExpirationMs: 3600000
+    testAPI_url: http://localhost
+    testAPI_port: 8084
+    selenium_container_url: http://localhost
+    selenium_container_port: 4444
+    oauth2FrontendRedirectUrl: http://localhost:4200
+
+server:
+  port: 0
+
+eureka:
+  client:
+    enabled: false
+    registerWithEureka: false
+    fetchRegistry: false

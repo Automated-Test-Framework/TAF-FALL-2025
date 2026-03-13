@@ -3,7 +3,6 @@ package ca.etsmtl.taf;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 //import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 //import ca.etsmtl.taf.eureka.EurekaItem;
@@ -15,7 +14,7 @@ import java.util.Map;
 @EnableDiscoveryClient
 @SpringBootApplication
 //@EnableJpaAuditing
-@EnableMongoAuditing
+// @EnableMongoAuditing moved to ca.etsmtl.taf.config.MongoAuditingConfig
 public class TestAutomationFrameworkApplication implements CommandLineRunner {
 
     //@Autowired
