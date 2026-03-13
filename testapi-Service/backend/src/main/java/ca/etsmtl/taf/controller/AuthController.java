@@ -1,8 +1,6 @@
 package ca.etsmtl.taf.controller;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
@@ -15,22 +13,17 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import ca.etsmtl.taf.entity.ERole;
-import ca.etsmtl.taf.entity.Role;
-import ca.etsmtl.taf.entity.User;
 import ca.etsmtl.taf.payload.request.LoginRequest;
 import ca.etsmtl.taf.payload.request.RefreshTokenRequest;
 import ca.etsmtl.taf.payload.request.SignupRequest;
 import ca.etsmtl.taf.payload.response.JwtResponse;
 import ca.etsmtl.taf.payload.response.MessageResponse;
-import ca.etsmtl.taf.repository.RoleRepository;
-import ca.etsmtl.taf.repository.UserRepository;
 import ca.etsmtl.taf.security.jwt.JwtUtils;
 import ca.etsmtl.taf.security.services.UserDetailsImpl;
 import ca.etsmtl.taf.security.services.UserDetailsServiceImpl;
+import ca.etsmtl.taf.service.UserRegistrationService;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -43,19 +36,13 @@ public class AuthController {
   AuthenticationManager authenticationManager;
 
   @Autowired
-  UserRepository userRepository;
-
-  @Autowired
-  RoleRepository roleRepository;
-
-  @Autowired
-  PasswordEncoder encoder;
-
-  @Autowired
   JwtUtils jwtUtils;
 
   @Autowired
   UserDetailsServiceImpl userDetailsService;
+
+  @Autowired
+  UserRegistrationService userRegistrationService;
 
   @PostMapping("/signin")
   public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -85,7 +72,8 @@ public class AuthController {
   /**
    * Refresh token endpoint.
    * Accepts a valid refresh token and returns a new access token + refresh token pair.
-   * The old refresh token is invalidated by issuing a new one (rotation strategy).
+   * Note: Previously issued refresh tokens remain valid until they expire; this method does
+   * not persist or invalidate older refresh tokens on the server side.
    */
   @PostMapping("/refresh-token")
   public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
@@ -102,7 +90,7 @@ public class AuthController {
     String username = jwtUtils.getUserNameFromJwtToken(requestRefreshToken);
 
     // Verify user still exists in the database
-    if (!userRepository.existsByUsername(username)) {
+    if (!userRegistrationService.existsByUsername(username)) {
       logger.warn("Refresh token refers to non-existent user: {}", username);
       return ResponseEntity.status(401)
           .body(new MessageResponse("Error: User not found. Please sign in again."));
@@ -131,49 +119,24 @@ public class AuthController {
 
   @PostMapping("/signup")
   public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-    if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+    if (userRegistrationService.existsByUsername(signUpRequest.getUsername())) {
       return ResponseEntity
           .badRequest()
           .body(new MessageResponse("Error: Username is already taken!"));
     }
 
-    if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+    if (userRegistrationService.existsByEmail(signUpRequest.getEmail())) {
       return ResponseEntity
           .badRequest()
           .body(new MessageResponse("Error: Email is already in use!"));
     }
 
-    // Create new user's account
-    User user = new User(signUpRequest.getFullName(),
-    		signUpRequest.getUsername(), 
-               signUpRequest.getEmail(),
-               encoder.encode(signUpRequest.getPassword()));
-
-    Set<String> strRoles = signUpRequest.getRole();
-    Set<Role> roles = new HashSet<>();
-
-    if (strRoles == null) {
-      Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-          .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-      roles.add(userRole);
-    } else {
-      strRoles.forEach(role -> {
-    	  
-    	  ERole currentRoleType = ERole.ROLE_USER;
-    	  
-    	  if ("admin".equals(role)) {
-    		  currentRoleType = ERole.ROLE_ADMIN;
-    	  }
-        
-    	  Role currentRole = roleRepository.findByName(currentRoleType)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-        
-    	  roles.add(currentRole);
-      });
-    }
-
-    user.setRoles(roles);
-    userRepository.save(user);
+    userRegistrationService.registerUser(
+        signUpRequest.getFullName(),
+        signUpRequest.getUsername(),
+        signUpRequest.getEmail(),
+        signUpRequest.getPassword(),
+        signUpRequest.getRole());
 
     return ResponseEntity.ok(new MessageResponse("Inscription Réussie.!"));
   }

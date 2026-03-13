@@ -1,9 +1,9 @@
-package org.requests;
+package ca.etsmtl.taf.testapi;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = {"org.requests", "org.config"})
+@SpringBootApplication
 public class TestManager {
     public static void main(String[] args) {
         SpringApplication.run(TestManager.class, args);

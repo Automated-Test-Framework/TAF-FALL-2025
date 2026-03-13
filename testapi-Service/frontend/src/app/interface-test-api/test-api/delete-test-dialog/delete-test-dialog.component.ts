@@ -2,7 +2,7 @@ import {Component, Inject, OnInit} from '@angular/core';
 import {TestApiService} from "../../../_services/test-api.service";
 import { FormBuilder, Validators } from '@angular/forms';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
-import {testModel2} from "../../../models/testmodel2";
+import {TestModel2} from "../../../models/testmodel2";
 
 @Component({
   selector: 'app-delete-test-dialog',

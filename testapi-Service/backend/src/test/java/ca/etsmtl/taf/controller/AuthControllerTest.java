@@ -1,16 +1,15 @@
 package ca.etsmtl.taf.controller;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.HashSet;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
@@ -24,22 +23,18 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ca.etsmtl.taf.entity.ERole;
-import ca.etsmtl.taf.entity.Role;
 import ca.etsmtl.taf.payload.request.LoginRequest;
 import ca.etsmtl.taf.payload.request.RefreshTokenRequest;
 import ca.etsmtl.taf.payload.request.SignupRequest;
-import ca.etsmtl.taf.repository.RoleRepository;
-import ca.etsmtl.taf.repository.UserRepository;
 import ca.etsmtl.taf.security.jwt.JwtUtils;
 import ca.etsmtl.taf.security.services.UserDetailsImpl;
 import ca.etsmtl.taf.security.services.UserDetailsServiceImpl;
+import ca.etsmtl.taf.service.UserRegistrationService;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -56,19 +51,13 @@ class AuthControllerTest {
     private AuthenticationManager authenticationManager;
 
     @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-    @MockitoBean
-    private PasswordEncoder encoder;
-
-    @MockitoBean
     private JwtUtils jwtUtils;
 
     @MockitoBean
     private UserDetailsServiceImpl userDetailsService;
+
+    @MockitoBean
+    private UserRegistrationService userRegistrationService;
 
     // ==================== /signin ====================
 
@@ -138,12 +127,8 @@ class AuthControllerTest {
         signupReq.setEmail("equipe3@etsmtl.ca");
         signupReq.setPassword("equipe3");
 
-        when(userRepository.existsByUsername("equipe3")).thenReturn(false);
-        when(userRepository.existsByEmail("equipe3@etsmtl.ca")).thenReturn(false);
-
-        Role userRole = new Role();
-        userRole.setName(ERole.ROLE_USER);
-        when(roleRepository.findByName(ERole.ROLE_USER)).thenReturn(Optional.of(userRole));
+        when(userRegistrationService.existsByUsername("equipe3")).thenReturn(false);
+        when(userRegistrationService.existsByEmail("equipe3@etsmtl.ca")).thenReturn(false);
 
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -161,7 +146,7 @@ class AuthControllerTest {
         signupReq.setEmail("equipe3@etsmtl.ca");
         signupReq.setPassword("equipe3");
 
-        when(userRepository.existsByUsername("equipe3")).thenReturn(true);
+        when(userRegistrationService.existsByUsername("equipe3")).thenReturn(true);
 
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -179,8 +164,8 @@ class AuthControllerTest {
         signupReq.setEmail("equipe3@etsmtl.ca");
         signupReq.setPassword("equipe3");
 
-        when(userRepository.existsByUsername("equipe3new")).thenReturn(false);
-        when(userRepository.existsByEmail("equipe3@etsmtl.ca")).thenReturn(true);
+        when(userRegistrationService.existsByUsername("equipe3new")).thenReturn(false);
+        when(userRegistrationService.existsByEmail("equipe3@etsmtl.ca")).thenReturn(true);
 
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -201,12 +186,8 @@ class AuthControllerTest {
         roles.add("admin");
         signupReq.setRole(roles);
 
-        when(userRepository.existsByUsername("admin1")).thenReturn(false);
-        when(userRepository.existsByEmail("admin@etsmtl.ca")).thenReturn(false);
-
-        Role adminRole = new Role();
-        adminRole.setName(ERole.ROLE_ADMIN);
-        when(roleRepository.findByName(ERole.ROLE_ADMIN)).thenReturn(Optional.of(adminRole));
+        when(userRegistrationService.existsByUsername("admin1")).thenReturn(false);
+        when(userRegistrationService.existsByEmail("admin@etsmtl.ca")).thenReturn(false);
 
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -214,7 +195,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Inscription Réussie.!"));
 
-        verify(userRepository).save(argThat(user -> user.getRoles().contains(adminRole)));
+        verify(userRegistrationService).registerUser(eq("Admin"), eq("admin1"), eq("admin@etsmtl.ca"), eq("admin123"), any());
     }
 
     // ==================== /refresh-token ====================
@@ -231,7 +212,7 @@ class AuthControllerTest {
 
         when(jwtUtils.validateJwtToken("valid.refresh.token")).thenReturn(true);
         when(jwtUtils.getUserNameFromJwtToken("valid.refresh.token")).thenReturn("equipe3");
-        when(userRepository.existsByUsername("equipe3")).thenReturn(true);
+        when(userRegistrationService.existsByUsername("equipe3")).thenReturn(true);
         when(jwtUtils.generateJwtTokenForUsername("equipe3")).thenReturn("new.access.token");
         when(jwtUtils.generateRefreshToken("equipe3")).thenReturn("new.refresh.token");
         when(userDetailsService.loadUserByUsername("equipe3")).thenReturn(userDetails);
@@ -269,7 +250,7 @@ class AuthControllerTest {
 
         when(jwtUtils.validateJwtToken("valid.refresh.token")).thenReturn(true);
         when(jwtUtils.getUserNameFromJwtToken("valid.refresh.token")).thenReturn("deleteduser");
-        when(userRepository.existsByUsername("deleteduser")).thenReturn(false);
+        when(userRegistrationService.existsByUsername("deleteduser")).thenReturn(false);
 
         mockMvc.perform(post("/api/auth/refresh-token")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -292,12 +273,8 @@ class AuthControllerTest {
         roles.add("user"); // NOT "admin" → false branch of "admin".equals(role)
         signupReq.setRole(roles);
 
-        when(userRepository.existsByUsername("user1")).thenReturn(false);
-        when(userRepository.existsByEmail("user@etsmtl.ca")).thenReturn(false);
-
-        Role userRole = new Role();
-        userRole.setName(ERole.ROLE_USER);
-        when(roleRepository.findByName(ERole.ROLE_USER)).thenReturn(Optional.of(userRole));
+        when(userRegistrationService.existsByUsername("user1")).thenReturn(false);
+        when(userRegistrationService.existsByEmail("user@etsmtl.ca")).thenReturn(false);
 
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -316,9 +293,10 @@ class AuthControllerTest {
         signupReq.setPassword("password");
         // strRoles is null → defaults to finding ROLE_USER
 
-        when(userRepository.existsByUsername("testuser")).thenReturn(false);
-        when(userRepository.existsByEmail("test@test.com")).thenReturn(false);
-        when(roleRepository.findByName(ERole.ROLE_USER)).thenReturn(Optional.empty());
+        when(userRegistrationService.existsByUsername("testuser")).thenReturn(false);
+        when(userRegistrationService.existsByEmail("test@test.com")).thenReturn(false);
+        when(userRegistrationService.registerUser(any(), any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("Error: Role is not found."));
 
         assertThrows(jakarta.servlet.ServletException.class, () ->
             mockMvc.perform(post("/api/auth/signup")
@@ -338,9 +316,10 @@ class AuthControllerTest {
         roles.add("admin");
         signupReq.setRole(roles);
 
-        when(userRepository.existsByUsername("admin2")).thenReturn(false);
-        when(userRepository.existsByEmail("admin2@test.com")).thenReturn(false);
-        when(roleRepository.findByName(ERole.ROLE_ADMIN)).thenReturn(Optional.empty());
+        when(userRegistrationService.existsByUsername("admin2")).thenReturn(false);
+        when(userRegistrationService.existsByEmail("admin2@test.com")).thenReturn(false);
+        when(userRegistrationService.registerUser(any(), any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("Error: Role is not found."));
 
         assertThrows(jakarta.servlet.ServletException.class, () ->
             mockMvc.perform(post("/api/auth/signup")

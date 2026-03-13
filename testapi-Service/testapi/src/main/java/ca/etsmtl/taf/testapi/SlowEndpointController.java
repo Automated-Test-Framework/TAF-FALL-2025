@@ -1,32 +1,23 @@
-package org.requests;
+package ca.etsmtl.taf.testapi;
 
-import org.requests.payload.request.TestApiRequest;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
-import java.io.Serializable;
 import java.util.Map;
 
+/**
+ * Test-only controller that simulates a slow API endpoint for timeout testing.
+ * Only loaded in non-production profiles to prevent DoS abuse.
+ */
+@Profile({"dev", "local", "default"})
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/microservice/testapi")
-public class TestApiController {
-    @PostMapping("/checkApi")
-    public Serializable testApi(@Valid @RequestBody TestApiRequest testApiRequest) {
-        return (redirectMethod(testApiRequest));
-    }
-
-    public Serializable redirectMethod(TestApiRequest request) {
-        return new RequestController(request).getAnswer();
-    }
+public class SlowEndpointController {
 
     private static final int MAX_DELAY_MS = 120_000;
 
-    /**
-     * Simulates a slow API endpoint to test timeout behavior.
-     * Sleeps for the given number of milliseconds (default 15000, max 120000).
-     */
     @GetMapping("/slow")
     public ResponseEntity<Map<String, Object>> slow(
             @RequestParam(value = "delay", defaultValue = "15000") int delay) {

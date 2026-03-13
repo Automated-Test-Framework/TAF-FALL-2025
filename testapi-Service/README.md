@@ -29,17 +29,15 @@ Le module se compose de 4 microservices orchestrés par Docker Compose :
 | **testapi** | Exécution des tests d'API via **Rest-Assured** | 8086 → 8082 |
 | **selenium** | Exécution des tests d'interface via **Selenium WebDriver** | 4445 → 4444 |
 
-Les services s'enregistrent auprès d'**Eureka** (registry, port 8761) pour la découverte de services.
-
 ### Flux d'un test d'API
 
 ```
 Frontend Angular        Backend (8084)              TestAPI (8086)            API cible
-┌──────────────┐      ┌────────────────────┐      ┌──────────────────┐      ┌──────────┐
-│ Tableau de   │─POST→│ TestApiController   │─POST→│ RequestController│─HTTP→│ ex:      │
-│ tests        │      │ /api/testapi/       │      │ (Rest-Assured)   │      │ jsonplace│
-│              │←JSON─│ checkApi            │←JSON─│                  │←─────│ holder   │
-└──────────────┘      └────────────────────┘      └──────────────────┘      └──────────┘
+┌──────────────┐      ┌────────────────────┐      ┌──────────────────────┐  ┌──────────┐
+│ Tableau de   │─POST→│ TestApiController   │─POST→│ TestRequestExecutor  │─HTTP→│ ex:      │
+│ tests        │      │ /api/testapi/       │      │ (Rest-Assured)       │  │ jsonplace│
+│              │←JSON─│ checkApi            │←JSON─│                      │←─────│ holder   │
+└──────────────┘      └────────────────────┘      └──────────────────────┘  └──────────┘
 ```
 
 Le backend agit comme un proxy transparent : il sérialise la requête JSON et la transmet au microservice testapi. C'est le microservice testapi qui effectue l'appel HTTP réel via Rest-Assured et exécute les assertions.
@@ -51,8 +49,20 @@ Le backend agit comme un proxy transparent : il sérialise la requête JSON et l
 **Prérequis :** Docker et Docker Compose installés.
 
 ```powershell
-# Démarrage rapide — Team 2 uniquement
+# Premier démarrage (build des images)
 .\start-taf-local.ps1 -Mode team2 -Build
+
+# Redémarrage rapide sans rebuild (recommandé après le premier build)
+.\start-taf-local.ps1 -Mode team2 -Restart
+
+# Arrêter les conteneurs (données MongoDB conservées)
+.\start-taf-local.ps1 -Mode team2 -Stop
+
+# Voir le statut de tous les conteneurs
+.\start-taf-local.ps1 -Status
+
+# Nettoyage complet (supprime conteneurs + volumes MongoDB)
+.\start-taf-local.ps1 -Clean
 
 # Ou manuellement
 docker compose -f docker-compose-local-test.yml up -d --build
@@ -71,7 +81,7 @@ cd testapi && mvn clean install && mvn spring-boot:run
 cd frontend && npm install && ng serve --open
 ```
 
-> Les variables d'environnement dans `backend/.env` doivent être configurées (MongoDB, JWT, Eureka, etc.).
+> Les variables d'environnement dans `backend/.env` doivent être configurées (MongoDB, JWT, etc.).
 
 ### Vérification après démarrage
 
@@ -79,7 +89,6 @@ cd frontend && npm install && ng serve --open
 |---------|-----|-------------------|
 | Frontend | http://localhost:4300 | Page de connexion |
 | Swagger UI | http://localhost:8084/swagger-ui.html | Interface API |
-| Eureka | http://localhost:8761 | TEAM2 enregistré |
 | Health check | http://localhost:8084/actuator/health | `{"status":"UP"}` |
 | Mongo Express | http://localhost:8881 | Interface admin MongoDB |
 
@@ -343,13 +352,31 @@ La réponse retourne un nouveau `accessToken` et un nouveau `refreshToken` (rota
 
 ### Google OAuth2
 
-Connexion via compte Google disponible sur la page de login du frontend. Nécessite les variables d'environnement `GOOGLE_CLIENT_ID` et `GOOGLE_CLIENT_SECRET` configurées avant le démarrage Docker :
+Connexion via compte Google disponible sur la page de login du frontend.
 
-```powershell
-$env:GOOGLE_CLIENT_ID = "votre-client-id.apps.googleusercontent.com"
-$env:GOOGLE_CLIENT_SECRET = "votre-client-secret"
-docker compose -f docker-compose-local-test.yml up -d --build backend-team2
+#### Obtenir les identifiants Google
+
+1. Aller sur [Google Cloud Console](https://console.cloud.google.com/)
+2. Créer un projet (ou en sélectionner un existant)
+3. **APIs & Services → Credentials → Create Credentials → OAuth client ID**
+4. Type d'application : **Web application**
+5. Ajouter dans **Authorized redirect URIs** : `http://localhost:8084/login/oauth2/code/google`
+6. Copier le **Client ID** et le **Client Secret** générés
+
+#### Configuration
+
+Les secrets sont stockés dans le fichier `.env` à la racine du dépôt (ignoré par `.gitignore`, jamais commité) :
+
+```bash
+# Copier le template si c'est la première fois
+cp .env.example .env
+
+# Remplir les valeurs dans .env
+GOOGLE_CLIENT_ID=votre-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=votre-client-secret
 ```
+
+Docker Compose lit automatiquement le fichier `.env` au démarrage — aucune autre configuration nécessaire.
 
 > Sans ces variables, le login Google ne fonctionne pas, mais le reste de l'application (JWT, tests d'API, Gatling, Selenium) fonctionne normalement.
 
@@ -383,8 +410,6 @@ Accessible à : [http://localhost:8084/swagger-ui.html](http://localhost:8084/sw
 | `GOOGLE_CLIENT_ID` | ID client Google OAuth2 | `placeholder` |
 | `GOOGLE_CLIENT_SECRET` | Secret client Google OAuth2 | `placeholder` |
 | `OAUTH2_FRONTEND_REDIRECT_URL` | URL de redirection frontend après OAuth2 | `http://localhost:4200` |
-| `EUREKA_HOST` | Hôte du serveur Eureka | — |
-| `EUREKA_PORT` | Port du serveur Eureka | `8761` |
 | `TEST_API_SERVICE_URL` | URL du microservice TestAPI | — |
 | `TEST_API_SERVICE_PORT` | Port du microservice TestAPI | `8082` |
 | `SELENIUM_URL` | URL du microservice Selenium | — |

@@ -1,9 +1,9 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import {testModel} from "../../../models/test-model";
+import {TestModel} from "../../../models/test-model";
 import {TestApiService} from "../../../_services/test-api.service";
-import {testModel2}  from "../../../models/testmodel2";
+import {TestModel2}  from "../../../models/testmodel2";
 
 
 @Component({
@@ -100,7 +100,7 @@ export class AddTestDialogComponent implements OnInit {
       return;
     }
 
-    const jsonData: testModel2 = {
+    const jsonData: TestModel2 = {
       id: this.isEditMode ? this.editingId : 0,
       method: this.method,
       apiUrl: this.apiUrl,

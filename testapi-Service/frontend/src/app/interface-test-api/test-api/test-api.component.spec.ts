@@ -10,7 +10,7 @@ import { of } from 'rxjs';
 import { TestApiComponent } from './test-api.component';
 import { TestApiService } from '../../_services/test-api.service';
 import { GherkinParserService } from '../../_services/gherkin-parser.service';
-import { testModel2 } from '../../models/testmodel2';
+import { TestModel2 } from '../../models/testmodel2';
 
 describe('TestApiComponent', () => {
   let component: TestApiComponent;
@@ -101,7 +101,7 @@ describe('TestApiComponent', () => {
 
   it('should add parsed tests and exit gherkin mode', () => {
     component.gherkinMode = true;
-    const tests: testModel2[] = [
+    const tests: TestModel2[] = [
       { id: 1, method: 'POST', apiUrl: 'https://api.test.com', headers: {}, expectedHeaders: {} }
     ];
 
@@ -128,7 +128,7 @@ describe('TestApiComponent', () => {
       afterClosed: () => of(null)
     } as any);
 
-    const testData: testModel2 = {
+    const testData: TestModel2 = {
       id: 1, method: 'POST', apiUrl: 'https://api.test.com',
       headers: { 'Content-Type': 'application/json' },
       expectedHeaders: {}, statusCode: 201,

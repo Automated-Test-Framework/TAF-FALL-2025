@@ -1,9 +1,9 @@
 # Rapport de Tests Unitaires — testapi-Service Backend
 
-**Projet** : TAF (Test Automation Framework) — Équipe 3  
+**Projet** : TAF (Test Automation Framework) — Équipe 2  
 **Cours** : MGL805, ÉTS, Hiver 2026  
-**Date** : 2026-03-11  
-**Branche** : `feature/Timeout`  
+**Date** : 2026-03-12  
+**Branche** : `feature/RefineThings`  
 **Framework** : JUnit 5 (Jupiter) + Mockito + Spring Boot Test  
 **Couverture** : JaCoCo 0.8.12
 
@@ -104,20 +104,31 @@ Le rapport de couverture JaCoCo est généré dans :
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|
-| `AuthController` | `AuthControllerTest.java` | 15 | Instr: 100%, Branch: 100% |
+| `AuthController` | `AuthControllerTest.java` | 13 | Instr: 100%, Branch: 100% |
 | `OAuth2Controller` | `OAuth2ControllerTest.java` | 1 | ↑ inclus |
 | `TestApiController` | `TestApiControllerTest.java` | 7 | Instr: 100%, Branch: 100% |
 | `ApiTestDefinitionController` | `ApiTestDefinitionControllerTest.java` | 9 | Instr: 100%, Branch: 100% |
 
 **Scénarios couverts :**
-- `AuthController` : connexion (JWT + refresh token valide, mauvais credentials, body vide/400), inscription (succès, username dupliqué, email dupliqué, rôle admin, **rôle non-admin ROLE_USER uniquement**), **renouvellement de token (refresh valide → nouvelle paire, refresh expiré → 401, utilisateur inexistant → 401)**, **RuntimeException sur signup et signin**
+- `AuthController` : connexion (JWT + refresh token valide, mauvais credentials, body vide/400), inscription via `UserRegistrationService` (succès, username dupliqué, email dupliqué, rôle admin, rôle non-admin ROLE_USER), **renouvellement de token (refresh valide → nouvelle paire, refresh expiré → 401, utilisateur inexistant → 401)**, **RuntimeException sur signup**
 - `OAuth2Controller` : GET `/api/oauth2/login-url` retourne les infos du provider
 - `TestApiController` : construction URI, accessibilité des champs, DTO `TestApiRequest`, **appel HTTP réel vers un HttpServer embarqué** avec vérification status code, **vérification du champ `testApiTimeout`**, **HttpClient utilise connectTimeout/timeout depuis `testApiTimeout`**, **timeout déclenché quand le serveur est trop lent (HttpTimeoutException)**
 - `ApiTestDefinitionController` : CRUD complet pour les définitions de tests API persistées dans MongoDB — création, lecture (par utilisateur), mise à jour (avec vérification propriétaire), suppression (avec vérification propriétaire), test 404 pour ID inexistant, test 403 pour accès non autorisé, test liste vide
 
 **Non testés** : `TestSeleniumController`, `GatlingApiController` — contrôleurs d'autres équipes nécessitant des services externes (Selenium, Gatling)
 
-### 6. Entités et DTOs
+### 6. Services (`service`)
+
+| Classe testée | Fichier de test | Tests | Couverture |
+|---|---|---|---|
+| `UserRegistrationService` | `AuthControllerTest.java` (indirect) | — | Instr: 100%, Branch: 100% |
+
+**Scénarios couverts :**
+- `existsByUsername`, `existsByEmail` — vérification de doublons lors de l'inscription
+- `registerUser` — création d'un utilisateur avec rôles, encodage du mot de passe, sauvegarde en base
+- Exception sur rôle inexistant → `RuntimeException`
+
+### 7. Entités et DTOs
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|
@@ -136,7 +147,7 @@ Le rapport de couverture JaCoCo est généré dans :
 
 ## Couverture par package
 
-### Classes de l'équipe (24 classes) — 97% couverture lignes
+### Classes de l'équipe (25 classes) — 98% couverture lignes
 
 | Package | Instructions | Branches | Note |
 |---|---|---|---|
@@ -147,6 +158,7 @@ Le rapport de couverture JaCoCo est généré dans :
 | `payload.request` | 100% | n/a | LoginRequest, SignupRequest, RefreshTokenRequest, TestApiRequest |
 | `payload.response` | 100% | n/a | JwtResponse, MessageResponse |
 | `controller` | 100% | 100% | AuthController, TestApiController, ApiTestDefinitionController, OAuth2Controller |
+| `service` | 100% | 100% | UserRegistrationService |
 | `entity` | 100% | 100% | User, Role, ERole, ApiTestDefinition |
 | `config` | 60% | 25% | MvcConfiguration (inner PathResourceResolver non testé) |
 
@@ -159,7 +171,7 @@ Le rapport de couverture JaCoCo est généré dans :
 | `config` | 50% | 0% | Configuration Spring |
 | `dto` | 25% | n/a | SeleniumCaseDto (autre équipe) |
 | `apiCommunication` | 19% | n/a | SeleniumServiceRequester (autre équipe) |
-| `service` | 17% | 0% | SeleniumService (autre équipe) |
+| `service` | 17% | 0% | SeleniumService (autre équipe), UserRegistrationService (100%) |
 | `eureka` | 5% | n/a | EurekaClientConfig (infra) |
 
 ---
@@ -178,7 +190,7 @@ Le rapport de couverture JaCoCo est généré dans :
 
 ## Outils et dépendances de test
 
-### 7. Timeout — Configuration et gestion (`controller`, `testapi`)
+### 8. Timeout — Configuration et gestion (`controller`, `testapi`)
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|

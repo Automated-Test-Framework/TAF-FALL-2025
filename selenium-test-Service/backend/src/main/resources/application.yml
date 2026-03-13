@@ -76,10 +76,11 @@ eureka:
   #  prefer-ip-address: true
 
   client:
+    enabled: ${EUREKA_CLIENT_ENABLED:true}
     registerWithEureka: true
     fetchRegistry: true
     serviceUrl:
-      defaultZone: http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:${EUREKA_PORT}/eureka
+      defaultZone: http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:eureka}@${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka
 
 springdoc:
   api-docs:

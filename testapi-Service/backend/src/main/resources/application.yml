@@ -21,6 +21,7 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID:placeholder}
             client-secret: ${GOOGLE_CLIENT_SECRET:placeholder}
             scope: openid, profile, email
+            redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:8084/login/oauth2/code/google}
         provider:
           google:
             authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
@@ -61,10 +62,11 @@ eureka:
   #  prefer-ip-address: true
 
   client:
+    enabled: ${EUREKA_CLIENT_ENABLED:true}
     registerWithEureka: true
     fetchRegistry: true
     serviceUrl:
-      defaultZone: http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:${EUREKA_PORT}/eureka
+      defaultZone: http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:eureka}@${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka
 
 springdoc:
   api-docs:

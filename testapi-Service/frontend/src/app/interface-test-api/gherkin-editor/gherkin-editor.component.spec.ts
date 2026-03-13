@@ -7,7 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { GherkinEditorComponent } from './gherkin-editor.component';
 import { GherkinParserService } from '../../_services/gherkin-parser.service';
-import { testModel2 } from '../../models/testmodel2';
+import { TestModel2 } from '../../models/testmodel2';
 
 describe('GherkinEditorComponent', () => {
   let component: GherkinEditorComponent;
@@ -143,8 +143,8 @@ describe('GherkinEditorComponent', () => {
     component.gherkinText = parserService.getSampleTemplate();
     component.onTextChange();
 
-    let emitted: testModel2[] | undefined;
-    component.testsReady.subscribe((tests: testModel2[]) => emitted = tests);
+    let emitted: TestModel2[] | undefined;
+    component.testsReady.subscribe((tests: TestModel2[]) => emitted = tests);
 
     component.applyTests();
 

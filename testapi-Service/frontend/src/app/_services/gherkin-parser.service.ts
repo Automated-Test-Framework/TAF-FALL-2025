@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { testModel2 } from '../models/testmodel2';
+import { TestModel2 } from '../models/testmodel2';
 
 /**
  * Lightweight, browser-safe Gherkin parser — no @cucumber dependencies.
@@ -31,16 +31,16 @@ export class GherkinParserService {
    * Parse Gherkin text and return an array of testModel2.
    * Each Scenario becomes one test.
    */
-  parse(gherkinText: string): { tests: testModel2[]; errors: string[] } {
+  parse(gherkinText: string): { tests: TestModel2[]; errors: string[] } {
     const errors: string[] = [];
-    const tests: testModel2[] = [];
+    const tests: TestModel2[] = [];
 
     try {
       const lines = gherkinText.split(/\r?\n/);
 
       let foundFeature = false;
       let currentScenarioName: string | null = null;
-      let currentTest: testModel2 | null = null;
+      let currentTest: TestModel2 | null = null;
       let testId = 1;
 
       for (const raw of lines) {
@@ -106,7 +106,7 @@ export class GherkinParserService {
   }
 
   /** Validate a completed test and push warnings. */
-  private finalizeTest(test: testModel2, scenarioName: string, errors: string[]): void {
+  private finalizeTest(test: TestModel2, scenarioName: string, errors: string[]): void {
     if (!test.apiUrl) {
       errors.push(`Scenario "${scenarioName}": missing API URL (use: And the API URL is "...")`);
     }
@@ -115,7 +115,7 @@ export class GherkinParserService {
   /**
    * Convert testModel2[] back to Gherkin text.
    */
-  toGherkin(tests: testModel2[]): string {
+  toGherkin(tests: TestModel2[]): string {
     const lines: string[] = ['Feature: API Tests', ''];
 
     for (const test of tests) {
@@ -187,7 +187,7 @@ export class GherkinParserService {
 
   // ── Private helpers ──────────────────────────────────────────
 
-  private parseStep(text: string, test: testModel2, errors: string[], scenarioName: string): void {
+  private parseStep(text: string, test: TestModel2, errors: string[], scenarioName: string): void {
     let match: RegExpMatchArray | null;
 
     // Method: the API method is "GET"

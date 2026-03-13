@@ -1,14 +1,18 @@
-package org.config;
+package ca.etsmtl.taf.testapi.config;
 
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class TimeoutConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(TimeoutConfig.class);
 
     @Value("${timeout.connection:10000}")
     private int connectionTimeout;
@@ -27,8 +31,8 @@ public class TimeoutConfig {
                         .setParam("http.socket.timeout", socketTimeout)
                         .setParam("http.connection-manager.timeout", connectionManagerTimeout));
 
-        System.out.println("✅ RestAssured timeout configured: connection=" + connectionTimeout
-                + "ms, socket=" + socketTimeout + "ms, connectionManager=" + connectionManagerTimeout + "ms");
+        log.info("RestAssured timeout configured: connection={}ms, socket={}ms, connectionManager={}ms",
+                connectionTimeout, socketTimeout, connectionManagerTimeout);
     }
 
     public int getConnectionTimeout() {

@@ -1,4 +1,4 @@
-export class testModel {
+export class TestModel {
 
   constructor(public id: string,
               public methode: string,

@@ -89,7 +89,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
                             // Assign default ROLE_USER
                             Set<Role> roles = new HashSet<>();
-                            roleRepository.findByName(ERole.ROLE_USER).ifPresent(roles::add);
+                            roles.add(roleRepository.findByName(ERole.ROLE_USER)
+                                    .orElseThrow(() -> new RuntimeException("Error: Role ROLE_USER not found in database")));
                             newUser.setRoles(roles);
 
                             return userRepository.save(newUser);

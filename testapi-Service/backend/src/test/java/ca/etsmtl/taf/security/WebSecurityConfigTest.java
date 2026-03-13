@@ -29,6 +29,7 @@ import ca.etsmtl.taf.security.jwt.AuthTokenFilter;
 import ca.etsmtl.taf.security.jwt.JwtUtils;
 import ca.etsmtl.taf.security.oauth2.OAuth2LoginSuccessHandler;
 import ca.etsmtl.taf.security.services.UserDetailsServiceImpl;
+import ca.etsmtl.taf.service.UserRegistrationService;
 
 @WebMvcTest(controllers = {OAuth2Controller.class, AuthController.class, TestApiController.class})
 @Import({WebSecurityConfig.class, AuthEntryPointJwt.class})
@@ -60,6 +61,9 @@ class WebSecurityConfigTest {
 
     @MockitoBean
     private PasswordEncoder encoder;
+
+    @MockitoBean
+    private UserRegistrationService userRegistrationService;
 
     // ==================== Public endpoints → 200 (no auth) ====================
 

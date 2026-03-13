@@ -1,4 +1,4 @@
-export interface testModel2 {
+export interface TestModel2 {
     id: number;
     mongoId?: string;
     method: string;

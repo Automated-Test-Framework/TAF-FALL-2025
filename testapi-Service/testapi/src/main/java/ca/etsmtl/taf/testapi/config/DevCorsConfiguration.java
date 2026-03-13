@@ -1,4 +1,4 @@
-package org.config;
+package ca.etsmtl.taf.testapi.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;

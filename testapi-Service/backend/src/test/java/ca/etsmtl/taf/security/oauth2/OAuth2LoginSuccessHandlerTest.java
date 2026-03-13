@@ -230,7 +230,7 @@ class OAuth2LoginSuccessHandlerTest {
     }
 
     @Test
-    @DisplayName("New user with no ROLE_USER in DB → creates user with empty roles")
+    @DisplayName("New user with no ROLE_USER in DB → throws RuntimeException")
     void newUser_noRoleInDb_emptyRoles() throws Exception {
         setField(handler, "frontendRedirectUrl", "http://localhost:4200");
 
@@ -251,21 +251,11 @@ class OAuth2LoginSuccessHandlerTest {
         // No ROLE_USER in DB
         when(roleRepository.findByName(ERole.ROLE_USER)).thenReturn(Optional.empty());
 
-        User savedUser = new User("No Role User", "norole", "norole@gmail.com", "google", "google999");
-        savedUser.setId("id5");
-        savedUser.setRoles(new HashSet<>());
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-        when(jwtUtils.generateJwtTokenForUsername("norole")).thenReturn("norole.jwt.token");
-        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
-
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        handler.onAuthenticationSuccess(request, response, auth);
-
-        // User saved with empty roles
-        verify(userRepository).save(argThat(user -> user.getRoles().isEmpty()));
+        assertThrows(RuntimeException.class,
+                () -> handler.onAuthenticationSuccess(request, response, auth));
     }
 
     @Test

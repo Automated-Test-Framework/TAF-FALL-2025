@@ -1,9 +1,13 @@
 FROM node:alpine AS builder
 WORKDIR /frontend
-COPY frontend .
 
-RUN npm install && \
-    npm run build
+# Copy package files first — npm install cached when dependencies don't change
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm install
+
+# Copy source code and build
+COPY frontend/ .
+RUN npm run build
 
 FROM nginx:alpine
 
@@ -12,38 +16,20 @@ ARG GROUP_ID=1001
 ARG USER_NAME=nginx-user
 ARG GROUP_NAME=nginx-group
 
-# Create group and user with specified IDs
-RUN addgroup -g $GROUP_ID -S $GROUP_NAME
-RUN adduser -u $USER_ID -S $USER_NAME -G $GROUP_NAME -s /bin/sh
+# Create user and set up all directories/permissions in one layer
+RUN addgroup -g $GROUP_ID -S $GROUP_NAME && \
+    adduser -u $USER_ID -S $USER_NAME -G $GROUP_NAME -s /bin/sh && \
+    mkdir -p /var/cache/nginx /app && \
+    touch /var/run/nginx.pid && \
+    chown -R "$USER_NAME":"$GROUP_NAME" /var/cache/nginx /var/run/nginx.pid /app /etc/nginx/conf.d
 
 COPY --from=builder /frontend/dist/* /usr/share/nginx/html/
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY frontend/nginx.conf /app/nginx.conf
+COPY frontend/envsubst-file.sh /app/envsubst-file.sh
 
-WORKDIR /app
-
-COPY frontend/nginx.conf .
-
-COPY frontend/envsubst-file.sh .
-
-# Fix line endings and grant execute permissions to the entrypoint script
-RUN sed -i 's/\r$//' /app/envsubst-file.sh && chmod +x /app/envsubst-file.sh
-
-# Ensure the cache directory exists and set ownership
-RUN mkdir -p /var/cache/nginx
-RUN chown -R "$USER_NAME":"$GROUP_NAME" /var/cache/nginx
-
-# Ensure the cache directory exists and set ownership
-RUN touch /var/run/nginx.pid
-RUN chown -R "$USER_NAME":"$GROUP_NAME" /var/run/nginx.pid
-
-#RUN envsubst '${BACKEND_API_URL}' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf
-
-# Set ownership of relevant directories/files to the non-root user
-RUN chown -R "$USER_NAME":"$GROUP_NAME" /app/nginx.conf
-RUN chown -R "$USER_NAME":"$GROUP_NAME" /app/envsubst-file.sh
-RUN chown -R "$USER_NAME":"$GROUP_NAME" /etc/nginx/conf.d
-# Set read permissions for the user on the config file
-RUN chmod u+r /etc/nginx/conf.d/default.conf
+RUN sed -i 's/\r$//' /app/envsubst-file.sh && chmod +x /app/envsubst-file.sh && \
+    chown -R "$USER_NAME":"$GROUP_NAME" /app /etc/nginx/conf.d
 
 USER $USER_NAME
 

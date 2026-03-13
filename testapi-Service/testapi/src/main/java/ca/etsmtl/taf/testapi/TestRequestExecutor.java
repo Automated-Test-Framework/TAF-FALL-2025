@@ -1,13 +1,15 @@
-package org.requests;
+package ca.etsmtl.taf.testapi;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import org.requests.payload.request.Answer;
-import org.requests.payload.request.TestApiRequest;
-import org.utils.JsonComparator;
+import ca.etsmtl.taf.testapi.payload.request.Answer;
+import ca.etsmtl.taf.testapi.payload.request.TestApiRequest;
+import ca.etsmtl.taf.testapi.util.JsonComparator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -16,7 +18,9 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 
-public class RequestController {
+public class TestRequestExecutor {
+
+    private static final Logger log = LoggerFactory.getLogger(TestRequestExecutor.class);
     
     private final TestApiRequest request;
     private final RequestSpecification httpRequest;
@@ -28,8 +32,8 @@ public class RequestController {
     private boolean timedOut = false;
     private long actualResponseTime = -1;
 
-    public RequestController(TestApiRequest request) {
-        System.out.println("############### DEBUG : RequestController INITIALISÉ ###############");
+    public TestRequestExecutor(TestApiRequest request) {
+        log.debug("TestRequestExecutor initialized");
 
         this.request = request;
         RequestSpecification spec = given()
@@ -47,7 +51,7 @@ public class RequestController {
     }
 
     public Answer getAnswer() {
-        System.out.println("############### DEBUG : getAnswer() appelé ###############");
+        log.debug("getAnswer() called");
 
         this.execute();
         Answer answer = new Answer();
@@ -75,10 +79,8 @@ public class RequestController {
         boolean timeOK = this.checkResponseTime();
         boolean headersOK = this.checkResponseHeaders();
 
-        System.out.println("DEBUG : checkStatusCode() = " + statusOK);
-        System.out.println("DEBUG : checkOutput() = " + outputOK);
-        System.out.println("DEBUG : checkResponseTime() = " + timeOK);
-        System.out.println("DEBUG : checkResponseHeaders() = " + headersOK);
+        log.debug("checkStatusCode()={}, checkOutput()={}, checkResponseTime()={}, checkResponseHeaders()={}",
+                statusOK, outputOK, timeOK, headersOK);
 
         // Initialiser answer.answer à true
         answer.answer = true;
@@ -104,8 +106,7 @@ public class RequestController {
 
         answer.fieldAnswer = this.fieldAnswer;
 
-        System.out.println("💡 DEBUG : Résultat final de answer.answer = " + answer.answer);
-        System.out.println("💡 DEBUG : Messages d'erreur = " + answer.messages);
+        log.debug("Final answer={}, messages={}", answer.answer, answer.messages);
 
         return answer;
     }
@@ -124,19 +125,16 @@ private void execute() {
                 || e instanceof SocketTimeoutException
                 || (e.getMessage() != null && e.getMessage().contains("timed out"))) {
             this.timedOut = true;
-            System.out.println("TIMEOUT: Request to " + this.request.getApiUrl()
-                    + " timed out after " + this.actualResponseTime + " ms");
+            log.warn("TIMEOUT: Request to {} timed out after {} ms", this.request.getApiUrl(), this.actualResponseTime);
         } else {
-            System.out.println("ERROR: Failed to execute request to "
-                    + this.request.getApiUrl() + " : " + e.getMessage());
+            log.error("Failed to execute request to {}: {}", this.request.getApiUrl(), e.getMessage());
         }
         this.response = null;
     }
 }
 
     private boolean checkStatusCode() {
-        System.out.println("Expected Status Code: " + this.request.getStatusCode());
-        System.out.println("Actual Status Code: " + this.response.getStatusCode());
+        log.debug("Expected StatusCode={}, Actual StatusCode={}", this.request.getStatusCode(), this.response.getStatusCode());
         return this.request.getStatusCode() == this.response.getStatusCode();
     }
 
@@ -152,38 +150,38 @@ private void execute() {
     private boolean checkOutput() {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode expectedOutput = this.request.getExpectedOutput();
-        System.out.println("DEBUG : expectedOutput brut = " + expectedOutput);
+        log.debug("expectedOutput raw = {}", expectedOutput);
 
         // Si aucun expectedOutput ou texte vide, ignorer la comparaison
         if (expectedOutput == null || expectedOutput.isNull() ||
             (expectedOutput.isTextual() && expectedOutput.asText().trim().isEmpty())) {
-            System.out.println("DEBUG : Aucun expectedOutput défini.");
+            log.debug("No expectedOutput defined, skipping comparison");
             return true;
         }
 
         if (expectedOutput.isTextual()) {
             String expectedText = expectedOutput.asText().trim();
-            System.out.println("DEBUG : expectedOutput en texte = " + expectedText);
+            log.debug("expectedOutput as text = {}", expectedText);
 
             // Ajout automatique des {} si le JSON semble incomplet
             if (!expectedText.startsWith("{") && !expectedText.startsWith("[") &&
                 !expectedText.endsWith("}") && !expectedText.endsWith("]")) {
                 expectedText = "{" + expectedText + "}";
-                System.out.println("DEBUG : expectedText modifié avec {} = " + expectedText);
+                log.debug("expectedText wrapped with braces = {}", expectedText);
             }
 
             try {
                 expectedOutput = mapper.readTree(expectedText);
-                System.out.println("DEBUG : expectedOutput parsé = " + expectedOutput);
+                log.debug("expectedOutput parsed = {}", expectedOutput);
             } catch (JsonProcessingException e) {
-                System.out.println("DEBUG : Erreur lors du parsing de expectedOutput : " + e.getMessage());
+                log.error("Failed to parse expectedOutput: {}", e.getMessage());
                 return false;
             }
         }
 
         // Si expectedOutput est un objet vide, ignorer la comparaison
         if (expectedOutput.isObject() && expectedOutput.size() == 0) {
-            System.out.println("DEBUG : expectedOutput est vide (objet vide).");
+            log.debug("expectedOutput is empty object, skipping comparison");
             return true;
         }
 
@@ -191,20 +189,20 @@ private void execute() {
         JsonNode output;
         try {
             String responseBody = this.response.getBody().asPrettyString();
-            System.out.println("DEBUG : Réponse brute = " + responseBody);
+            log.debug("Response body = {}", responseBody);
             output = mapper.readTree(responseBody);
-            System.out.println("DEBUG : Output parsé = " + output);
+            log.debug("Output parsed = {}", output);
         } catch (JsonProcessingException e) {
-            System.out.println("DEBUG : Erreur lors du parsing de la réponse : " + e.getMessage());
+            log.error("Failed to parse response body: {}", e.getMessage());
             return false;
         }
 
         // Comparaison JSON
         this.fieldAnswer = JsonComparator.compareJson(expectedOutput, output, mapper.createObjectNode());
-        System.out.println("DEBUG : Différence (fieldAnswer) = " + this.fieldAnswer);
+        log.debug("fieldAnswer = {}", this.fieldAnswer);
 
         boolean result = expectedOutput.equals(output);
-        System.out.println("DEBUG : Résultat de la comparaison = " + result);
+        log.debug("Comparison result = {}", result);
         return result;
     }
 
@@ -228,6 +226,7 @@ private void execute() {
             String foundValue = response.header(expected.getKey());
             if (foundValue == null) {
                 messages.add(String.format("Required header %s wasn't set in response", expected.getKey()));
+                ok = false;
                 continue;
             }
 

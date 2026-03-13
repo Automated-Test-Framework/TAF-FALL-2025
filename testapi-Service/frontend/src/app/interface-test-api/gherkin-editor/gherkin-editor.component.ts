@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, OnInit, ViewChild, ElementRef, AfterViewChecked, ViewEncapsulation } from '@angular/core';
 import { GherkinParserService } from '../../_services/gherkin-parser.service';
-import { testModel2 } from '../../models/testmodel2';
+import { TestModel2 } from '../../models/testmodel2';
 
 @Component({
   selector: 'app-gherkin-editor',
@@ -11,7 +11,7 @@ import { testModel2 } from '../../models/testmodel2';
 export class GherkinEditorComponent implements OnInit, AfterViewChecked {
 
   @Input() initialGherkin: string = '';
-  @Output() testsReady = new EventEmitter<testModel2[]>();
+  @Output() testsReady = new EventEmitter<TestModel2[]>();
   @Output() closeEditor = new EventEmitter<void>();
 
   @ViewChild('editorTextarea') editorTextarea!: ElementRef<HTMLTextAreaElement>;
@@ -19,7 +19,7 @@ export class GherkinEditorComponent implements OnInit, AfterViewChecked {
 
   gherkinText: string = '';
   highlightedHtml: string = '\n';
-  parsedTests: testModel2[] = [];
+  parsedTests: TestModel2[] = [];
   parseErrors: string[] = [];
   showPreview: boolean = false;
   private needsSync = false;

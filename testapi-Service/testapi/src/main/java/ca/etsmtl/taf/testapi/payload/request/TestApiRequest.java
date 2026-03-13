@@ -1,7 +1,7 @@
-package org.requests.payload.request;
+package ca.etsmtl.taf.testapi.payload.request;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.requests.Method;
+import ca.etsmtl.taf.testapi.Method;
 
 import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
@@ -68,5 +68,3 @@ public class TestApiRequest {
         this.headers = headers;
     }
 }
-
-

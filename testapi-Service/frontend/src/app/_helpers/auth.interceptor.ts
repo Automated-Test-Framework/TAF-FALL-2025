@@ -28,11 +28,12 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
-        // Only attempt refresh on 401 errors and if the request is not itself a refresh/auth request
+        // Only attempt refresh on 401 errors, skip auth/oauth2 URLs and already-retried requests
         if (error.status === 401
             && !req.url.includes('/api/auth/')
             && !req.url.includes('/auth/api/')
-            && !req.url.includes('/oauth2/')) {
+            && !req.url.includes('/oauth2/')
+            && !req.headers.has('X-Retry-After-Refresh')) {
           return this.handle401Error(authReq, next);
         }
         return throwError(() => error);
@@ -49,6 +50,13 @@ export class AuthInterceptor implements HttpInterceptor {
 
       if (refreshToken) {
         return this.authService.refreshToken(refreshToken).pipe(
+          catchError((err) => {
+            // Refresh token itself is invalid — force logout
+            this.isRefreshing = false;
+            this.tokenService.signOut();
+            window.location.href = '/login';
+            return throwError(() => err);
+          }),
           switchMap((response: any) => {
             this.isRefreshing = false;
 
@@ -64,15 +72,11 @@ export class AuthInterceptor implements HttpInterceptor {
 
             this.refreshTokenSubject.next(newAccessToken);
 
-            // Retry the original request with the new token
-            return next.handle(this.addTokenHeader(request, newAccessToken));
-          }),
-          catchError((err) => {
-            // Refresh token is also invalid — force logout
-            this.isRefreshing = false;
-            this.tokenService.signOut();
-            window.location.href = '/login';
-            return throwError(() => err);
+            // Retry the original request with the new token (marked to prevent re-interception)
+            const retryReq = this.addTokenHeader(request, newAccessToken).clone({
+              setHeaders: { 'X-Retry-After-Refresh': 'true' }
+            });
+            return next.handle(retryReq);
           })
         );
       } else {

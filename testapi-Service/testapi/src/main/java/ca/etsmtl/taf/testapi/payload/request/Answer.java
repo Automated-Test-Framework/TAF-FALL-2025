@@ -1,4 +1,4 @@
-package org.requests.payload.request;
+package ca.etsmtl.taf.testapi.payload.request;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

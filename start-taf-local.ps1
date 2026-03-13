@@ -1,5 +1,13 @@
 # TAF Local Testing - Quick Start Script
 # This script helps you build and start the TAF system locally
+#
+# Usage examples:
+#   .\start-taf-local.ps1 -Mode team2            # Start team2 (use existing images)
+#   .\start-taf-local.ps1 -Mode team2 -Build     # Build + start team2
+#   .\start-taf-local.ps1 -Mode team2 -Restart   # Quick restart team2 containers
+#   .\start-taf-local.ps1 -Mode team2 -Stop      # Stop team2 containers (keep data)
+#   .\start-taf-local.ps1 -Status                 # Show all container status
+#   .\start-taf-local.ps1 -Clean                  # Remove containers + volumes (destructive!)
 
 param(
     [Parameter(Mandatory=$false)]
@@ -8,6 +16,9 @@ param(
     
     [switch]$Build,
     [switch]$Clean,
+    [switch]$Stop,
+    [switch]$Restart,
+    [switch]$Status,
     [switch]$Logs
 )
 
@@ -16,6 +27,17 @@ $composeFile = "docker-compose-local-test.yml"
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  TAF Local Testing - Quick Start" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
+
+# Auto-create .env from .env.example if missing
+if (-not (Test-Path ".env")) {
+    if (Test-Path ".env.example") {
+        Copy-Item ".env.example" ".env"
+        Write-Host "INFO: .env file created from .env.example. Please review and update the values if needed." -ForegroundColor Yellow
+    } else {
+        Write-Host "ERROR: .env file not found and .env.example is missing!" -ForegroundColor Red
+        exit 1
+    }
+}
 
 # Check if Docker is running
 try {
@@ -26,31 +48,56 @@ try {
     exit 1
 }
 
-# Clean mode
+# Status mode — just show container status and exit
+if ($Status) {
+    Write-Host "Service Status:" -ForegroundColor Cyan
+    docker compose -f $composeFile ps
+    exit 0
+}
+
+# Clean mode — remove containers AND volumes (MongoDB data lost!)
 if ($Clean) {
-    Write-Host "Cleaning up..." -ForegroundColor Yellow
+    Write-Host "Cleaning up (removing containers + volumes)..." -ForegroundColor Yellow
     docker compose -f $composeFile down -v
-    Write-Host "Cleanup complete!" -ForegroundColor Green
+    Write-Host "Cleanup complete! MongoDB data has been removed." -ForegroundColor Green
     exit 0
 }
 
 # Define service groups
 $services = @{
-    "full" = @("mongodb", "mysql", "registry", "gateway", "auth", "user", 
-               "backend-team1", "backend-team2", "backend-team3",
+    "full" = @("mongodb", "auth", "user", 
+               "backend-team1", "testapi-team2", "backend-team2", "backend-team3",
                "selenium-team1", "selenium-team2", "selenium-team3",
                "frontend-team1", "frontend-team2", "frontend-team3")
-    "minimal" = @("mongodb", "registry", "gateway", "auth")
-    "core" = @("mongodb", "registry", "gateway", "auth", "user")
-    "team1" = @("mongodb", "registry", "gateway", "auth", "backend-team1", "selenium-team1", "frontend-team1")
-    "team2" = @("mongodb", "registry", "gateway", "auth", "backend-team2", "selenium-team2", "frontend-team2")
-    "team3" = @("mongodb", "registry", "gateway", "auth", "backend-team3", "selenium-team3", "frontend-team3")
+    "minimal" = @("mongodb", "auth")
+    "core" = @("mongodb", "auth", "user")
+    "team1" = @("mongodb", "auth", "user", "backend-team1", "selenium-team1", "frontend-team1")
+    "team2" = @("mongodb", "auth", "user", "testapi-team2", "backend-team2", "selenium-team2", "frontend-team2")
+    "team3" = @("mongodb", "auth", "user", "backend-team3", "selenium-team3", "frontend-team3")
 }
 
 $selectedServices = $services[$Mode]
 
 Write-Host "Mode: $Mode" -ForegroundColor Cyan
-Write-Host "Services to start: $($selectedServices -join ', ')`n" -ForegroundColor Gray
+Write-Host "Services: $($selectedServices -join ', ')`n" -ForegroundColor Gray
+
+# Stop mode — stop containers but keep images/volumes/data
+if ($Stop) {
+    Write-Host "Stopping $Mode services..." -ForegroundColor Yellow
+    docker compose -f $composeFile stop $selectedServices
+    Write-Host "Services stopped. Data and images preserved." -ForegroundColor Green
+    Write-Host "To start again: .\start-taf-local.ps1 -Mode $Mode" -ForegroundColor Gray
+    exit 0
+}
+
+# Restart mode — quick restart without rebuilding or phased startup
+if ($Restart) {
+    Write-Host "Restarting $Mode services..." -ForegroundColor Yellow
+    docker compose -f $composeFile restart $selectedServices
+    Write-Host "`nRestart complete!" -ForegroundColor Green
+    docker compose -f $composeFile ps --format "table {{.Name}}\t{{.Status}}" | Select-Object -First 20
+    exit 0
+}
 
 # Build if requested
 if ($Build) {
@@ -71,16 +118,12 @@ if ($Build) {
 Write-Host "`nStarting services..." -ForegroundColor Yellow
 
 # Start in phases for better reliability
-Write-Host "  Phase 1: Starting databases..." -ForegroundColor Gray
-docker compose -f $composeFile up -d mongodb mysql
+Write-Host "  Phase 1: Starting database..." -ForegroundColor Gray
+docker compose -f $composeFile up -d mongodb
 Start-Sleep -Seconds 10
 
-Write-Host "  Phase 2: Starting registry..." -ForegroundColor Gray
-docker compose -f $composeFile up -d registry
-Start-Sleep -Seconds 30
-
-Write-Host "  Phase 3: Starting gateway and core services..." -ForegroundColor Gray
-docker compose -f $composeFile up -d gateway auth user
+Write-Host "  Phase 2: Starting core services..." -ForegroundColor Gray
+docker compose -f $composeFile up -d auth user
 Start-Sleep -Seconds 20
 
 if ($Mode -ne "minimal" -and $Mode -ne "core") {
@@ -88,13 +131,13 @@ if ($Mode -ne "minimal" -and $Mode -ne "core") {
     
     switch ($Mode) {
         "full" {
-            docker compose -f $composeFile up -d backend-team1 backend-team2 backend-team3
+            docker compose -f $composeFile up -d backend-team1 testapi-team2 backend-team2 backend-team3
         }
         "team1" {
             docker compose -f $composeFile up -d backend-team1
         }
         "team2" {
-            docker compose -f $composeFile up -d backend-team2
+            docker compose -f $composeFile up -d testapi-team2 backend-team2
         }
         "team3" {
             docker compose -f $composeFile up -d backend-team3
@@ -149,8 +192,8 @@ Write-Host "Service Status:" -ForegroundColor Cyan
 docker compose -f $composeFile ps
 
 Write-Host "`nAccess Points:" -ForegroundColor Cyan
-Write-Host "  Eureka Registry: http://localhost:8761 (eureka/eureka)" -ForegroundColor White
-Write-Host "  API Gateway:     http://localhost:8080" -ForegroundColor White
+Write-Host "  MongoDB:         http://localhost:27017" -ForegroundColor White
+Write-Host "  Mongo Express:   http://localhost:8881" -ForegroundColor White
 Write-Host "  Auth Service:    http://localhost:8081" -ForegroundColor White
 Write-Host "  User Service:    http://localhost:8082" -ForegroundColor White
 
@@ -160,6 +203,7 @@ if ($Mode -ne "minimal" -and $Mode -ne "core") {
             Write-Host "  Backend Team 1:  http://localhost:8083" -ForegroundColor White
             Write-Host "  Backend Team 2:  http://localhost:8084" -ForegroundColor White
             Write-Host "  Backend Team 3:  http://localhost:8085" -ForegroundColor White
+            Write-Host "  TestAPI Team 2:  http://localhost:8086" -ForegroundColor White
             Write-Host "  Selenium Team 1: http://localhost:4444" -ForegroundColor White
             Write-Host "  Selenium Team 2: http://localhost:4445" -ForegroundColor White
             Write-Host "  Selenium Team 3: http://localhost:4446" -ForegroundColor White
@@ -173,6 +217,7 @@ if ($Mode -ne "minimal" -and $Mode -ne "core") {
             Write-Host "  Frontend Team 1: http://localhost:4200" -ForegroundColor Yellow
         }
         "team2" {
+            Write-Host "  TestAPI Team 2:  http://localhost:8086" -ForegroundColor White
             Write-Host "  Backend Team 2:  http://localhost:8084" -ForegroundColor White
             Write-Host "  Selenium Team 2: http://localhost:4445" -ForegroundColor White
             Write-Host "  Frontend Team 2: http://localhost:4300" -ForegroundColor Yellow
@@ -186,10 +231,12 @@ if ($Mode -ne "minimal" -and $Mode -ne "core") {
 }
 
 Write-Host "`nUseful Commands:" -ForegroundColor Cyan
+Write-Host "  Quick restart:   .\start-taf-local.ps1 -Mode $Mode -Restart" -ForegroundColor Gray
+Write-Host "  Stop services:   .\start-taf-local.ps1 -Mode $Mode -Stop" -ForegroundColor Gray
+Write-Host "  Check status:    .\start-taf-local.ps1 -Status" -ForegroundColor Gray
 Write-Host "  View logs:       docker compose -f $composeFile logs -f" -ForegroundColor Gray
-Write-Host "  Stop services:   docker compose -f $composeFile stop" -ForegroundColor Gray
-Write-Host "  Restart service: docker compose -f $composeFile restart <service-name>" -ForegroundColor Gray
-Write-Host "  Clean up:        .\start-taf-local.ps1 -Clean" -ForegroundColor Gray
+Write-Host "  Rebuild:         .\start-taf-local.ps1 -Mode $Mode -Build" -ForegroundColor Gray
+Write-Host "  Full cleanup:    .\start-taf-local.ps1 -Clean" -ForegroundColor Gray
 
 if ($Logs) {
     Write-Host "`nShowing logs (Ctrl+C to exit)..." -ForegroundColor Yellow

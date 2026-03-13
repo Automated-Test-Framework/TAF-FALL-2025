@@ -3,8 +3,8 @@ import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
 import {BehaviorSubject,  Observable, Subject, forkJoin, merge, of, throwError} from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import {testModel} from "../models/test-model";
-import {testModel2} from "../models/testmodel2";
+import {TestModel} from "../models/test-model";
+import {TestModel2} from "../models/testmodel2";
 import {TestResponseModel} from "../models/testResponseModel";
 
 @Injectable({
@@ -16,7 +16,7 @@ export class TestApiService {
   private DEFINITIONS_API: string = `${this.REST_API}/testapi/definitions`;
   constructor(private http: HttpClient) { }
 
-  executeTests(dataTests: testModel2[]): Observable<TestResponseModel[]> {
+  executeTests(dataTests: TestModel2[]): Observable<TestResponseModel[]> {
     return forkJoin(
       dataTests.map(test => {
         const sanitizedTest = {
@@ -41,7 +41,7 @@ export class TestApiService {
    * Execute tests progressively — emits each result as it arrives.
    * Returns Observable of {index, result} so the UI can update one row at a time.
    */
-  executeTestsProgressive(dataTests: testModel2[]): Observable<{index: number, result: TestResponseModel}> {
+  executeTestsProgressive(dataTests: TestModel2[]): Observable<{index: number, result: TestResponseModel}> {
     const requests = dataTests.map((test, index) => {
       const sanitizedTest = {
         ...test,
@@ -70,9 +70,9 @@ export class TestApiService {
 
 
 //to refresh automatically the tests's  list
-  private testsSubject: BehaviorSubject<testModel2[]> = new BehaviorSubject<testModel2[]>([]);
-  tests$ : Observable<testModel2[]> = this.testsSubject.asObservable();
-  listTests : testModel2 []=[];
+  private testsSubject: BehaviorSubject<TestModel2[]> = new BehaviorSubject<TestModel2[]>([]);
+  tests$ : Observable<TestModel2[]> = this.testsSubject.asObservable();
+  listTests : TestModel2 []=[];
 
   // ── MongoDB persistence ─────────────────────────
 
@@ -91,7 +91,7 @@ export class TestApiService {
   }
 
   /** Convert backend ApiTestDefinition to frontend testModel2 */
-  private fromBackend(d: any, localId: number): testModel2 {
+  private fromBackend(d: any, localId: number): TestModel2 {
     return {
       id: localId,
       mongoId: d.id,
@@ -107,7 +107,7 @@ export class TestApiService {
   }
 
   /** Convert frontend testModel2 to backend payload */
-  private toBackend(test: testModel2): any {
+  private toBackend(test: TestModel2): any {
     return {
       method: test.method,
       apiUrl: test.apiUrl,
@@ -121,7 +121,7 @@ export class TestApiService {
   }
 
   //ajouter un test a la liste
-  addTestOnList(newTest: testModel2){
+  addTestOnList(newTest: TestModel2){
     newTest.id= this.listTests.length+1;
     this.listTests.push(newTest);
     this.testsSubject.next([...this.listTests]);
@@ -140,7 +140,7 @@ export class TestApiService {
   }
 
   // Mettre a jour un test existant dans la liste
-  updateTest(updatedTest: testModel2): void {
+  updateTest(updatedTest: TestModel2): void {
     const index = this.listTests.findIndex(t => t.id === updatedTest.id);
     if (index !== -1) {
       const mongoId = this.listTests[index].mongoId;
@@ -234,6 +234,23 @@ export class TestApiService {
   clearTests(): void {
     this.listTests = [];
     this.testsSubject.next([]);
+  }
+
+  /** Save test execution results to MongoDB for Dashboard (Équipe 6) */
+  saveResults(tests: TestModel2[]): Observable<any> {
+    const payload = tests.map(t => ({
+      method: t.method,
+      apiUrl: t.apiUrl,
+      statusCode: t.statusCode,
+      answer: t.responseStatus,
+      actualResponseTime: t.actualResponseTime ?? null
+    }));
+    return this.http.post(`${this.REST_API}/testapi/results`, payload).pipe(
+      catchError(err => {
+        console.error('Failed to save test results to Dashboard DB:', err);
+        return of(null);
+      })
+    );
   }
 
 }

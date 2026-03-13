@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { GherkinParserService } from './gherkin-parser.service';
-import { testModel2 } from '../models/testmodel2';
+import { TestModel2 } from '../models/testmodel2';
 
 describe('GherkinParserService', () => {
   let service: GherkinParserService;
@@ -243,7 +243,7 @@ describe('GherkinParserService', () => {
   describe('toGherkin()', () => {
 
     it('should convert a simple test to Gherkin', () => {
-      const tests: testModel2[] = [{
+      const tests: TestModel2[] = [{
         id: 1,
         method: 'GET',
         apiUrl: 'https://example.com/api',
@@ -262,7 +262,7 @@ describe('GherkinParserService', () => {
     });
 
     it('should include headers in output', () => {
-      const tests: testModel2[] = [{
+      const tests: TestModel2[] = [{
         id: 1,
         method: 'GET',
         apiUrl: 'https://example.com',
@@ -276,7 +276,7 @@ describe('GherkinParserService', () => {
     });
 
     it('should include expected headers', () => {
-      const tests: testModel2[] = [{
+      const tests: TestModel2[] = [{
         id: 1,
         method: 'GET',
         apiUrl: 'https://example.com',
@@ -290,7 +290,7 @@ describe('GherkinParserService', () => {
     });
 
     it('should include input body', () => {
-      const tests: testModel2[] = [{
+      const tests: TestModel2[] = [{
         id: 1,
         method: 'POST',
         apiUrl: 'https://example.com',
@@ -305,7 +305,7 @@ describe('GherkinParserService', () => {
     });
 
     it('should include expected output', () => {
-      const tests: testModel2[] = [{
+      const tests: TestModel2[] = [{
         id: 1,
         method: 'GET',
         apiUrl: 'https://example.com',
@@ -320,7 +320,7 @@ describe('GherkinParserService', () => {
     });
 
     it('should include response time', () => {
-      const tests: testModel2[] = [{
+      const tests: TestModel2[] = [{
         id: 1,
         method: 'GET',
         apiUrl: 'https://example.com',
@@ -335,7 +335,7 @@ describe('GherkinParserService', () => {
     });
 
     it('should produce multiple scenarios for multiple tests', () => {
-      const tests: testModel2[] = [
+      const tests: TestModel2[] = [
         { id: 1, method: 'GET', apiUrl: 'https://a.com', headers: {}, expectedHeaders: {} },
         { id: 2, method: 'POST', apiUrl: 'https://b.com', headers: {}, expectedHeaders: {} },
       ];
@@ -346,7 +346,7 @@ describe('GherkinParserService', () => {
     });
 
     it('should always include When/Then steps', () => {
-      const tests: testModel2[] = [{
+      const tests: TestModel2[] = [{
         id: 1,
         method: 'GET',
         apiUrl: 'https://example.com',
@@ -366,7 +366,7 @@ describe('GherkinParserService', () => {
   describe('round-trip (toGherkin → parse)', () => {
 
     it('should produce equivalent tests after round-trip', () => {
-      const original: testModel2[] = [{
+      const original: TestModel2[] = [{
         id: 1,
         method: 'PUT',
         apiUrl: 'https://example.com/items/1',

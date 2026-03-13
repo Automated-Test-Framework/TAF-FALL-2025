@@ -3,7 +3,7 @@
 import { TestBed, inject } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestApiService } from './test-api.service';
-import { testModel2 } from '../models/testmodel2';
+import { TestModel2 } from '../models/testmodel2';
 
 describe('Service: TestApi', () => {
   let service: TestApiService;
@@ -27,7 +27,7 @@ describe('Service: TestApi', () => {
   });
 
   it('should add a test to the list', () => {
-    const test: testModel2 = {
+    const test: TestModel2 = {
       id: 0, method: 'GET', apiUrl: 'https://example.com',
       headers: {}, expectedHeaders: {}, statusCode: 200,
     };
@@ -37,7 +37,7 @@ describe('Service: TestApi', () => {
     const req = httpMock.expectOne(r => r.method === 'POST' && r.url.includes('/definitions'));
     req.flush({ id: 'mongo1' });
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests.length).toBe(1);
@@ -64,7 +64,7 @@ describe('Service: TestApi', () => {
     const delReq = httpMock.expectOne(r => r.method === 'DELETE');
     delReq.flush({});
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests.length).toBe(1);
@@ -104,7 +104,7 @@ describe('Service: TestApi', () => {
 
     service.clearTests();
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests.length).toBe(0);
@@ -126,7 +126,7 @@ describe('Service: TestApi', () => {
     const putReq = httpMock.expectOne(r => r.method === 'PUT');
     putReq.flush({});
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests.length).toBe(1);
@@ -148,7 +148,7 @@ describe('Service: TestApi', () => {
       headers: {}, expectedHeaders: {},
     });
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests.length).toBe(1);
@@ -164,7 +164,7 @@ describe('Service: TestApi', () => {
       { id: 'def', method: 'POST', apiUrl: 'https://loaded2.com', headers: {}, expectedHeaders: {}, statusCode: 201 },
     ]);
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests.length).toBe(2);
@@ -184,7 +184,7 @@ describe('Service: TestApi', () => {
       { id: 1, stutsCode: 200, output: '{}', fieldAnswer: null, answer: true, messages: [], actualResponseTime: 123 }
     ]);
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests[0].actualResponseTime).toBe(123);
@@ -204,7 +204,7 @@ describe('Service: TestApi', () => {
         actualResponseTime: 10050 }
     ]);
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests[0].responseStatus).toBe(false);
@@ -224,7 +224,7 @@ describe('Service: TestApi', () => {
       { id: 1, stutsCode: 200, output: '{}', fieldAnswer: null, answer: true, messages: [], actualResponseTime: 250 }
     ]);
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests[0].responseTime).toBe(5000);
@@ -240,7 +240,7 @@ describe('Service: TestApi', () => {
     // Update only the second test
     service.updateSingleTestResult(1, { id: 2, stutsCode: 200, output: '{}', fieldAnswer: null, answer: true, messages: [], actualResponseTime: 500 });
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests[0].responseStatus).toBeUndefined(); // first test not updated yet
@@ -258,7 +258,7 @@ describe('Service: TestApi', () => {
     // Now clear results
     service.clearTestResults();
 
-    let tests: testModel2[] = [];
+    let tests: TestModel2[] = [];
     service.tests$.subscribe(t => tests = t);
 
     expect(tests.length).toBe(1); // test still exists

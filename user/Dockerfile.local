@@ -9,11 +9,14 @@ COPY gradle ./gradle
 COPY build.gradle .
 COPY settings.gradle .
 
-# Copy source code
-COPY src ./src
-
 # Convert line endings and make executable
 RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
+
+# Pre-download dependencies (cached unless build.gradle changes)
+RUN ./gradlew dependencies --no-daemon || true
+
+# Copy source code
+COPY src ./src
 
 # Build the application
 RUN ./gradlew clean bootJar --no-daemon
