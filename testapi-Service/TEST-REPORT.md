@@ -2,8 +2,8 @@
 
 **Projet** : TAF (Test Automation Framework) — Équipe 3  
 **Cours** : MGL805, ÉTS, Hiver 2026  
-**Date** : 2026-02-14  
-**Branche** : `feature/UnitTest`  
+**Date** : 2026-03-10  
+**Branche** : `feature/ModeGherkin`  
 **Framework** : JUnit 5 (Jupiter) + Mockito + Spring Boot Test  
 **Couverture** : JaCoCo 0.8.12
 
@@ -13,12 +13,13 @@
 
 | Métrique | Valeur |
 |---|---|
-| Tests totaux | 68 |
-| Réussis | 67 |
+| Tests totaux | 79 |
+| Réussis | 79 |
 | Échoués | 0 |
-| Ignorés | 1 (`contextLoads` — nécessite MongoDB) |
-| Couverture instructions (global) | **61%** |
-| Couverture branches (global) | **33%** |
+| Ignorés | 0 |
+| Couverture instructions (20 classes équipe) | **100%** |
+| Couverture branches (20 classes équipe) | **100%** |
+| Couverture lignes (20 classes équipe) | **100%** |
 
 ---
 
@@ -44,13 +45,14 @@ Le rapport de couverture JaCoCo est généré dans :
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|
-| `JwtUtils` | `JwtUtilsTest.java` | 12 | Instr: 97%, Branch: 100% |
+| `JwtUtils` | `JwtUtilsTest.java` | 13 | Instr: 100%, Branch: 100% |
 | `AuthTokenFilter` | `AuthTokenFilterTest.java` | 5 | ↑ inclus |
 | `AuthEntryPointJwt` | `AuthEntryPointJwtTest.java` | 2 | ↑ inclus |
 
 **Scénarios couverts :**
 - Génération de token JWT et extraction du username
 - Validation : token valide, null, vide, malformé, clé incorrecte, expiré
+- **Token non signé (UnsupportedJwtException)**
 - **Génération de refresh token et validation de sa durée d'expiration**
 - **Extraction du username depuis un token expiré (`getUserNameFromExpiredJwtToken`)**
 - **Extraction du username depuis un token encore valide via la méthode expired**
@@ -89,26 +91,29 @@ Le rapport de couverture JaCoCo est généré dans :
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|
-| `WebSecurityConfig` | `WebSecurityConfigTest.java` | 4 | Instr: 100%, Branch: n/a |
+| `WebSecurityConfig` | `WebSecurityConfigTest.java` | 7 | Instr: 100%, Branch: n/a |
 
 **Scénarios couverts :**
 - Endpoints publics (`/api/auth/**`, `/api/test/all`, Swagger) retournent 200
 - Endpoints protégés (`/api/test/user`, `/api/test/admin`) retournent 401
+- **Bean `authenticationJwtTokenFilter()` retourne une instance valide**
+- **Bean `authenticationProvider()` retourne un `DaoAuthenticationProvider`**
+- **Bean `authenticationManager()` retourne un `AuthenticationManager`**
 
 ### 5. Contrôleurs (`controller`)
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|
-| `AuthController` | `AuthControllerTest.java` | 10 | Instr: 90%, Branch: 80% |
+| `AuthController` | `AuthControllerTest.java` | 15 | Instr: 100%, Branch: 100% |
 | `OAuth2Controller` | `OAuth2ControllerTest.java` | 1 | ↑ inclus |
 | `TestController` | `TestControllerTest.java` | 3 | ↑ inclus |
-| `TestApiController` | `TestApiControllerTest.java` | 3 | ↑ inclus |
+| `TestApiController` | `TestApiControllerTest.java` | 4 | Instr: 100%, Branch: 100% |
 
 **Scénarios couverts :**
-- `AuthController` : connexion (JWT + refresh token valide, mauvais credentials, body vide/400), inscription (succès, username dupliqué, email dupliqué, rôle admin), **renouvellement de token (refresh valide → nouvelle paire, refresh expiré → 401, utilisateur inexistant → 401)**
+- `AuthController` : connexion (JWT + refresh token valide, mauvais credentials, body vide/400), inscription (succès, username dupliqué, email dupliqué, rôle admin, **rôle non-admin ROLE_USER uniquement**), **renouvellement de token (refresh valide → nouvelle paire, refresh expiré → 401, utilisateur inexistant → 401)**, **RuntimeException sur signup et signin**
 - `OAuth2Controller` : GET `/api/oauth2/login-url` retourne les infos du provider
 - `TestController` : GET `/all`, `/user`, `/admin` retournent le bon contenu
-- `TestApiController` : construction URI, accessibilité des champs, DTO `TestApiRequest`
+- `TestApiController` : construction URI, accessibilité des champs, DTO `TestApiRequest`, **appel HTTP réel vers un HttpServer embarqué** avec vérification status code
 
 **Non testés** : `TestSeleniumController`, `GatlingApiController` — contrôleurs d'autres équipes nécessitant des services externes (Selenium, Gatling)
 
@@ -116,39 +121,45 @@ Le rapport de couverture JaCoCo est généré dans :
 
 | Classe testée | Fichier de test | Tests | Couverture |
 |---|---|---|---|
-| `User`, `Role`, `ERole` | `UserEntityTest.java` | 6 | Instr: 23% (Lombok génère beaucoup de code) |
-| `JwtResponse` | `JwtResponseTest.java` | 3 | Instr: 100% |
+| `User`, `Role`, `ERole` | `UserEntityTest.java`, `RoleTest.java` | 9 | Instr: 100%, Branch: 100% |
+| `JwtResponse` | `JwtResponseTest.java` | 4 | Instr: 100% |
 | `MessageResponse` | `MessageResponseTest.java` | 2 | Instr: 100% |
 
 **Scénarios couverts :**
 - `User` : constructeur local, constructeur OAuth2, constructeur par défaut + setters, assignation de rôles
 - `ERole` : enum contient les 3 valeurs
-- `Role` : getter/setter
-- `JwtResponse` : constructeur, setters, type de token par défaut
+- `Role` : **constructeur par défaut, constructeur avec paramètres, getter/setter pour id et name**
+- `JwtResponse` : constructeur, setters, type de token par défaut, **setter refreshToken**
 - `MessageResponse` : constructeur/getter, setter
 
 ---
 
 ## Couverture par package
 
+### Classes de l'équipe (20 classes) — 100% couverture
+
 | Package | Instructions | Branches | Note |
 |---|---|---|---|
 | `security` | 100% | n/a | WebSecurityConfig |
 | `security.services` | 100% | 100% | UserDetailsImpl, UserDetailsServiceImpl |
 | `security.oauth2` | 100% | 100% | OAuth2LoginSuccessHandler |
-| `security.jwt` | 97% | 100% | JwtUtils, AuthTokenFilter, AuthEntryPointJwt |
+| `security.jwt` | 100% | 100% | JwtUtils, AuthTokenFilter, AuthEntryPointJwt |
 | `payload.request` | 100% | n/a | LoginRequest, SignupRequest |
 | `payload.response` | 100% | n/a | JwtResponse, MessageResponse |
-| `controller` | 90% | 80% | 4/6 contrôleurs testés |
+| `controller` | 100% | 100% | AuthController, TestApiController, TestController, OAuth2Controller |
+| `entity` | 100% | 100% | User, Role, ERole |
+
+### Autres packages (autres équipes / infrastructure)
+
+| Package | Instructions | Branches | Note |
+|---|---|---|---|
 | `taf` (main) | 58% | n/a | Classe principale |
 | `provider` | 90% | 50% | GatlingJarPathProvider (autre équipe) |
 | `config` | 50% | 0% | Configuration Spring |
-| `entity` | 23% | 0% | Lombok génère getter/setter non appelés |
 | `dto` | 25% | n/a | SeleniumCaseDto (autre équipe) |
 | `apiCommunication` | 19% | n/a | SeleniumServiceRequester (autre équipe) |
 | `service` | 17% | 0% | SeleniumService (autre équipe) |
 | `eureka` | 5% | n/a | EurekaClientConfig (infra) |
-| **Total** | **61%** | **33%** |  |
 
 ---
 

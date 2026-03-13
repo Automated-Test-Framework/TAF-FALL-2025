@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FormsModule } from '@angular/forms';
 
 import { LoginComponent } from './login.component';
 
@@ -8,7 +11,9 @@ describe('LoginComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ LoginComponent ]
+      declarations: [ LoginComponent ],
+      imports: [ HttpClientTestingModule, FormsModule ],
+      schemas: [ NO_ERRORS_SCHEMA ]
     })
     .compileComponents();
   });

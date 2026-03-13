@@ -64,12 +64,9 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>ca.etsmtl</groupId>
-			<artifactId>frontend</artifactId>
-			<version>${project.version}</version>
-			<scope>runtime</scope>
-		</dependency>
+		<!-- frontend dependency moved to 'with-frontend' profile (active by default).
+		     Deactivate with -P !with-frontend to skip frontend artifact resolution
+		     (useful for running tests locally without building the Angular project). -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
@@ -232,5 +229,25 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- Profile that includes the frontend Angular artifact as a runtime dependency.
+		     Active by default so Docker/CI builds work unchanged.
+		     Deactivate with: mvn test -P !with-frontend -->
+		<profile>
+			<id>with-frontend</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>ca.etsmtl</groupId>
+					<artifactId>frontend</artifactId>
+					<version>${project.version}</version>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
 
 </project>

@@ -1,5 +1,7 @@
 package ca.etsmtl.taf.security;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -11,6 +13,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +26,7 @@ import ca.etsmtl.taf.controller.TestController;
 import ca.etsmtl.taf.repository.RoleRepository;
 import ca.etsmtl.taf.repository.UserRepository;
 import ca.etsmtl.taf.security.jwt.AuthEntryPointJwt;
+import ca.etsmtl.taf.security.jwt.AuthTokenFilter;
 import ca.etsmtl.taf.security.jwt.JwtUtils;
 import ca.etsmtl.taf.security.oauth2.OAuth2LoginSuccessHandler;
 import ca.etsmtl.taf.security.services.UserDetailsServiceImpl;
@@ -89,5 +94,33 @@ class WebSecurityConfigTest {
     void protectedEndpoint_unknown_returns401() throws Exception {
         mockMvc.perform(get("/api/unknown"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // ==================== Bean method unit tests ====================
+
+    @Test
+    @DisplayName("passwordEncoder returns BCryptPasswordEncoder")
+    void passwordEncoder_returnsBCryptPasswordEncoder() {
+        WebSecurityConfig config = new WebSecurityConfig();
+        assertInstanceOf(BCryptPasswordEncoder.class, config.passwordEncoder());
+    }
+
+    @Test
+    @DisplayName("authenticationJwtTokenFilter returns AuthTokenFilter")
+    void authenticationJwtTokenFilter_returnsAuthTokenFilter() {
+        WebSecurityConfig config = new WebSecurityConfig();
+        assertInstanceOf(AuthTokenFilter.class, config.authenticationJwtTokenFilter());
+    }
+
+    @Test
+    @DisplayName("authenticationManager delegates to AuthenticationConfiguration")
+    void authenticationManager_delegatesToConfig() throws Exception {
+        WebSecurityConfig config = new WebSecurityConfig();
+        AuthenticationConfiguration authConfig = mock(AuthenticationConfiguration.class);
+        AuthenticationManager mockManager = mock(AuthenticationManager.class);
+        when(authConfig.getAuthenticationManager()).thenReturn(mockManager);
+
+        AuthenticationManager result = config.authenticationManager(authConfig);
+        assertSame(mockManager, result);
     }
 }

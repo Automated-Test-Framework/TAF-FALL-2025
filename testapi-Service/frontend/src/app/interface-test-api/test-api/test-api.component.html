@@ -1,5 +1,25 @@
 <h1 style="text-align: center;"> Liste des tests</h1>
 
+<!-- Mode toggle buttons -->
+<div style="text-align: center; margin-bottom: 10px;">
+  <button mat-raised-button [color]="gherkinMode ? 'primary' : undefined" (click)="toggleGherkinMode()">
+    <mat-icon>{{ gherkinMode ? 'table_chart' : 'code' }}</mat-icon>
+    {{ gherkinMode ? 'Mode Tableau' : 'Mode Gherkin' }}
+  </button>
+</div>
+
+<!-- ═══ Gherkin Editor Mode ═══ -->
+<div *ngIf="gherkinMode">
+  <app-gherkin-editor
+    [initialGherkin]="gherkinText"
+    (testsReady)="onGherkinTestsReady($event)"
+    (closeEditor)="onGherkinClose()">
+  </app-gherkin-editor>
+</div>
+
+<!-- ═══ Table Mode ═══ -->
+<div *ngIf="!gherkinMode">
+
 <!-- Ajout du champ pour importer un fichier CSV -->
 <div style="text-align: center; margin-bottom: 10px;">
   <input type="file" (change)="importCSV($event)" accept=".csv">
@@ -66,3 +86,5 @@
   <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
   <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 </table>
+
+</div> <!-- end table mode -->

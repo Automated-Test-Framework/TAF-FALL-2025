@@ -7,6 +7,7 @@ import { DeleteTestDialogComponent } from "./delete-test-dialog/delete-test-dial
 import { testModel2 } from "../../models/testmodel2";
 import { TestResponseModel } from "../../models/testResponseModel";
 import { ErrorDialogComponent } from './error-dialog.component';
+import { GherkinParserService } from '../../_services/gherkin-parser.service';
 
 @Component({
   selector: 'app-test-api',
@@ -19,9 +20,14 @@ export class TestApiComponent implements OnInit {
   displayedColumns: string[] = ['id', 'method', 'apiUrl', 'responseTime', 'statusCode', 'responseStatus', 'action'];
   dataTests: testModel2[] = [];
 
+  // Gherkin mode
+  gherkinMode: boolean = false;
+  gherkinText: string = '';
+
   constructor(
     private testApiService: TestApiService,
     public dialog: MatDialog,
+    private gherkinParser: GherkinParserService,
   ) { }
 
   ngOnInit() {
@@ -170,5 +176,30 @@ export class TestApiComponent implements OnInit {
     console.log("========>", listTestsReponses);
     this.testApiService.updateTestsStatusExecution(listTestsReponses);
     this.getTestList();
+  }
+
+  // ── Gherkin mode ──────────────────────────────────
+
+  /** Toggle between table mode and Gherkin editor mode */
+  toggleGherkinMode(): void {
+    if (!this.gherkinMode && this.dataTests.length > 0) {
+      // Convert existing table tests to Gherkin when entering Gherkin mode
+      this.gherkinText = this.gherkinParser.toGherkin(this.dataTests);
+    }
+    this.gherkinMode = !this.gherkinMode;
+  }
+
+  /** Receive parsed tests from Gherkin editor and add to table */
+  onGherkinTestsReady(tests: testModel2[]): void {
+    // Clear existing tests and add new ones from Gherkin
+    this.testApiService.clearTests();
+    tests.forEach(test => this.testApiService.addTestOnList(test));
+    this.gherkinMode = false;
+    this.getTestList();
+  }
+
+  /** Close Gherkin editor without applying */
+  onGherkinClose(): void {
+    this.gherkinMode = false;
   }
 }

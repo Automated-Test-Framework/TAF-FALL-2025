@@ -1,0 +1,107 @@
+<div class="gherkin-editor-container">
+
+  <!-- ── Toolbar ── -->
+  <div class="gherkin-toolbar">
+    <div class="toolbar-left">
+      <span class="toolbar-title">
+        <mat-icon class="toolbar-icon">code</mat-icon>
+        Mode Gherkin
+      </span>
+      <button mat-stroked-button (click)="loadTemplate()" matTooltip="Charger un exemple">
+        <mat-icon>description</mat-icon> Exemple
+      </button>
+      <button mat-stroked-button (click)="fileInput.click()" matTooltip="Importer un fichier .feature">
+        <mat-icon>upload_file</mat-icon> Importer
+      </button>
+      <input #fileInput type="file" accept=".feature,.gherkin,.txt" (change)="importFeature($event)" hidden>
+      <button mat-stroked-button (click)="exportFeature()" matTooltip="Exporter en .feature">
+        <mat-icon>download</mat-icon> Exporter
+      </button>
+      <button mat-stroked-button (click)="togglePreview()" [class.active]="showPreview">
+        <mat-icon>{{ showPreview ? 'visibility_off' : 'visibility' }}</mat-icon>
+        {{ showPreview ? 'Masquer' : 'Aperçu' }}
+      </button>
+    </div>
+    <div class="toolbar-right">
+      <button mat-raised-button color="primary" (click)="applyTests()"
+              [disabled]="parsedTests.length === 0 || parseErrors.length > 0"
+              matTooltip="Convertir et ajouter les tests au tableau">
+        <mat-icon>play_arrow</mat-icon>
+        Appliquer ({{ parsedTests.length }} tests)
+      </button>
+      <button mat-button (click)="cancel()">
+        <mat-icon>close</mat-icon> Fermer
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Main content area ── -->
+  <div class="editor-content" [class.with-preview]="showPreview">
+
+    <!-- Editor pane -->
+    <div class="editor-pane">
+      <div class="editor-wrapper">
+        <!-- Syntax-highlighted layer (behind textarea) -->
+        <pre #highlightPre class="highlight-layer" [innerHTML]="highlightedHtml"></pre>
+        <!-- Transparent textarea (on top, captures input) -->
+        <textarea #editorTextarea
+                  class="editor-textarea"
+                  [(ngModel)]="gherkinText"
+                  (input)="onTextChange()"
+                  (scroll)="syncScroll()"
+                  (keydown)="onKeyDown($event)"
+                  spellcheck="false"
+                  placeholder="Écrivez vos scénarios Gherkin ici..."></textarea>
+      </div>
+
+      <!-- Error messages -->
+      <div class="error-panel" *ngIf="parseErrors.length > 0">
+        <mat-icon class="error-icon">error</mat-icon>
+        <div class="error-list">
+          <div *ngFor="let err of parseErrors" class="error-message">{{ err }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview pane -->
+    <div class="preview-pane" *ngIf="showPreview">
+      <h3 class="preview-title">Tests détectés ({{ parsedTests.length }})</h3>
+      <div *ngIf="parsedTests.length === 0" class="preview-empty">
+        Aucun test détecté. Vérifiez la syntaxe Gherkin.
+      </div>
+      <div *ngFor="let test of parsedTests; let i = index" class="preview-card">
+        <div class="preview-card-header">
+          <span class="method-badge" [ngClass]="'method-' + test.method.toLowerCase()">{{ test.method }}</span>
+          <span class="preview-url">{{ test.apiUrl || '(URL manquante)' }}</span>
+        </div>
+        <div class="preview-details">
+          <div *ngIf="test.statusCode"><strong>Statut attendu :</strong> {{ test.statusCode }}</div>
+          <div *ngIf="test.input"><strong>Body :</strong> <code>{{ test.input }}</code></div>
+          <div *ngIf="test.expectedOutput"><strong>Sortie attendue :</strong> <code>{{ test.expectedOutput }}</code></div>
+          <div *ngIf="objectKeys(test.headers).length > 0">
+            <strong>Headers :</strong>
+            <span *ngFor="let key of objectKeys(test.headers)" class="header-chip">{{ key }}: {{ test.headers[key] }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Syntax help ── -->
+  <details class="syntax-help">
+    <summary>Aide syntaxe Gherkin</summary>
+    <table class="help-table">
+      <tr><th>Étape</th><th>Exemple</th></tr>
+      <tr><td>Méthode HTTP</td><td><code>Given the API method is "GET"</code></td></tr>
+      <tr><td>URL de l'API</td><td><code>And the API URL is "https://example.com/api"</code></td></tr>
+      <tr><td>Code statut attendu</td><td><code>And the expected status code is 200</code></td></tr>
+      <tr><td>En-tête de requête</td><td><code>And the header "Accept" is "application/json"</code></td></tr>
+      <tr><td>Corps de requête</td><td><code>And the input is '&#123;"key": "value"&#125;'</code></td></tr>
+      <tr><td>Sortie attendue</td><td><code>And the expected output is '&#123;"id": 1&#125;'</code></td></tr>
+      <tr><td>En-tête de réponse</td><td><code>And the expected header "Content-Type" is "application/json"</code></td></tr>
+      <tr><td>Temps de réponse</td><td><code>And the response time is 5000</code></td></tr>
+      <tr><td>Exécution</td><td><code>When I execute the test</code></td></tr>
+      <tr><td>Assertion</td><td><code>Then the test should pass</code></td></tr>
+    </table>
+  </details>
+</div>

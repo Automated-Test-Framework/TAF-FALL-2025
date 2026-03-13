@@ -137,6 +137,20 @@ class JwtUtilsTest {
         assertEquals("activeuser", username);
     }
 
+    @Test
+    @DisplayName("validateJwtToken rejects unsigned JWT (UnsupportedJwtException)")
+    void validateJwtToken_unsignedJwt_shouldReturnFalse() {
+        // An unsigned JWT (alg: none) triggers UnsupportedJwtException in parseClaimsJws()
+        // Header {"alg":"none"} → base64url, Payload {"sub":"test"} → base64url, no signature
+        String unsignedJwt = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("{\"alg\":\"none\"}".getBytes())
+                + "."
+                + java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("{\"sub\":\"test\"}".getBytes())
+                + ".";
+        assertFalse(jwtUtils.validateJwtToken(unsignedJwt));
+    }
+
     // --- helpers ---
 
     private Authentication createAuth(String username) {

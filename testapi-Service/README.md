@@ -109,8 +109,64 @@ C'est la **fonctionnalité principale** du module TestAPI. Elle permet de tester
 - **Export CSV** — télécharge les définitions de tests au format CSV
 - **Import CSV** — charge des tests depuis un fichier CSV
 - **Supprimer** — supprime un test individuel du tableau
+- **Mode Gherkin** — éditeur BDD permettant d'écrire les tests en syntaxe Gherkin (voir ci-dessous)
 
 > **Note :** Les résultats sont conservés en mémoire côté frontend uniquement. Un rafraîchissement de la page réinitialise les résultats (mais pas les définitions de tests).
+
+### Mode Gherkin (BDD)
+
+Le **Mode Gherkin** offre une alternative au formulaire tableau pour définir les tests d'API. Il permet d'écrire les tests en syntaxe [Gherkin](https://cucumber.io/docs/gherkin/) (Given/When/Then), le format standard BDD utilisé par Cucumber.
+
+#### Accès
+
+1. Cliquer sur le bouton **« Mode Gherkin »** en haut de la page Tests API
+2. L'éditeur Gherkin remplace le tableau — avec coloration syntaxique en temps réel
+3. Écrire les scénarios ou charger un fichier `.feature`
+4. Cliquer **« Appliquer »** pour convertir les scénarios en tests dans le tableau
+
+#### Syntaxe supportée
+
+```gherkin
+Feature: API Tests
+
+  Scenario: Vérifier que GET retourne les bonnes données
+    Given the API method is "GET"
+    And the API URL is "https://jsonplaceholder.typicode.com/posts/1"
+    And the expected status code is 200
+    And the header "Accept" is "application/json"
+    When I execute the test
+    Then the test should pass
+
+  Scenario: Créer un post via POST
+    Given the API method is "POST"
+    And the API URL is "https://jsonplaceholder.typicode.com/posts"
+    And the expected status code is 201
+    And the header "Content-Type" is "application/json"
+    And the input is '{"title": "foo", "body": "bar", "userId": 1}'
+    When I execute the test
+    Then the test should pass
+```
+
+| Étape | Pattern | Exemple |
+|-------|---------|---------|
+| Méthode HTTP | `the API method is "METHOD"` | `Given the API method is "POST"` |
+| URL de l'API | `the API URL is "URL"` | `And the API URL is "https://..."` |
+| Code statut | `the expected status code is CODE` | `And the expected status code is 200` |
+| En-tête requête | `the header "KEY" is "VALUE"` | `And the header "Accept" is "application/json"` |
+| Corps requête | `the input is 'JSON'` | `And the input is '{"key": "val"}'` |
+| Sortie attendue | `the expected output is 'JSON'` | `And the expected output is '{"id": 1}'` |
+| En-tête réponse | `the expected header "KEY" is "VALUE"` | `And the expected header "Content-Type" is "..."` |
+| Temps de réponse | `the response time is MS` | `And the response time is 5000` |
+
+Chaque `Scenario` devient un test dans le tableau. La conversion est **bidirectionnelle** : les tests existants dans le tableau sont automatiquement convertis en Gherkin lorsqu'on entre en mode Gherkin.
+
+#### Fonctions de l'éditeur
+
+- **Exemple** — charge un template Gherkin pré-rempli
+- **Importer** — charge un fichier `.feature` depuis le disque
+- **Exporter** — télécharge le contenu actuel en fichier `.feature`
+- **Aperçu** — affiche un panneau latéral montrant les tests détectés en temps réel
+- **Appliquer** — convertit les scénarios en tests et retourne au mode tableau
 
 ### Requête API — format JSON
 
@@ -317,7 +373,7 @@ Accessible à : [http://localhost:8084/swagger-ui.html](http://localhost:8084/sw
 
 ## Tests unitaires
 
-Le backend dispose d'une suite de **61 tests unitaires** avec couverture JaCoCo.
+Le backend dispose d'une suite de **79 tests unitaires** avec couverture JaCoCo.
 
 ```powershell
 # One-click : depuis la racine du projet
@@ -330,10 +386,11 @@ mvn test -pl backend -am
 
 | Métrique | Valeur |
 |---|---|
-| Tests totaux | 68 |
-| Réussis | 67 |
-| Ignorés | 1 (contextLoads — nécessite MongoDB) |
-| Couverture instructions | 61% |
+| Tests totaux | 79 |
+| Réussis | 79 |
+| Échoués | 0 |
+| Couverture instructions (classes équipe) | **100%** |
+| Couverture branches (classes équipe) | **100%** |
 | Modules couverts | Sécurité (JWT, OAuth2, filtres), contrôleurs, entités, DTOs |
 
 Le rapport de couverture est dans `backend/target/site/jacoco/index.html`.  

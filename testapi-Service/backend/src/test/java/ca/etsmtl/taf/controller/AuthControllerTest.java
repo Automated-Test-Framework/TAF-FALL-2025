@@ -277,4 +277,74 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").exists());
     }
+
+    // ==================== Signup — additional branch coverage ====================
+
+    @Test
+    @DisplayName("POST /api/auth/signup — non-admin explicit role defaults to ROLE_USER")
+    void signup_userRole_assignsCorrectly() throws Exception {
+        SignupRequest signupReq = new SignupRequest();
+        signupReq.setFullName("User");
+        signupReq.setUsername("user1");
+        signupReq.setEmail("user@etsmtl.ca");
+        signupReq.setPassword("user123");
+        Set<String> roles = new HashSet<>();
+        roles.add("user"); // NOT "admin" → false branch of "admin".equals(role)
+        signupReq.setRole(roles);
+
+        when(userRepository.existsByUsername("user1")).thenReturn(false);
+        when(userRepository.existsByEmail("user@etsmtl.ca")).thenReturn(false);
+
+        Role userRole = new Role();
+        userRole.setName(ERole.ROLE_USER);
+        when(roleRepository.findByName(ERole.ROLE_USER)).thenReturn(Optional.of(userRole));
+
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signupReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Inscription Réussie.!"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/signup — role not found with null roles throws RuntimeException")
+    void signup_roleNotFound_defaultRoles_throwsException() {
+        SignupRequest signupReq = new SignupRequest();
+        signupReq.setFullName("Test");
+        signupReq.setUsername("testuser");
+        signupReq.setEmail("test@test.com");
+        signupReq.setPassword("password");
+        // strRoles is null → defaults to finding ROLE_USER
+
+        when(userRepository.existsByUsername("testuser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@test.com")).thenReturn(false);
+        when(roleRepository.findByName(ERole.ROLE_USER)).thenReturn(Optional.empty());
+
+        assertThrows(jakarta.servlet.ServletException.class, () ->
+            mockMvc.perform(post("/api/auth/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(signupReq))));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/signup — role not found with explicit roles throws RuntimeException")
+    void signup_roleNotFound_explicitRoles_throwsException() {
+        SignupRequest signupReq = new SignupRequest();
+        signupReq.setFullName("Admin");
+        signupReq.setUsername("admin2");
+        signupReq.setEmail("admin2@test.com");
+        signupReq.setPassword("admin123");
+        Set<String> roles = new HashSet<>();
+        roles.add("admin");
+        signupReq.setRole(roles);
+
+        when(userRepository.existsByUsername("admin2")).thenReturn(false);
+        when(userRepository.existsByEmail("admin2@test.com")).thenReturn(false);
+        when(roleRepository.findByName(ERole.ROLE_ADMIN)).thenReturn(Optional.empty());
+
+        assertThrows(jakarta.servlet.ServletException.class, () ->
+            mockMvc.perform(post("/api/auth/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(signupReq))));
+    }
 }

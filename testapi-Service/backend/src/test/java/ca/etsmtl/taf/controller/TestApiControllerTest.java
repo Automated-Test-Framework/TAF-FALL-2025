@@ -3,6 +3,11 @@ package ca.etsmtl.taf.controller;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+
+import com.sun.net.httpserver.HttpServer;
+import org.springframework.http.ResponseEntity;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -67,6 +72,40 @@ class TestApiControllerTest {
         assertEquals("{\"key\":\"value\"}", req.getInput());
         assertEquals("{\"result\":\"ok\"}", req.getExpectedOutput());
         assertEquals("application/json", req.getHeaders().get("Content-Type"));
+    }
+
+    @Test
+    @DisplayName("testApi sends request to microservice and returns response body")
+    void testApi_sendsRequestAndReturnsResponse() throws Exception {
+        // Start an embedded HTTP server to simulate the testapi microservice
+        HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        int port = server.getAddress().getPort();
+        server.createContext("/microservice/testapi/checkApi", exchange -> {
+            byte[] resp = "{\"status\":\"success\"}".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, resp.length);
+            exchange.getResponseBody().write(resp);
+            exchange.getResponseBody().close();
+        });
+        server.setExecutor(null);
+        server.start();
+
+        try {
+            setField(controller, "Test_API_microservice_url", "http://localhost");
+            setField(controller, "Test_API_microservice_port", String.valueOf(port));
+
+            TestApiRequest req = new TestApiRequest();
+            req.setMethod("GET");
+            req.setApiUrl("http://example.com");
+            req.setStatusCode(200);
+
+            ResponseEntity<String> result = controller.testApi(req);
+
+            assertNotNull(result);
+            assertEquals(200, result.getStatusCode().value());
+            assertEquals("{\"status\":\"success\"}", result.getBody());
+        } finally {
+            server.stop(0);
+        }
     }
 
     private void setField(Object target, String fieldName, Object value) throws Exception {

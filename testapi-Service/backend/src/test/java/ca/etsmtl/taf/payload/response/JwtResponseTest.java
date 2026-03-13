@@ -58,4 +58,14 @@ class JwtResponseTest {
 
         assertEquals("Bearer", response.getTokenType());
     }
+
+    @Test
+    @DisplayName("setRefreshToken updates refreshToken field")
+    void setRefreshToken_updatesField() {
+        JwtResponse response = new JwtResponse(
+                "t", "old.refresh", "id", "F", "u", "e@e.ca", List.of());
+
+        response.setRefreshToken("new.refresh.token");
+        assertEquals("new.refresh.token", response.getRefreshToken());
+    }
 }

@@ -28,10 +28,18 @@ public class RequestController {
         System.out.println("############### DEBUG : RequestController INITIALISÉ ###############");
 
         this.request = request;
-        this.httpRequest = given()
-                .header("Content-Type", "application/json")
-                .headers(this.request.getHeaders())
-                .body(this.request.getInput());
+        RequestSpecification spec = given()
+                .header("Content-Type", "application/json");
+
+        if (this.request.getHeaders() != null) {
+            spec = spec.headers(this.request.getHeaders());
+        }
+
+        if (this.request.getInput() != null && !this.request.getInput().isEmpty()) {
+            spec = spec.body(this.request.getInput());
+        }
+
+        this.httpRequest = spec;
     }
 
     public Answer getAnswer() {

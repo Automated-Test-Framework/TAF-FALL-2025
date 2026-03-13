@@ -95,5 +95,10 @@ export class TestApiService {
     this.testsSubject.next([...this.listTests]);
   }
 
+  /** Clear all tests from the list */
+  clearTests(): void {
+    this.listTests = [];
+    this.testsSubject.next([]);
+  }
 
 }
